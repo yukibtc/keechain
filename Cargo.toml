@@ -1,0 +1,30 @@
+[package]
+name = "keechain"
+version = "0.1.0"
+edition = "2021"
+description = "Bitcoin PSBT signer and descriptor exporter for offline devices"
+authors = ["Yuki Kishimoto <yukikishimoto@proton.me>"]
+homepage = "https://github.com/yukibtc/keechain"
+repository = "https://github.com/yukibtc/keechain.git"
+license = "MIT"
+readme = "README.md"
+keywords = ["bitcoin", "signer", "psbt", "offline", "cold"]
+
+[dependencies]
+aes = "0.8"
+anyhow = "1.0.66"
+base64 = "0.13.1"
+bdk = { version = "0.24.0", default-features = false, features = ["keys-bip39"] }
+bitcoin = "0.29.2"
+cbc = { version = "0.1.2", features = ["alloc"] }
+clap = { version = "4.0.27", features = ["derive"] }
+dirs = "4.0.0"
+rand = "0.8.5"
+rpassword = "7.1.0"
+secp256k1 = "0.24.1"
+sha2 = "0.10.1"
+thiserror = "1.0.37"
+
+[profile.release]
+lto = true
+codegen-units = 1
