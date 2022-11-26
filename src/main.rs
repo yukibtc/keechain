@@ -6,6 +6,7 @@ use clap::Parser;
 
 mod cli;
 mod command;
+mod types;
 mod util;
 
 use self::cli::{Cli, Commands};

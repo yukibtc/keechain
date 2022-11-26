@@ -16,7 +16,7 @@ pub enum Error {
     #[error("Invalid content format")]
     InvalidContentFormat,
     #[error("Error while decoding from base64")]
-    Base64DecodeError,
+    Base64Decode,
     #[error("Wrong encryption block mode. The content must be encrypted using CBC mode!")]
     WrongBlockMode,
 }
@@ -46,9 +46,8 @@ where
     }
 
     let key: Vec<u8> = hash::sha256(key);
-    let content: Vec<u8> =
-        base64::decode(parsed_content[0]).map_err(|_| Error::Base64DecodeError)?;
-    let iv: Vec<u8> = base64::decode(parsed_content[1]).map_err(|_| Error::Base64DecodeError)?;
+    let content: Vec<u8> = base64::decode(parsed_content[0]).map_err(|_| Error::Base64Decode)?;
+    let iv: Vec<u8> = base64::decode(parsed_content[1]).map_err(|_| Error::Base64Decode)?;
 
     let cipher = Aes256CbcDec::new(key.as_slice().into(), iv.as_slice().into());
     let result = cipher
@@ -61,6 +60,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::Seed;
+    use crate::util;
 
     #[test]
     fn test_encryption_decryption() {
@@ -77,7 +78,7 @@ mod tests {
         );
         assert_eq!(
             decrypt(key, b"badbase64?iv=encode").unwrap_err(),
-            Error::Base64DecodeError
+            Error::Base64Decode
         );
 
         //Content encrypted with aes256 using GCM mode
@@ -89,5 +90,19 @@ mod tests {
             .unwrap_err(),
             Error::WrongBlockMode
         );
+    }
+
+    #[test]
+    fn test_encryption_decryption_seed() {
+        let key: &str = "supersecretpassword";
+        let mnemonic: &str = "easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt";
+        let passphrase: Option<&str> = Some("mypassphrase");
+        let seed = Seed::new(mnemonic, passphrase).unwrap();
+
+        let encrypted_seed: Vec<u8> = encrypt(key, &util::serialize(seed.clone()).unwrap());
+        let decrypted_seed: Seed =
+            util::deserialize(decrypt(key, &encrypted_seed).unwrap()).unwrap();
+
+        assert_eq!(decrypted_seed, seed);
     }
 }

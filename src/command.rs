@@ -7,27 +7,26 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use anyhow::{anyhow, Result};
-use bdk::keys::bip39::Mnemonic;
 use bdk::miniscript::Descriptor;
 use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey};
 use bitcoin::Network;
 use secp256k1::Secp256k1;
 
-use crate::util::{aes, dir};
+use crate::types::Seed;
+use crate::util::{self, aes, dir};
 
-pub fn restore<S>(
-    file_name: S,
-    password: S,
-    seed_phrase: S,
-    passphrase: Option<String>,
-) -> Result<()>
+pub struct KeeChain {
+    keychain_file: PathBuf,
+}
+
+pub fn restore<S>(file_name: S, password: S, mnemonic: S, passphrase: Option<S>) -> Result<()>
 where
     S: Into<String>,
 {
-    let mnemonic_file: PathBuf = dir::get_directory()?.join(file_name.into());
+    let keychain_file: PathBuf = dir::get_directory()?.join(file_name.into());
 
     // Check if mnemonic file already exist
-    if mnemonic_file.exists() {
+    if keychain_file.exists() {
         return Err(anyhow!(
             "There is already a file with the same name! Please, choose another name."
         ));
@@ -40,40 +39,38 @@ where
         return Err(anyhow!("Invalid password"));
     }
 
-    let mnemonic: Mnemonic = Mnemonic::from_str(&seed_phrase.into())?;
-    let seed: [u8; 64] = mnemonic.to_seed(passphrase.unwrap_or_default());
-
-    // Encrypt seed
-    let encrypted_seed: Vec<u8> = aes::encrypt(password, &seed);
+    let seed = Seed::new(mnemonic, passphrase)?;
+    let serialized_seed: Vec<u8> = util::serialize(seed)?;
+    let encrypted_seed: Vec<u8> = aes::encrypt(password, &serialized_seed);
 
     let mut file: File = File::options()
         .create_new(true)
         .write(true)
-        .open(mnemonic_file)?;
+        .open(keychain_file)?;
     file.write_all(&encrypted_seed)?;
 
     Ok(())
 }
 
-pub fn open<S>(file_name: S, password: S) -> Result<Vec<u8>>
+pub fn open<S>(file_name: S, password: S) -> Result<Seed>
 where
     S: Into<String>,
 {
-    let mnemonic_file: PathBuf = dir::get_directory()?.join(file_name.into());
+    let keychain_file: PathBuf = dir::get_directory()?.join(file_name.into());
 
     // Check if mnemonic file exist
-    if !mnemonic_file.exists() {
+    if !keychain_file.exists() {
         return Err(anyhow!("File not found."));
     }
 
     // Read seed from file
-    let mut file: File = File::open(mnemonic_file)?;
+    let mut file: File = File::open(keychain_file)?;
     let mut content: Vec<u8> = Vec::new();
     file.read_to_end(&mut content)?;
 
     // Decrypt seed
     match aes::decrypt(password.into(), &content) {
-        Ok(data) => Ok(data),
+        Ok(data) => util::deserialize(data),
         Err(aes::Error::WrongBlockMode) => Err(anyhow!(
             "Impossible to decrypt file: invalid password or content"
         )),
@@ -89,8 +86,8 @@ pub fn extended_private_key<S>(
 where
     S: Into<String>,
 {
-    let seed: Vec<u8> = open(file_name, password)?;
-    Ok(ExtendedPrivKey::new_master(network, &seed)?)
+    let seed: Seed = open(file_name, password)?;
+    Ok(ExtendedPrivKey::new_master(network, &seed.to_bytes())?)
 }
 
 pub fn extended_public_key<S>(file_name: S, password: S, network: Network) -> Result<ExtendedPubKey>
