@@ -2,7 +2,7 @@
 name = "keechain"
 version = "0.1.0"
 edition = "2021"
-description = "Bitcoin PSBT signer and descriptor exporter for offline devices"
+description = "Bitcoin PSBT signer, descriptor exporter and more for offline devices."
 authors = ["Yuki Kishimoto <yukikishimoto@proton.me>"]
 homepage = "https://github.com/yukibtc/keechain"
 repository = "https://github.com/yukibtc/keechain.git"

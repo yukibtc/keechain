@@ -20,8 +20,14 @@ Verify commit:
 git verify-commit HEAD
 ```
 
+## Install Rust
+
+Follow this instructions: https://www.rust-lang.org/tools/install
+
 ## Build
 
-Follow instruction for your OS:
+```
+cargo build --release
+```
 
-* [Unix](build-unix.md) 
+When build is completed, you can find `keechain` binary in `target/release` folder.
