@@ -7,12 +7,14 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use anyhow::{anyhow, Result};
+use bdk::keys::bip39::Mnemonic;
 use bdk::miniscript::Descriptor;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey};
 use bitcoin::Network;
 use secp256k1::Secp256k1;
 
-use crate::types::Seed;
+use crate::types::{Index, Seed, WordCount};
+use crate::util::bip::bip85::FromBip85;
 use crate::util::{self, aes, dir};
 
 pub fn restore<S>(file_name: S, password: S, mnemonic: S, passphrase: Option<S>) -> Result<()>
@@ -179,5 +181,23 @@ where
     println!("Native Segwit: {}", native_segwit);
     println!("Taproot: {}", taproot);
 
+    Ok(())
+}
+
+pub fn derive<S>(
+    file_name: S,
+    password: S,
+    network: Network,
+    word_count: WordCount,
+    index: Index,
+) -> Result<()>
+where
+    S: Into<String>,
+{
+    let root: ExtendedPrivKey = extended_private_key(file_name, password, network)?;
+    let secp = Secp256k1::new();
+
+    let mnemonic: Mnemonic = Mnemonic::from_bip85(&secp, &root, word_count, index)?;
+    println!("Mnemonic: {}", mnemonic);
     Ok(())
 }

@@ -2,19 +2,20 @@
 // Distributed under the MIT software license
 
 use anyhow::Result;
+use bitcoin::Network;
 use clap::Parser;
-use cli::DangerCommands;
 
 mod cli;
 mod command;
 mod types;
 mod util;
 
-use self::cli::{Cli, Commands};
+use self::cli::{Cli, Commands, DangerCommands};
 use self::util::io;
 
 fn main() -> Result<()> {
     let args = Cli::parse();
+    let network: Network = args.network;
 
     match args.command {
         Commands::Restore { name } => {
@@ -35,8 +36,16 @@ fn main() -> Result<()> {
         }
         Commands::Export { name, account } => {
             let password: String = rpassword::prompt_password("Password: ")?;
-            command::get_public_keys(name, password, args.network, Some(account))?;
+            command::get_public_keys(name, password, network, Some(account))?;
             Ok(())
+        }
+        Commands::Derive {
+            name,
+            word_count,
+            index,
+        } => {
+            let password: String = rpassword::prompt_password("Password: ")?;
+            command::derive(name, password, network, word_count, index)
         }
         Commands::Sign { name, file } => {
             println!("{} - {}", name, file.display());
