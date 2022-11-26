@@ -8,24 +8,18 @@ use std::str::FromStr;
 
 use anyhow::{anyhow, Result};
 use bdk::miniscript::Descriptor;
-use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey};
+use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey};
 use bitcoin::Network;
 use secp256k1::Secp256k1;
 
 use crate::types::Seed;
 use crate::util::{self, aes, dir};
 
-pub struct KeeChain {
-    keychain_file: PathBuf,
-}
-
 pub fn restore<S>(file_name: S, password: S, mnemonic: S, passphrase: Option<S>) -> Result<()>
 where
     S: Into<String>,
 {
     let keychain_file: PathBuf = dir::get_directory()?.join(file_name.into());
-
-    // Check if mnemonic file already exist
     if keychain_file.exists() {
         return Err(anyhow!(
             "There is already a file with the same name! Please, choose another name."
@@ -33,8 +27,6 @@ where
     }
 
     let password: String = password.into();
-
-    // Check if password is valid
     if password.is_empty() {
         return Err(anyhow!("Invalid password"));
     }
@@ -78,6 +70,31 @@ where
     }
 }
 
+pub fn view_seed<S>(file_name: S, password: S) -> Result<()>
+where
+    S: Into<String>,
+{
+    let seed: Seed = open(file_name, password)?;
+    println!("\n################################################################\n");
+    println!("Mnemonic: {}", seed.mnemonic());
+    if let Some(passphrase) = seed.passphrase() {
+        println!("Passphrase: {}", passphrase);
+    }
+    println!("Seed (hex format): {}", seed.to_hex());
+    println!("\n################################################################\n");
+    Ok(())
+}
+
+pub fn wipe<S>(file_name: S, password: S) -> Result<()>
+where
+    S: Into<String> + Clone,
+{
+    let _ = open(file_name.clone(), password)?;
+    let keychain_file: PathBuf = dir::get_directory()?.join(file_name.into());
+    std::fs::remove_file(keychain_file)?;
+    Ok(())
+}
+
 pub fn extended_private_key<S>(
     file_name: S,
     password: S,
@@ -90,21 +107,14 @@ where
     Ok(ExtendedPrivKey::new_master(network, &seed.to_bytes())?)
 }
 
-pub fn extended_public_key<S>(file_name: S, password: S, network: Network) -> Result<ExtendedPubKey>
-where
-    S: Into<String>,
-{
-    let privkey = extended_private_key(file_name, password, network)?;
-    let secp = Secp256k1::new();
-    Ok(ExtendedPubKey::from_priv(&secp, &privkey))
-}
-
-fn derivation_path(purpose: u8, account: Option<u32>) -> Result<DerivationPath> {
-    Ok(DerivationPath::from_str(&format!(
-        "m/{}'/0'/{}'",
-        purpose,
-        account.unwrap_or(0),
-    ))?)
+fn account_extended_derivation_path(purpose: u32, account: Option<u32>) -> Result<DerivationPath> {
+    // Path: m/<purpose>'/0'/<account>'
+    let path: Vec<ChildNumber> = vec![
+        ChildNumber::from_hardened_idx(purpose)?,
+        ChildNumber::from_hardened_idx(0)?,
+        ChildNumber::from_hardened_idx(account.unwrap_or(0))?,
+    ];
+    Ok(DerivationPath::from(path))
 }
 
 fn descriptor(
@@ -144,19 +154,19 @@ where
     let secp = Secp256k1::new();
     let legacy = ExtendedPubKey::from_priv(
         &secp,
-        &xpriv.derive_priv(&secp, &derivation_path(44, account)?)?,
+        &xpriv.derive_priv(&secp, &account_extended_derivation_path(44, account)?)?,
     );
     let nested_segwit = ExtendedPubKey::from_priv(
         &secp,
-        &xpriv.derive_priv(&secp, &derivation_path(49, account)?)?,
+        &xpriv.derive_priv(&secp, &account_extended_derivation_path(49, account)?)?,
     );
     let native_segwit = ExtendedPubKey::from_priv(
         &secp,
-        &xpriv.derive_priv(&secp, &derivation_path(84, account)?)?,
+        &xpriv.derive_priv(&secp, &account_extended_derivation_path(84, account)?)?,
     );
     let taproot = ExtendedPubKey::from_priv(
         &secp,
-        &xpriv.derive_priv(&secp, &derivation_path(86, account)?)?,
+        &xpriv.derive_priv(&secp, &account_extended_derivation_path(86, account)?)?,
     );
 
     let legacy: Descriptor<String> = descriptor(legacy, 44, account, false)?;

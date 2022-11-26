@@ -19,7 +19,8 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
-    /// Restore from BIP39 Seed
+    /// Restore BIP39 Seed Phrase
+    #[command(arg_required_else_help = true)]
     Restore {
         /// Keychain name
         #[arg(required = true)]
@@ -44,5 +45,27 @@ pub enum Commands {
         /// PSBT file
         #[arg(required = true)]
         file: PathBuf,
+    },
+    /// Danger
+    Danger {
+        #[command(subcommand)]
+        command: DangerCommands,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum DangerCommands {
+    /// View mnemonic and passphrase
+    #[command(arg_required_else_help = true)]
+    ViewSeed {
+        /// Keychain name
+        #[arg(required = true)]
+        name: String,
+    },
+    /// Delete keychain
+    Wipe {
+        /// Keychain name
+        #[arg(required = true)]
+        name: String,
     },
 }

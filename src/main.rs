@@ -3,6 +3,7 @@
 
 use anyhow::Result;
 use clap::Parser;
+use cli::DangerCommands;
 
 mod cli;
 mod command;
@@ -40,6 +41,21 @@ fn main() -> Result<()> {
         Commands::Sign { name, file } => {
             println!("{} - {}", name, file.display());
             Ok(())
+        }
+        Commands::Danger { command } => match command {
+            DangerCommands::ViewSeed { name } => {
+                let password: String = rpassword::prompt_password("Password: ")?;
+                command::view_seed(name, password)
+            }
+            DangerCommands::Wipe { name } => {
+                let password: String = rpassword::prompt_password("Password: ")?;
+                if io::ask("Are you really sure? This action is permanent!")? && io::ask("Again, are you really sure? THIS ACTION IS PERMANENT AND YOU MAY LOSE ALL YOUR FUNDS!")? {
+                    command::wipe(name, password)?;
+                } else {
+                    println!("Aborted.");
+                }
+                Ok(())
+            }
         },
     }
 }
