@@ -1,15 +1,23 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::str::FromStr;
 
 use anyhow::{anyhow, Result};
+use bdk::database::MemoryDatabase;
 use bdk::keys::bip39::Mnemonic;
+use bdk::keys::DescriptorSecretKey;
 use bdk::miniscript::Descriptor;
-use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey};
+use bdk::wallet::AddressIndex;
+use bdk::{descriptor, SignOptions, Wallet};
+use bitcoin::psbt::PartiallySignedTransaction;
+use bitcoin::util::bip32::{
+    ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
+};
 use bitcoin::Network;
 use secp256k1::Secp256k1;
 
@@ -121,14 +129,16 @@ fn account_extended_derivation_path(purpose: u32, account: Option<u32>) -> Resul
 
 fn descriptor(
     pubkey: ExtendedPubKey,
+    network: Network,
     purpose: u8,
     account: Option<u32>,
     change: bool,
 ) -> Result<Descriptor<String>> {
     let descriptor: String = format!(
-        "[{}/{}'/0'/{}']{}/{}/*",
+        "[{}/{}'/{}'/{}']{}/{}/*",
         pubkey.fingerprint(),
         purpose,
+        if network.eq(&Network::Bitcoin) { 0 } else { 1 },
         account.unwrap_or(0),
         pubkey,
         i32::from(change)
@@ -151,30 +161,30 @@ pub fn get_public_keys<S>(
 where
     S: Into<String>,
 {
-    let xpriv: ExtendedPrivKey = extended_private_key(file_name, password, network)?;
+    let root: ExtendedPrivKey = extended_private_key(file_name, password, network)?;
 
     let secp = Secp256k1::new();
     let legacy = ExtendedPubKey::from_priv(
         &secp,
-        &xpriv.derive_priv(&secp, &account_extended_derivation_path(44, account)?)?,
+        &root.derive_priv(&secp, &account_extended_derivation_path(44, account)?)?,
     );
     let nested_segwit = ExtendedPubKey::from_priv(
         &secp,
-        &xpriv.derive_priv(&secp, &account_extended_derivation_path(49, account)?)?,
+        &root.derive_priv(&secp, &account_extended_derivation_path(49, account)?)?,
     );
     let native_segwit = ExtendedPubKey::from_priv(
         &secp,
-        &xpriv.derive_priv(&secp, &account_extended_derivation_path(84, account)?)?,
+        &root.derive_priv(&secp, &account_extended_derivation_path(84, account)?)?,
     );
     let taproot = ExtendedPubKey::from_priv(
         &secp,
-        &xpriv.derive_priv(&secp, &account_extended_derivation_path(86, account)?)?,
+        &root.derive_priv(&secp, &account_extended_derivation_path(86, account)?)?,
     );
 
-    let legacy: Descriptor<String> = descriptor(legacy, 44, account, false)?;
-    let nested_segwit: Descriptor<String> = descriptor(nested_segwit, 49, account, false)?;
-    let native_segwit: Descriptor<String> = descriptor(native_segwit, 84, account, false)?;
-    let taproot: Descriptor<String> = descriptor(taproot, 86, account, false)?;
+    let legacy: Descriptor<String> = descriptor(legacy, network, 44, account, false)?;
+    let nested_segwit: Descriptor<String> = descriptor(nested_segwit, network, 49, account, false)?;
+    let native_segwit: Descriptor<String> = descriptor(native_segwit, network, 84, account, false)?;
+    let taproot: Descriptor<String> = descriptor(taproot, network, 86, account, false)?;
 
     println!("Legacy: {}", legacy);
     println!("Nested Segwit: {}", nested_segwit);
@@ -200,4 +210,92 @@ where
     let mnemonic: Mnemonic = Mnemonic::from_bip85(&secp, &root, word_count, index)?;
     println!("Mnemonic: {}", mnemonic);
     Ok(())
+}
+
+pub fn sign<S>(file_name: S, password: S, network: Network, psbt_file: PathBuf) -> Result<()>
+where
+    S: Into<String>,
+{
+    if !psbt_file.exists() && !psbt_file.is_file() {
+        return Err(anyhow!("PSBT file not found."));
+    }
+
+    let mut file: File = File::open(psbt_file.clone())?;
+    let mut content: Vec<u8> = Vec::new();
+    file.read_to_end(&mut content)?;
+
+    let psbt: String = base64::encode(content);
+    let mut psbt = PartiallySignedTransaction::from_str(&psbt)?;
+
+    let root: ExtendedPrivKey = extended_private_key(file_name, password, network)?;
+    let secp = Secp256k1::new();
+    let root_fingerprint: Fingerprint = root.fingerprint(&secp);
+
+    let mut paths: Vec<DerivationPath> = Vec::new();
+
+    for input in psbt.inputs.iter() {
+        for (fingerprint, path) in input.bip32_derivation.values() {
+            if fingerprint.eq(&root_fingerprint) {
+                paths.push(path.clone());
+            }
+        }
+    }
+
+    if paths.is_empty() {
+        return Err(anyhow!("Nothing to sign here."));
+    }
+
+    let mut finalized: bool = false;
+
+    for path in paths.into_iter() {
+        let child_priv: ExtendedPrivKey = root.derive_priv(&secp, &path)?;
+        let desc = DescriptorSecretKey::from_str(&child_priv.to_string())?;
+        let descriptor = match path.into_iter().next() {
+            Some(ChildNumber::Hardened { index: 44 }) => descriptor!(pkh(desc))?,
+            Some(ChildNumber::Hardened { index: 49 }) => descriptor!(sh(wpkh(desc)))?,
+            Some(ChildNumber::Hardened { index: 84 }) => descriptor!(wpkh(desc))?,
+            Some(ChildNumber::Hardened { index: 86 }) => descriptor!(tr(desc))?,
+            _ => return Err(anyhow!("Unsupported derivation path")),
+        };
+
+        let wallet = Wallet::new(descriptor, None, network, MemoryDatabase::default())?;
+
+        // Required for sign
+        let _ = wallet.get_address(AddressIndex::New)?;
+
+        if wallet.sign(&mut psbt, SignOptions::default())? {
+            finalized = true;
+        }
+    }
+
+    if finalized {
+        let mut psbt_file = psbt_file;
+        rename_psbt_to_signed(&mut psbt_file)?;
+        let mut file: File = File::options()
+            .create_new(true)
+            .write(true)
+            .open(psbt_file)?;
+        file.write_all(psbt.to_string().as_bytes())?;
+        println!("Signed.")
+    } else {
+        println!("PSBT signing not finalized");
+    }
+
+    Ok(())
+}
+
+fn rename_psbt_to_signed(psbt_file: &mut PathBuf) -> Result<()> {
+    if let Some(mut file_name) = psbt_file.file_name().and_then(OsStr::to_str) {
+        if let Some(ext) = psbt_file.extension().and_then(OsStr::to_str) {
+            let splitted: Vec<&str> = file_name.split(&format!(".{}", ext)).collect();
+            file_name = match splitted.first() {
+                Some(name) => *name,
+                None => return Err(anyhow!("Impossible to get file name")),
+            }
+        }
+        psbt_file.set_file_name(&format!("{}-signed.psbt", file_name));
+        Ok(())
+    } else {
+        Err(anyhow!("Impossible to get file name"))
+    }
 }

@@ -14,12 +14,15 @@ use self::cli::{Cli, Commands, DangerCommands};
 use self::util::io;
 
 fn main() -> Result<()> {
+    env_logger::init();
+
     let args = Cli::parse();
     let network: Network = args.network;
 
+    let password: String = rpassword::prompt_password("Password: ")?;
+
     match args.command {
         Commands::Restore { name } => {
-            let password: String = rpassword::prompt_password("Password: ")?;
             let seed: String = io::get_input("Seed: ")?;
             let passphrase: Option<String> =
                 if let Ok(result) = io::ask("Do you want to use a passphrase?") {
@@ -35,29 +38,17 @@ fn main() -> Result<()> {
             command::restore(name, password, seed, passphrase)
         }
         Commands::Export { name, account } => {
-            let password: String = rpassword::prompt_password("Password: ")?;
-            command::get_public_keys(name, password, network, Some(account))?;
-            Ok(())
+            command::get_public_keys(name, password, network, Some(account))
         }
         Commands::Derive {
             name,
             word_count,
             index,
-        } => {
-            let password: String = rpassword::prompt_password("Password: ")?;
-            command::derive(name, password, network, word_count, index)
-        }
-        Commands::Sign { name, file } => {
-            println!("{} - {}", name, file.display());
-            Ok(())
-        }
+        } => command::derive(name, password, network, word_count, index),
+        Commands::Sign { name, file } => command::sign(name, password, network, file),
         Commands::Danger { command } => match command {
-            DangerCommands::ViewSeed { name } => {
-                let password: String = rpassword::prompt_password("Password: ")?;
-                command::view_seed(name, password)
-            }
+            DangerCommands::ViewSeed { name } => command::view_seed(name, password),
             DangerCommands::Wipe { name } => {
-                let password: String = rpassword::prompt_password("Password: ")?;
                 if io::ask("Are you really sure? This action is permanent!")? && io::ask("Again, are you really sure? THIS ACTION IS PERMANENT AND YOU MAY LOSE ALL YOUR FUNDS!")? {
                     command::wipe(name, password)?;
                 } else {
