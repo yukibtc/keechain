@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use bitcoin::Network;
 use clap::{Parser, Subcommand};
 
-use crate::types::{Index, WordCount, ExportTypes};
+use crate::types::{ExportTypes, Index, WordCount};
 
 #[derive(Debug, Parser)]
 #[command(name = "keechain")]
@@ -15,6 +15,9 @@ pub struct Cli {
     /// Network
     #[clap(short, long, default_value_t = Network::Bitcoin)]
     pub network: Network,
+    /// Keychain name
+    #[arg(required = true)]
+    pub name: String,
     #[command(subcommand)]
     pub command: Commands,
 }
@@ -22,21 +25,13 @@ pub struct Cli {
 #[derive(Debug, Subcommand)]
 pub enum Commands {
     /// Restore BIP39 Seed Phrase
-    #[command(arg_required_else_help = true)]
-    Restore {
-        /// Keychain name
-        #[arg(required = true)]
-        name: String,
-    },
+    Restore,
     /// Export descriptors
     #[command(arg_required_else_help = true)]
     Export {
-        /// Keychain name
-        #[arg(required = true)]
-        name: String,
         /// Type
         #[arg(required = true, name = "TYPE")]
-        export_type: ExportTypes,        
+        export_type: ExportTypes,
         /// Account number
         #[arg(default_value_t = 0)]
         account: u32,
@@ -44,9 +39,6 @@ pub enum Commands {
     /// Derive BIP39 Seed Phrase with Deterministic Entropy (BIP85)
     #[command(arg_required_else_help = true)]
     Derive {
-        /// Keychain name
-        #[arg(required = true)]
-        name: String,
         /// Word count
         #[arg(required = true, value_enum)]
         word_count: WordCount,
@@ -57,9 +49,6 @@ pub enum Commands {
     /// Sign PSBT
     #[command(arg_required_else_help = true)]
     Sign {
-        /// Keychain name
-        #[arg(required = true)]
-        name: String,
         /// PSBT file
         #[arg(required = true)]
         file: PathBuf,
@@ -74,16 +63,7 @@ pub enum Commands {
 #[derive(Debug, Subcommand)]
 pub enum DangerCommands {
     /// View mnemonic and passphrase
-    #[command(arg_required_else_help = true)]
-    ViewSeed {
-        /// Keychain name
-        #[arg(required = true)]
-        name: String,
-    },
+    ViewSeed,
     /// Delete keychain
-    Wipe {
-        /// Keychain name
-        #[arg(required = true)]
-        name: String,
-    },
+    Wipe,
 }
