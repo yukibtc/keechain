@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use bitcoin::Network;
 use clap::{Parser, Subcommand};
 
-use crate::types::{Index, WordCount};
+use crate::types::{Index, WordCount, ExportTypes};
 
 #[derive(Debug, Parser)]
 #[command(name = "keechain")]
@@ -34,6 +34,9 @@ pub enum Commands {
         /// Keychain name
         #[arg(required = true)]
         name: String,
+        /// Type
+        #[arg(required = true, name = "TYPE")]
+        export_type: ExportTypes,        
         /// Account number
         #[arg(default_value_t = 0)]
         account: u32,

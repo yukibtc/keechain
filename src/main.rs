@@ -4,6 +4,7 @@
 use anyhow::Result;
 use bitcoin::Network;
 use clap::Parser;
+use types::ExportTypes;
 
 mod cli;
 mod command;
@@ -37,8 +38,10 @@ fn main() -> Result<()> {
 
             command::restore(name, password, seed, passphrase)
         }
-        Commands::Export { name, account } => {
-            command::get_public_keys(name, password, network, Some(account))
+        Commands::Export { name, export_type, account } => {
+            match export_type {
+                ExportTypes::Descriptors => command::get_public_keys(name, password, network, Some(account))
+            }
         }
         Commands::Derive {
             name,

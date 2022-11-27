@@ -94,6 +94,11 @@ impl fmt::Debug for Index {
     }
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq, ValueEnum)]
+pub enum ExportTypes {
+    Descriptors,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
