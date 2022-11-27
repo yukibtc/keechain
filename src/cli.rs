@@ -26,6 +26,8 @@ pub struct Cli {
 pub enum Commands {
     /// Restore BIP39 Seed Phrase
     Restore,
+    /// Get fingerprint
+    Identity,
     /// Export descriptors
     #[command(arg_required_else_help = true)]
     Export {
@@ -36,7 +38,7 @@ pub enum Commands {
         #[arg(default_value_t = 0)]
         account: u32,
     },
-    /// Derive BIP39 Seed Phrase with Deterministic Entropy (BIP85)
+    /// Derive BIP39 Seed Phrase (BIP85)
     #[command(arg_required_else_help = true)]
     Derive {
         /// Word count

@@ -299,3 +299,13 @@ fn rename_psbt_to_signed(psbt_file: &mut PathBuf) -> Result<()> {
         Err(anyhow!("Impossible to get file name"))
     }
 }
+
+pub fn identity<S>(file_name: S, password: S, network: Network) -> Result<()>
+where
+    S: Into<String>,
+{
+    let root: ExtendedPrivKey = extended_private_key(file_name, password, network)?;
+    let secp = Secp256k1::new();
+    println!("Fingerprint: {}", root.fingerprint(&secp));
+    Ok(())
+}

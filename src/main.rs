@@ -20,7 +20,6 @@ fn main() -> Result<()> {
     let args = Cli::parse();
     let network: Network = args.network;
     let name: String = args.name;
-
     let password: String = rpassword::prompt_password("Password: ")?;
 
     match args.command {
@@ -39,6 +38,7 @@ fn main() -> Result<()> {
 
             command::restore(name, password, seed, passphrase)
         }
+        Commands::Identity => command::identity(name, password, network),
         Commands::Export {
             export_type,
             account,
