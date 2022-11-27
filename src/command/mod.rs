@@ -21,6 +21,8 @@ use bitcoin::util::bip32::{
 use bitcoin::Network;
 use secp256k1::Secp256k1;
 
+pub mod export;
+
 use crate::types::{Index, Seed, WordCount};
 use crate::util::bip::bip85::FromBip85;
 use crate::util::{self, aes, dir};
@@ -29,7 +31,7 @@ pub fn restore<S>(file_name: S, password: S, mnemonic: S, passphrase: Option<S>)
 where
     S: Into<String>,
 {
-    let keychain_file: PathBuf = dir::get_directory()?.join(file_name.into());
+    let keychain_file: PathBuf = dir::keechain()?.join(file_name.into());
     if keychain_file.exists() {
         return Err(anyhow!(
             "There is already a file with the same name! Please, choose another name."
@@ -58,7 +60,7 @@ pub fn open<S>(file_name: S, password: S) -> Result<Seed>
 where
     S: Into<String>,
 {
-    let keychain_file: PathBuf = dir::get_directory()?.join(file_name.into());
+    let keychain_file: PathBuf = dir::keechain()?.join(file_name.into());
 
     // Check if mnemonic file exist
     if !keychain_file.exists() {
@@ -100,7 +102,7 @@ where
     S: Into<String> + Clone,
 {
     let _ = open(file_name.clone(), password)?;
-    let keychain_file: PathBuf = dir::get_directory()?.join(file_name.into());
+    let keychain_file: PathBuf = dir::keechain()?.join(file_name.into());
     std::fs::remove_file(keychain_file)?;
     Ok(())
 }
@@ -117,11 +119,15 @@ where
     Ok(ExtendedPrivKey::new_master(network, &seed.to_bytes())?)
 }
 
-fn account_extended_derivation_path(purpose: u32, account: Option<u32>) -> Result<DerivationPath> {
-    // Path: m/<purpose>'/0'/<account>'
+pub fn account_extended_derivation_path(
+    purpose: u32,
+    network: Network,
+    account: Option<u32>,
+) -> Result<DerivationPath> {
+    // Path: m/<purpose>'/<coin>'/<account>'
     let path: Vec<ChildNumber> = vec![
         ChildNumber::from_hardened_idx(purpose)?,
-        ChildNumber::from_hardened_idx(0)?,
+        ChildNumber::from_hardened_idx(if network.eq(&Network::Bitcoin) { 0 } else { 1 })?,
         ChildNumber::from_hardened_idx(account.unwrap_or(0))?,
     ];
     Ok(DerivationPath::from(path))
@@ -162,23 +168,40 @@ where
     S: Into<String>,
 {
     let root: ExtendedPrivKey = extended_private_key(file_name, password, network)?;
-
     let secp = Secp256k1::new();
+
+    println!(
+        "BIP32 Root Public Key: {}",
+        ExtendedPubKey::from_priv(&secp, &root)
+    );
+
     let legacy = ExtendedPubKey::from_priv(
         &secp,
-        &root.derive_priv(&secp, &account_extended_derivation_path(44, account)?)?,
+        &root.derive_priv(
+            &secp,
+            &account_extended_derivation_path(44, network, account)?,
+        )?,
     );
     let nested_segwit = ExtendedPubKey::from_priv(
         &secp,
-        &root.derive_priv(&secp, &account_extended_derivation_path(49, account)?)?,
+        &root.derive_priv(
+            &secp,
+            &account_extended_derivation_path(49, network, account)?,
+        )?,
     );
     let native_segwit = ExtendedPubKey::from_priv(
         &secp,
-        &root.derive_priv(&secp, &account_extended_derivation_path(84, account)?)?,
+        &root.derive_priv(
+            &secp,
+            &account_extended_derivation_path(84, network, account)?,
+        )?,
     );
     let taproot = ExtendedPubKey::from_priv(
         &secp,
-        &root.derive_priv(&secp, &account_extended_derivation_path(86, account)?)?,
+        &root.derive_priv(
+            &secp,
+            &account_extended_derivation_path(86, network, account)?,
+        )?,
     );
 
     let legacy: Descriptor<String> = descriptor(legacy, network, 44, account, false)?;

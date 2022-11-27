@@ -6,7 +6,8 @@ use std::path::PathBuf;
 use bitcoin::Network;
 use clap::{Parser, Subcommand};
 
-use crate::types::{ExportTypes, Index, WordCount};
+use crate::command::export::ElectrumExportSupportedScripts;
+use crate::types::{Index, WordCount};
 
 #[derive(Debug, Parser)]
 #[command(name = "keechain")]
@@ -28,15 +29,12 @@ pub enum Commands {
     Restore,
     /// Get fingerprint
     Identity,
-    /// Export descriptors
+    /// Export
     #[command(arg_required_else_help = true)]
     Export {
         /// Type
-        #[arg(required = true, name = "TYPE")]
+        #[command(subcommand)]
         export_type: ExportTypes,
-        /// Account number
-        #[arg(default_value_t = 0)]
-        account: u32,
     },
     /// Derive BIP39 Seed Phrase (BIP85)
     #[command(arg_required_else_help = true)]
@@ -68,4 +66,29 @@ pub enum DangerCommands {
     ViewSeed,
     /// Delete keychain
     Wipe,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ExportTypes {
+    /// Export descriptors
+    Descriptors {
+        /// Account number
+        #[arg(default_value_t = 0)]
+        account: u32,
+    },
+    /// Export Bitcoin Core descriptors
+    BitcoinCore {
+        /// Account number
+        #[arg(default_value_t = 0)]
+        account: u32,
+    },
+    /// Export Electrum file
+    Electrum {
+        /// Script
+        #[arg(default_value_t = ElectrumExportSupportedScripts::NativeSegwit)]
+        script: ElectrumExportSupportedScripts,
+        /// Account number
+        #[arg(default_value_t = 0)]
+        account: u32,
+    },
 }

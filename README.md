@@ -10,7 +10,9 @@ KeeChain is a Bitcoin CLI application to transform your old computer to a signin
 
 * Restore BIP39 seed phrase with an optional passphrase
 * Seed encryption with AES-256
-* Descriptor exporter
+* Export:
+    - Descriptors
+    - Electrum JSON file (BIP44, BIP49 and BIP84)
 * PSBT file signer
 * Deterministic Entropy (BIP85)
 

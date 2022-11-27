@@ -5,7 +5,14 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 
-pub fn get_directory() -> Result<PathBuf> {
+pub fn home() -> PathBuf {
+    match dirs::home_dir() {
+        Some(path) => path,
+        None => Path::new("./").to_path_buf(),
+    }
+}
+
+pub fn keechain() -> Result<PathBuf> {
     Ok(match dirs::home_dir() {
         Some(path) => {
             let path: PathBuf = path.join(".keechain");

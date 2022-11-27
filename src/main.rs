@@ -4,14 +4,13 @@
 use anyhow::Result;
 use bitcoin::Network;
 use clap::Parser;
-use types::ExportTypes;
 
 mod cli;
 mod command;
 mod types;
 mod util;
 
-use self::cli::{Cli, Commands, DangerCommands};
+use self::cli::{Cli, Commands, DangerCommands, ExportTypes};
 use self::util::io;
 
 fn main() -> Result<()> {
@@ -39,13 +38,17 @@ fn main() -> Result<()> {
             command::restore(name, password, seed, passphrase)
         }
         Commands::Identity => command::identity(name, password, network),
-        Commands::Export {
-            export_type,
-            account,
-        } => match export_type {
-            ExportTypes::Descriptors => {
+        Commands::Export { export_type } => match export_type {
+            ExportTypes::Descriptors { account } => {
                 command::get_public_keys(name, password, network, Some(account))
             }
+            ExportTypes::BitcoinCore { account: _ } => todo!(),
+            ExportTypes::Electrum { script, account } => command::export::electrum(
+                name,
+                password,
+                network,
+                command::account_extended_derivation_path(script.as_u32(), network, Some(account))?,
+            ),
         },
         Commands::Derive { word_count, index } => {
             command::derive(name, password, network, word_count, index)
