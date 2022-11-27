@@ -11,6 +11,7 @@ pub mod convert;
 pub mod dir;
 pub mod hash;
 pub mod io;
+pub mod slip;
 
 pub fn serialize<T>(data: T) -> Result<Vec<u8>>
 where
