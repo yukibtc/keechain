@@ -21,27 +21,39 @@ use bitcoin::util::bip32::{
 use bitcoin::Network;
 use secp256k1::Secp256k1;
 
+pub mod danger;
 pub mod export;
 
 use crate::types::{Index, Seed, WordCount};
 use crate::util::bip::bip85::FromBip85;
 use crate::util::{self, aes, dir};
 
-pub fn restore<S>(file_name: S, password: S, mnemonic: S, passphrase: Option<S>) -> Result<()>
+pub fn restore<S, PSW, M, P>(
+    name: S,
+    get_password: PSW,
+    get_mnemonic: M,
+    get_passphrase: P,
+) -> Result<()>
 where
     S: Into<String>,
+    PSW: FnOnce() -> Result<String>,
+    M: FnOnce() -> Result<String>,
+    P: FnOnce() -> Result<Option<String>>,
 {
-    let keychain_file: PathBuf = dir::keechain()?.join(file_name.into());
+    let keychain_file: PathBuf = dir::get_keychain_file(name)?;
     if keychain_file.exists() {
         return Err(anyhow!(
             "There is already a file with the same name! Please, choose another name."
         ));
     }
 
-    let password: String = password.into();
+    let password: String = get_password()?;
     if password.is_empty() {
         return Err(anyhow!("Invalid password"));
     }
+
+    let mnemonic: String = get_mnemonic()?;
+    let passphrase: Option<String> = get_passphrase()?;
 
     let seed = Seed::new(mnemonic, passphrase)?;
     let serialized_seed: Vec<u8> = util::serialize(seed)?;
@@ -56,11 +68,12 @@ where
     Ok(())
 }
 
-pub fn open<S>(file_name: S, password: S) -> Result<Seed>
+pub fn open<S, PSW>(name: S, get_password: PSW) -> Result<Seed>
 where
     S: Into<String>,
+    PSW: FnOnce() -> Result<String>,
 {
-    let keychain_file: PathBuf = dir::keechain()?.join(file_name.into());
+    let keychain_file: PathBuf = dir::get_keychain_file(name)?;
 
     // Check if mnemonic file exist
     if !keychain_file.exists() {
@@ -72,8 +85,10 @@ where
     let mut content: Vec<u8> = Vec::new();
     file.read_to_end(&mut content)?;
 
+    let password: String = get_password()?;
+
     // Decrypt seed
-    match aes::decrypt(password.into(), &content) {
+    match aes::decrypt(password, &content) {
         Ok(data) => util::deserialize(data),
         Err(aes::Error::WrongBlockMode) => Err(anyhow!(
             "Impossible to decrypt file: invalid password or content"
@@ -82,40 +97,16 @@ where
     }
 }
 
-pub fn view_seed<S>(file_name: S, password: S) -> Result<()>
-where
-    S: Into<String>,
-{
-    let seed: Seed = open(file_name, password)?;
-    println!("\n################################################################\n");
-    println!("Mnemonic: {}", seed.mnemonic());
-    if let Some(passphrase) = seed.passphrase() {
-        println!("Passphrase: {}", passphrase);
-    }
-    println!("Seed (hex format): {}", seed.to_hex());
-    println!("\n################################################################\n");
-    Ok(())
-}
-
-pub fn wipe<S>(file_name: S, password: S) -> Result<()>
-where
-    S: Into<String> + Clone,
-{
-    let _ = open(file_name.clone(), password)?;
-    let keychain_file: PathBuf = dir::keechain()?.join(file_name.into());
-    std::fs::remove_file(keychain_file)?;
-    Ok(())
-}
-
-pub fn extended_private_key<S>(
-    file_name: S,
-    password: S,
+pub fn extended_private_key<S, PSW>(
+    name: S,
+    get_password: PSW,
     network: Network,
 ) -> Result<ExtendedPrivKey>
 where
     S: Into<String>,
+    PSW: FnOnce() -> Result<String>,
 {
-    let seed: Seed = open(file_name, password)?;
+    let seed: Seed = open(name, get_password)?;
     Ok(ExtendedPrivKey::new_master(network, &seed.to_bytes())?)
 }
 
@@ -158,16 +149,17 @@ fn descriptor(
     }
 }
 
-pub fn get_public_keys<S>(
-    file_name: S,
-    password: S,
+pub fn get_public_keys<S, PSW>(
+    name: S,
+    get_password: PSW,
     network: Network,
     account: Option<u32>,
 ) -> Result<()>
 where
     S: Into<String>,
+    PSW: FnOnce() -> Result<String>,
 {
-    let root: ExtendedPrivKey = extended_private_key(file_name, password, network)?;
+    let root: ExtendedPrivKey = extended_private_key(name, get_password, network)?;
     let secp = Secp256k1::new();
 
     println!(
@@ -217,17 +209,18 @@ where
     Ok(())
 }
 
-pub fn derive<S>(
+pub fn derive<S, PSW>(
     file_name: S,
-    password: S,
+    get_password: PSW,
     network: Network,
     word_count: WordCount,
     index: Index,
 ) -> Result<()>
 where
     S: Into<String>,
+    PSW: FnOnce() -> Result<String>,
 {
-    let root: ExtendedPrivKey = extended_private_key(file_name, password, network)?;
+    let root: ExtendedPrivKey = extended_private_key(file_name, get_password, network)?;
     let secp = Secp256k1::new();
 
     let mnemonic: Mnemonic = Mnemonic::from_bip85(&secp, &root, word_count, index)?;
@@ -235,9 +228,10 @@ where
     Ok(())
 }
 
-pub fn sign<S>(file_name: S, password: S, network: Network, psbt_file: PathBuf) -> Result<()>
+pub fn sign<S, PSW>(name: S, get_password: PSW, network: Network, psbt_file: PathBuf) -> Result<()>
 where
     S: Into<String>,
+    PSW: FnOnce() -> Result<String>,
 {
     if !psbt_file.exists() && !psbt_file.is_file() {
         return Err(anyhow!("PSBT file not found."));
@@ -250,7 +244,7 @@ where
     let psbt: String = base64::encode(content);
     let mut psbt = PartiallySignedTransaction::from_str(&psbt)?;
 
-    let root: ExtendedPrivKey = extended_private_key(file_name, password, network)?;
+    let root: ExtendedPrivKey = extended_private_key(name, get_password, network)?;
     let secp = Secp256k1::new();
     let root_fingerprint: Fingerprint = root.fingerprint(&secp);
 
@@ -323,11 +317,12 @@ fn rename_psbt_to_signed(psbt_file: &mut PathBuf) -> Result<()> {
     }
 }
 
-pub fn identity<S>(file_name: S, password: S, network: Network) -> Result<()>
+pub fn identity<S, PSW>(name: S, get_password: PSW, network: Network) -> Result<()>
 where
     S: Into<String>,
+    PSW: FnOnce() -> Result<String>,
 {
-    let root: ExtendedPrivKey = extended_private_key(file_name, password, network)?;
+    let root: ExtendedPrivKey = extended_private_key(name, get_password, network)?;
     let secp = Secp256k1::new();
     println!("Fingerprint: {}", root.fingerprint(&secp));
     Ok(())

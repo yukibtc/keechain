@@ -24,3 +24,12 @@ pub fn keechain() -> Result<PathBuf> {
         None => Path::new("./keechain").to_path_buf(),
     })
 }
+
+pub fn get_keychain_file<S>(name: S) -> Result<PathBuf>
+where
+    S: Into<String>,
+{
+    let mut keychain_file: PathBuf = keechain()?.join(name.into());
+    keychain_file.set_extension("keechain");
+    Ok(keychain_file)
+}

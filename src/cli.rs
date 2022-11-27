@@ -16,9 +16,6 @@ pub struct Cli {
     /// Network
     #[clap(short, long, default_value_t = Network::Bitcoin)]
     pub network: Network,
-    /// Keychain name
-    #[arg(required = true)]
-    pub name: String,
     #[command(subcommand)]
     pub command: Commands,
 }
@@ -26,9 +23,17 @@ pub struct Cli {
 #[derive(Debug, Subcommand)]
 pub enum Commands {
     /// Restore BIP39 Seed Phrase
-    Restore,
+    Restore {
+        /// Keychain name
+        #[arg(required = true)]
+        name: String,
+    },
     /// Get fingerprint
-    Identity,
+    Identity {
+        /// Keychain name
+        #[arg(required = true)]
+        name: String,
+    },
     /// Export
     #[command(arg_required_else_help = true)]
     Export {
@@ -39,6 +44,9 @@ pub enum Commands {
     /// Derive BIP39 Seed Phrase (BIP85)
     #[command(arg_required_else_help = true)]
     Derive {
+        /// Keychain name
+        #[arg(required = true)]
+        name: String,
         /// Word count
         #[arg(required = true, value_enum)]
         word_count: WordCount,
@@ -49,6 +57,9 @@ pub enum Commands {
     /// Sign PSBT
     #[command(arg_required_else_help = true)]
     Sign {
+        /// Keychain name
+        #[arg(required = true)]
+        name: String,
         /// PSBT file
         #[arg(required = true)]
         file: PathBuf,
@@ -63,27 +74,44 @@ pub enum Commands {
 #[derive(Debug, Subcommand)]
 pub enum DangerCommands {
     /// View mnemonic and passphrase
-    ViewSeed,
+    ViewSeed {
+        /// Keychain name
+        #[arg(required = true)]
+        name: String,
+    },
     /// Delete keychain
-    Wipe,
+    Wipe {
+        /// Keychain name
+        #[arg(required = true)]
+        name: String,
+    },
 }
 
 #[derive(Debug, Subcommand)]
 pub enum ExportTypes {
     /// Export descriptors
     Descriptors {
+        /// Keychain name
+        #[arg(required = true)]
+        name: String,
         /// Account number
         #[arg(default_value_t = 0)]
         account: u32,
     },
     /// Export Bitcoin Core descriptors
     BitcoinCore {
+        /// Keychain name
+        #[arg(required = true)]
+        name: String,
         /// Account number
         #[arg(default_value_t = 0)]
         account: u32,
     },
     /// Export Electrum file
     Electrum {
+        /// Keychain name
+        #[arg(required = true)]
+        name: String,
         /// Script
         #[arg(default_value_t = ElectrumExportSupportedScripts::NativeSegwit)]
         script: ElectrumExportSupportedScripts,

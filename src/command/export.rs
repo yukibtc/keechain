@@ -76,11 +76,17 @@ where
     Ok(())
 } */
 
-pub fn electrum<S>(file_name: S, password: S, network: Network, path: DerivationPath) -> Result<()>
+pub fn electrum<S, PSW>(
+    name: S,
+    get_password: PSW,
+    network: Network,
+    path: DerivationPath,
+) -> Result<()>
 where
     S: Into<String>,
+    PSW: FnOnce() -> Result<String>,
 {
-    let root: ExtendedPrivKey = extended_private_key(file_name, password, network)?;
+    let root: ExtendedPrivKey = extended_private_key(name, get_password, network)?;
     let secp = Secp256k1::new();
     let fingerprint = root.fingerprint(&secp);
 

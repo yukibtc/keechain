@@ -19,6 +19,13 @@ where
     Ok(input)
 }
 
+pub fn get_password<S>(prompt: S) -> Result<String>
+where
+    S: Into<String> + std::fmt::Display,
+{
+    Ok(rpassword::prompt_password(prompt)?)
+}
+
 pub fn ask<S>(prompt: S) -> Result<bool>
 where
     S: Into<String> + std::marker::Copy,
