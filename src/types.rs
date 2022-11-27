@@ -9,7 +9,8 @@ use bdk::keys::bip39::Mnemonic;
 use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 
-use crate::util::convert;
+use crate::util::aes::{self, Aes256Encryption};
+use crate::util::{self, convert};
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Seed {
@@ -43,6 +44,30 @@ impl Seed {
 
     pub fn to_hex(&self) -> String {
         convert::bytes_to_hex_string(self.to_bytes().to_vec())
+    }
+}
+
+impl Aes256Encryption for Seed {
+    type Err = anyhow::Error;
+    fn encrypt<K>(&self, key: K) -> Result<Vec<u8>, Self::Err>
+    where
+        K: AsRef<[u8]>,
+    {
+        let serialized_seed: Vec<u8> = util::serialize(self)?;
+        Ok(aes::encrypt(key, &serialized_seed))
+    }
+
+    fn decrypt<K>(key: K, content: &[u8]) -> Result<Self, Self::Err>
+    where
+        K: AsRef<[u8]>,
+    {
+        match aes::decrypt(key, content) {
+            Ok(data) => util::deserialize(data),
+            Err(aes::Error::WrongBlockMode) => Err(anyhow!(
+                "Impossible to decrypt file: invalid password or content"
+            )),
+            Err(e) => Err(anyhow!(e.to_string())),
+        }
     }
 }
 

@@ -57,6 +57,18 @@ where
     Ok(result)
 }
 
+pub trait Aes256Encryption: Sized {
+    type Err;
+
+    fn encrypt<K>(&self, key: K) -> Result<Vec<u8>, Self::Err>
+    where
+        K: AsRef<[u8]>;
+
+    fn decrypt<K>(key: K, content: &[u8]) -> Result<Self, Self::Err>
+    where
+        K: AsRef<[u8]>;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

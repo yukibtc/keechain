@@ -25,8 +25,9 @@ pub mod danger;
 pub mod export;
 
 use crate::types::{Index, Seed, WordCount};
+use crate::util::aes::Aes256Encryption;
 use crate::util::bip::bip85::FromBip85;
-use crate::util::{self, aes, dir};
+use crate::util::dir;
 
 pub fn restore<S, PSW, M, P>(
     name: S,
@@ -56,14 +57,12 @@ where
     let passphrase: Option<String> = get_passphrase()?;
 
     let seed = Seed::new(mnemonic, passphrase)?;
-    let serialized_seed: Vec<u8> = util::serialize(seed)?;
-    let encrypted_seed: Vec<u8> = aes::encrypt(password, &serialized_seed);
 
     let mut file: File = File::options()
         .create_new(true)
         .write(true)
         .open(keychain_file)?;
-    file.write_all(&encrypted_seed)?;
+    file.write_all(&seed.encrypt(password)?)?;
 
     Ok(())
 }
@@ -87,14 +86,7 @@ where
 
     let password: String = get_password()?;
 
-    // Decrypt seed
-    match aes::decrypt(password, &content) {
-        Ok(data) => util::deserialize(data),
-        Err(aes::Error::WrongBlockMode) => Err(anyhow!(
-            "Impossible to decrypt file: invalid password or content"
-        )),
-        Err(e) => Err(anyhow!(e.to_string())),
-    }
+    Seed::decrypt(password, &content)
 }
 
 pub fn extended_private_key<S, PSW>(
