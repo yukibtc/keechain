@@ -1,39 +1,34 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use std::io::{stdin, stdout, Write};
-
 use anyhow::Result;
+use dialoguer::{Confirm, Input, Password};
 
 pub fn get_input<S>(prompt: S) -> Result<String>
 where
     S: Into<String>,
 {
-    let mut input = String::new();
-    print!("{}", prompt.into());
-    let _ = stdout().flush();
-    stdin().read_line(&mut input)?;
-    if let Some('\n') | Some('\r') = input.chars().next_back() {
-        input.pop();
-    }
-    Ok(input)
+    Ok(Input::new().with_prompt(prompt).interact_text()?)
 }
 
-pub fn get_password<S>(prompt: S) -> Result<String>
-where
-    S: Into<String> + std::fmt::Display,
-{
-    Ok(rpassword::prompt_password(prompt)?)
+pub fn get_password() -> Result<String> {
+    Ok(Password::new().with_prompt("Password").interact()?)
+}
+
+pub fn get_password_with_confirmation() -> Result<String> {
+    Ok(Password::new()
+        .with_prompt("Password")
+        .with_confirmation("Confirm password", "Passwords mismatching")
+        .interact()?)
 }
 
 pub fn ask<S>(prompt: S) -> Result<bool>
 where
     S: Into<String> + std::marker::Copy,
 {
-    let input: String = get_input(format!("{} [y/N] ", prompt.into()))?;
-    match input.as_str() {
-        "y" | "yes" | "Y" | "Yes" => Ok(true),
-        "n" | "no" | "N" | "No" | "" => Ok(false),
-        _ => ask(prompt),
+    if Confirm::new().with_prompt(prompt).interact()? {
+        Ok(true)
+    } else {
+        Ok(false)
     }
 }
