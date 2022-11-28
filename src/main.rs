@@ -79,7 +79,11 @@ fn main() -> Result<()> {
             word_count,
             index,
         ),
-        Commands::Decode { file } => command::decode(file),
+        Commands::Decode { file } => {
+            let psbt = command::decode(file)?;
+            println!("{:#?}", psbt);
+            Ok(())
+        }
         Commands::Sign { name, file } => {
             command::sign(name, || io::get_password("Password: "), network, file)
         }

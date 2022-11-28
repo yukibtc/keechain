@@ -170,7 +170,7 @@ where
     Ok(())
 }
 
-pub fn decode(psbt_file: PathBuf) -> Result<()> {
+pub fn decode(psbt_file: PathBuf) -> Result<PartiallySignedTransaction> {
     if !psbt_file.exists() && !psbt_file.is_file() {
         return Err(anyhow!("PSBT file not found."));
     }
@@ -180,11 +180,7 @@ pub fn decode(psbt_file: PathBuf) -> Result<()> {
     file.read_to_end(&mut content)?;
 
     let psbt: String = base64::encode(content);
-    let psbt = PartiallySignedTransaction::from_str(&psbt)?;
-
-    println!("{:#?}", psbt);
-
-    Ok(())
+    Ok(PartiallySignedTransaction::from_str(&psbt)?)
 }
 
 pub fn sign<S, PSW>(name: S, get_password: PSW, network: Network, psbt_file: PathBuf) -> Result<()>
@@ -192,16 +188,7 @@ where
     S: Into<String>,
     PSW: FnOnce() -> Result<String>,
 {
-    if !psbt_file.exists() && !psbt_file.is_file() {
-        return Err(anyhow!("PSBT file not found."));
-    }
-
-    let mut file: File = File::open(psbt_file.clone())?;
-    let mut content: Vec<u8> = Vec::new();
-    file.read_to_end(&mut content)?;
-
-    let psbt: String = base64::encode(content);
-    let mut psbt = PartiallySignedTransaction::from_str(&psbt)?;
+    let mut psbt: PartiallySignedTransaction = decode(psbt_file.clone())?;
 
     let root: ExtendedPrivKey = extended_private_key(name, get_password, network)?;
     let secp = Secp256k1::new();
