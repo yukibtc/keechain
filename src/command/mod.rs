@@ -14,12 +14,17 @@ use bdk::keys::DescriptorSecretKey;
 use bdk::miniscript::Descriptor;
 use bdk::wallet::AddressIndex;
 use bdk::{descriptor, SignOptions, Wallet};
+use bitcoin::hashes::hmac::{Hmac, HmacEngine};
+use bitcoin::hashes::{sha512, Hash, HashEngine};
 use bitcoin::psbt::PartiallySignedTransaction;
 use bitcoin::util::bip32::{
     ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
 };
 use bitcoin::Network;
+use rand::rngs::OsRng;
+use rand::RngCore;
 use secp256k1::Secp256k1;
+use sysinfo::{System, SystemExt};
 
 pub mod danger;
 pub mod export;
@@ -27,7 +32,97 @@ pub mod export;
 use crate::types::{Index, Seed, WordCount};
 use crate::util::aes::Aes256Encryption;
 use crate::util::bip::bip85::FromBip85;
-use crate::util::dir;
+use crate::util::{dir, time};
+
+fn entropy(word_count: WordCount) -> Vec<u8> {
+    let mut h = HmacEngine::<sha512::Hash>::new(b"keechain-entropy");
+
+    // OS Random
+    let mut os_random = [0u8; 32];
+    OsRng.fill_bytes(&mut os_random);
+    h.input(&os_random);
+
+    if System::IS_SUPPORTED {
+        let system_info: System = System::new_all();
+
+        // Dynamic events
+        let dynamic_events: Vec<u8> = vec![
+            time::timestamp_nanos().to_be_bytes().to_vec(),
+            system_info.boot_time().to_be_bytes().to_vec(),
+            system_info.free_memory().to_be_bytes().to_vec(),
+            system_info.free_swap().to_be_bytes().to_vec(),
+            format!("{:?}", system_info.processes()).as_bytes().to_vec(),
+            format!("{:?}", system_info.load_average())
+                .as_bytes()
+                .to_vec(),
+        ]
+        .concat();
+
+        h.input(&dynamic_events);
+
+        // Static events
+        let static_events: Vec<u8> = vec![
+            format!("{:?}", system_info.host_name()).as_bytes().to_vec(),
+            format!("{:?}", system_info.long_os_version())
+                .as_bytes()
+                .to_vec(),
+            format!("{:?}", system_info.kernel_version())
+                .as_bytes()
+                .to_vec(),
+            format!("{:?}", system_info.global_cpu_info())
+                .as_bytes()
+                .to_vec(),
+        ]
+        .concat();
+
+        h.input(&static_events);
+    } else {
+        println!("Impossible to fetch entropy from dynamic and static events: using only OS random and timestamp!");
+        println!("For a better entropy use another OS or dice roll generation");
+        h.input(&time::timestamp_nanos().to_be_bytes());
+    }
+
+    let entropy: [u8; 64] = Hmac::from_engine(h).into_inner();
+    let len: u32 = word_count.as_u32() * 4 / 3;
+    entropy[0..len as usize].to_vec()
+}
+
+pub fn generate<S, PSW, P>(
+    name: S,
+    get_password: PSW,
+    get_passphrase: P,
+    word_count: WordCount,
+) -> Result<Mnemonic>
+where
+    S: Into<String>,
+    PSW: FnOnce() -> Result<String>,
+    P: FnOnce() -> Result<Option<String>>,
+{
+    let keychain_file: PathBuf = dir::get_keychain_file(name)?;
+    if keychain_file.exists() {
+        return Err(anyhow!(
+            "There is already a file with the same name! Please, choose another name."
+        ));
+    }
+
+    let password: String = get_password()?;
+    if password.is_empty() {
+        return Err(anyhow!("Invalid password"));
+    }
+
+    let entropy: Vec<u8> = entropy(word_count);
+    let mnemonic = Mnemonic::from_entropy(&entropy)?;
+    let passphrase: Option<String> = get_passphrase()?;
+    let seed = Seed::new(mnemonic.to_string(), passphrase)?;
+
+    let mut file: File = File::options()
+        .create_new(true)
+        .write(true)
+        .open(keychain_file)?;
+    file.write_all(&seed.encrypt(password)?)?;
+
+    Ok(mnemonic)
+}
 
 pub fn restore<S, PSW, M, P>(
     name: S,
@@ -89,7 +184,7 @@ where
     Seed::decrypt(password, &content)
 }
 
-pub fn extended_private_key<S, PSW>(
+fn extended_private_key<S, PSW>(
     name: S,
     get_password: PSW,
     network: Network,

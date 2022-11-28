@@ -21,6 +21,31 @@ fn main() -> Result<()> {
     let network: Network = args.network;
 
     match args.command {
+        Commands::Generate { name, word_count } => {
+            let mnemonic = command::generate(
+                name,
+                || io::get_password("Password: "),
+                || {
+                    if let Ok(result) = io::ask("Do you want to use a passphrase?") {
+                        if result {
+                            Ok(Some(io::get_input("Passphrase: ")?))
+                        } else {
+                            Ok(None)
+                        }
+                    } else {
+                        Ok(None)
+                    }
+                },
+                word_count,
+            )?;
+
+            println!("\n!!! WRITE DOWN YOUT SEED PHRASE !!!");
+            println!("\n################################################################\n");
+            println!("{}", mnemonic);
+            println!("\n################################################################\n");
+
+            Ok(())
+        }
         Commands::Restore { name } => command::restore(
             name,
             || io::get_password("Password: "),

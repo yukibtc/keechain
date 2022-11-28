@@ -22,6 +22,15 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
+    /// Generate BIP39 Seed Phrase
+    Generate {
+        /// Keychain name
+        #[arg(required = true)]
+        name: String,
+        /// Word count
+        #[arg(value_enum, default_value_t = WordCount::W24)]
+        word_count: WordCount,
+    },
     /// Restore BIP39 Seed Phrase
     Restore {
         /// Keychain name
