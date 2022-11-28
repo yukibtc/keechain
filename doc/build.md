@@ -34,4 +34,4 @@ When build is completed, you can find `keechain` binary in `target/release` fold
 
 ## Usage
 
-Before using `keechain`, take a look at [usage](doc/usage.md) guide.
+Before using `keechain`, take a look at [usage](./usage.md) guide.
