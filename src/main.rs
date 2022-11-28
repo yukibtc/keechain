@@ -114,7 +114,7 @@ fn main() -> Result<()> {
         }
         Commands::Danger { command } => match command {
             DangerCommands::ViewSeed { name } => {
-                command::danger::view_seed(name, || io::get_password("Password: "))
+                command::danger::view_seed(name, || io::get_password("Password: "), network)
             }
             DangerCommands::Wipe { name } => {
                 if io::ask("Are you really sure? This action is permanent!")? && io::ask("Again, are you really sure? THIS ACTION IS PERMANENT AND YOU MAY LOSE ALL YOUR FUNDS!")? {
