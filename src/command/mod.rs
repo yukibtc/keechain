@@ -103,6 +103,7 @@ where
 }
 
 fn descriptor(
+    root_fingerprint: Fingerprint,
     pubkey: ExtendedPubKey,
     path: &DerivationPath,
     change: bool,
@@ -131,7 +132,7 @@ fn descriptor(
 
     let descriptor: String = format!(
         "[{}/{:#}/{:#}/{:#}]{}/{}/*",
-        pubkey.fingerprint(),
+        root_fingerprint,
         purpose,
         coin,
         account,

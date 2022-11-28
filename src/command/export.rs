@@ -58,6 +58,7 @@ where
 {
     let root: ExtendedPrivKey = extended_private_key(name, get_password, network)?;
     let secp = Secp256k1::new();
+    let root_fingerprint = root.fingerprint(&secp);
 
     let paths: Vec<DerivationPath> = vec![
         bip32::account_extended_path(44, network, account)?,
@@ -76,12 +77,18 @@ where
         let derived_public_key: ExtendedPubKey =
             ExtendedPubKey::from_priv(&secp, &derived_private_key);
 
-        descriptors
-            .external
-            .push(descriptor(derived_public_key, path, false)?);
-        descriptors
-            .internal
-            .push(descriptor(derived_public_key, path, true)?);
+        descriptors.external.push(descriptor(
+            root_fingerprint,
+            derived_public_key,
+            path,
+            false,
+        )?);
+        descriptors.internal.push(descriptor(
+            root_fingerprint,
+            derived_public_key,
+            path,
+            true,
+        )?);
     }
 
     Ok(descriptors)
