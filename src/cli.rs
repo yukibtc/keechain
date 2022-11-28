@@ -54,6 +54,12 @@ pub enum Commands {
         #[arg(required = true)]
         index: Index,
     },
+    /// Decode PSBT
+    Decode {
+        /// PSBT file
+        #[arg(required = true)]
+        file: PathBuf,
+    },
     /// Sign PSBT
     #[command(arg_required_else_help = true)]
     Sign {

@@ -169,6 +169,23 @@ where
     Ok(())
 }
 
+pub fn decode(psbt_file: PathBuf) -> Result<()> {
+    if !psbt_file.exists() && !psbt_file.is_file() {
+        return Err(anyhow!("PSBT file not found."));
+    }
+
+    let mut file: File = File::open(psbt_file)?;
+    let mut content: Vec<u8> = Vec::new();
+    file.read_to_end(&mut content)?;
+
+    let psbt: String = base64::encode(content);
+    let psbt = PartiallySignedTransaction::from_str(&psbt)?;
+
+    println!("{:#?}", psbt);
+
+    Ok(())
+}
+
 pub fn sign<S, PSW>(name: S, get_password: PSW, network: Network, psbt_file: PathBuf) -> Result<()>
 where
     S: Into<String>,
