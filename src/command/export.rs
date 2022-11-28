@@ -11,9 +11,11 @@ use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey};
 use bitcoin::Network;
 use clap::ValueEnum;
 use secp256k1::Secp256k1;
-use serde_json::json;
+use serde_json::{json, Value};
 
-use super::extended_private_key;
+use super::{descriptor, extended_private_key};
+use crate::types::Descriptors;
+use crate::util::bip::bip32;
 use crate::util::dir;
 use crate::util::slip::slip132::ToSlip132;
 
@@ -44,37 +46,82 @@ impl fmt::Display for ElectrumExportSupportedScripts {
     }
 }
 
-/* pub fn bitcoin_core<S>(
-    file_name: S,
-    password: S,
+pub fn descriptors<S, PSW>(
+    name: S,
+    get_password: PSW,
+    network: Network,
+    account: Option<u32>,
+) -> Result<Descriptors>
+where
+    S: Into<String>,
+    PSW: FnOnce() -> Result<String>,
+{
+    let root: ExtendedPrivKey = extended_private_key(name, get_password, network)?;
+    let secp = Secp256k1::new();
+
+    let paths: Vec<DerivationPath> = vec![
+        bip32::account_extended_path(44, network, account)?,
+        bip32::account_extended_path(49, network, account)?,
+        bip32::account_extended_path(84, network, account)?,
+        bip32::account_extended_path(86, network, account)?,
+    ];
+
+    let mut descriptors = Descriptors {
+        external: Vec::new(),
+        internal: Vec::new(),
+    };
+
+    for path in paths.iter() {
+        let derived_private_key: ExtendedPrivKey = root.derive_priv(&secp, path)?;
+        let derived_public_key: ExtendedPubKey =
+            ExtendedPubKey::from_priv(&secp, &derived_private_key);
+
+        descriptors
+            .external
+            .push(descriptor(derived_public_key, path, false)?);
+        descriptors
+            .internal
+            .push(descriptor(derived_public_key, path, true)?);
+    }
+
+    Ok(descriptors)
+}
+
+pub fn bitcoin_core<S, PSW>(
+    name: S,
+    get_password: PSW,
     network: Network,
     account: Option<u32>,
 ) -> Result<()>
 where
     S: Into<String>,
+    PSW: FnOnce() -> Result<String>,
 {
-    let descriptors_external = json!({
-        "timestamp": "now",
-        "label": "Keechain",
-        "active": true,
-        "desc": "",
-        "internal": false,
-    });
+    let descriptors: Descriptors = descriptors(name, get_password, network, account)?;
+    let mut bitcoin_core_descriptors: Vec<Value> = Vec::new();
 
-    let descriptors_internal = json!({
-        "timestamp": "now",
-        "label": "Keechain",
-        "active": true,
-        "desc": "",
-        "internal": true,
-    });
+    for external in descriptors.external.iter() {
+        bitcoin_core_descriptors.push(json!({
+            "timestamp": "now",
+            "active": true,
+            "desc": external,
+            "internal": false,
+        }));
+    }
 
-    let descriptors = json!([descriptors_external, descriptors_internal]);
+    for internal in descriptors.internal.iter() {
+        bitcoin_core_descriptors.push(json!({
+            "timestamp": "now",
+            "active": true,
+            "desc": internal,
+            "internal": true,
+        }));
+    }
 
-    println!("importdescriptor '{}'", descriptors);
+    println!("importdescriptors '{}'", json!(bitcoin_core_descriptors));
 
     Ok(())
-} */
+}
 
 pub fn electrum<S, PSW>(
     name: S,

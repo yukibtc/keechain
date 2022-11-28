@@ -31,3 +31,7 @@ cargo build --release
 ```
 
 When build is completed, you can find `keechain` binary in `target/release` folder.
+
+## Usage
+
+Before using `keechain`, take a look at [usage](doc/usage.md) guide.

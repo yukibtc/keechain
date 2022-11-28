@@ -102,103 +102,52 @@ where
     Ok(ExtendedPrivKey::new_master(network, &seed.to_bytes())?)
 }
 
-pub fn account_extended_derivation_path(
-    purpose: u32,
-    network: Network,
-    account: Option<u32>,
-) -> Result<DerivationPath> {
-    // Path: m/<purpose>'/<coin>'/<account>'
-    let path: Vec<ChildNumber> = vec![
-        ChildNumber::from_hardened_idx(purpose)?,
-        ChildNumber::from_hardened_idx(if network.eq(&Network::Bitcoin) { 0 } else { 1 })?,
-        ChildNumber::from_hardened_idx(account.unwrap_or(0))?,
-    ];
-    Ok(DerivationPath::from(path))
-}
-
 fn descriptor(
     pubkey: ExtendedPubKey,
-    network: Network,
-    purpose: u8,
-    account: Option<u32>,
+    path: &DerivationPath,
     change: bool,
 ) -> Result<Descriptor<String>> {
+    let mut iter_path = path.into_iter();
+
+    let purpose: &ChildNumber = match iter_path.next() {
+        Some(child) => child,
+        None => return Err(anyhow!("Invalid derivation path: purpose not provided")),
+    };
+
+    let coin: &ChildNumber = match iter_path.next() {
+        Some(ChildNumber::Hardened { index: 0 }) => &ChildNumber::Hardened { index: 0 },
+        Some(ChildNumber::Hardened { index: 1 }) => &ChildNumber::Hardened { index: 1 },
+        _ => {
+            return Err(anyhow!(
+                "Invalid derivation path: coin invalid or not provided"
+            ))
+        }
+    };
+
+    let account: &ChildNumber = match iter_path.next() {
+        Some(child) => child,
+        None => &ChildNumber::Hardened { index: 0 },
+    };
+
     let descriptor: String = format!(
-        "[{}/{}'/{}'/{}']{}/{}/*",
+        "[{}/{:#}/{:#}/{:#}]{}/{}/*",
         pubkey.fingerprint(),
         purpose,
-        if network.eq(&Network::Bitcoin) { 0 } else { 1 },
-        account.unwrap_or(0),
+        coin,
+        account,
         pubkey,
         i32::from(change)
     );
-    match purpose {
-        44 => Ok(Descriptor::from_str(&format!("pkh({})", descriptor))?),
-        49 => Ok(Descriptor::from_str(&format!("sh(wpkh({}))", descriptor))?),
-        84 => Ok(Descriptor::from_str(&format!("wpkh({})", descriptor))?),
-        86 => Ok(Descriptor::from_str(&format!("tr({})", descriptor))?),
-        _ => Err(anyhow!("Unsupported purpose")),
-    }
-}
 
-pub fn get_public_keys<S, PSW>(
-    name: S,
-    get_password: PSW,
-    network: Network,
-    account: Option<u32>,
-) -> Result<()>
-where
-    S: Into<String>,
-    PSW: FnOnce() -> Result<String>,
-{
-    let root: ExtendedPrivKey = extended_private_key(name, get_password, network)?;
-    let secp = Secp256k1::new();
+    let descriptor: String = match purpose {
+        ChildNumber::Hardened { index: 44 } => format!("pkh({})", descriptor),
+        ChildNumber::Hardened { index: 49 } => format!("sh(wpkh({}))", descriptor),
+        ChildNumber::Hardened { index: 84 } => format!("wpkh({})", descriptor),
+        ChildNumber::Hardened { index: 86 } => format!("tr({})", descriptor),
+        _ => return Err(anyhow!("Unsupported derivation path")),
+    };
 
-    println!(
-        "BIP32 Root Public Key: {}",
-        ExtendedPubKey::from_priv(&secp, &root)
-    );
-
-    let legacy = ExtendedPubKey::from_priv(
-        &secp,
-        &root.derive_priv(
-            &secp,
-            &account_extended_derivation_path(44, network, account)?,
-        )?,
-    );
-    let nested_segwit = ExtendedPubKey::from_priv(
-        &secp,
-        &root.derive_priv(
-            &secp,
-            &account_extended_derivation_path(49, network, account)?,
-        )?,
-    );
-    let native_segwit = ExtendedPubKey::from_priv(
-        &secp,
-        &root.derive_priv(
-            &secp,
-            &account_extended_derivation_path(84, network, account)?,
-        )?,
-    );
-    let taproot = ExtendedPubKey::from_priv(
-        &secp,
-        &root.derive_priv(
-            &secp,
-            &account_extended_derivation_path(86, network, account)?,
-        )?,
-    );
-
-    let legacy: Descriptor<String> = descriptor(legacy, network, 44, account, false)?;
-    let nested_segwit: Descriptor<String> = descriptor(nested_segwit, network, 49, account, false)?;
-    let native_segwit: Descriptor<String> = descriptor(native_segwit, network, 84, account, false)?;
-    let taproot: Descriptor<String> = descriptor(taproot, network, 86, account, false)?;
-
-    println!("Legacy: {}", legacy);
-    println!("Nested Segwit: {}", nested_segwit);
-    println!("Native Segwit: {}", native_segwit);
-    println!("Taproot: {}", taproot);
-
-    Ok(())
+    Ok(Descriptor::from_str(&descriptor)?)
 }
 
 pub fn derive<S, PSW>(

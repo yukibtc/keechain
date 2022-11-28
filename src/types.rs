@@ -6,6 +6,7 @@ use std::str::FromStr;
 
 use anyhow::{anyhow, Result};
 use bdk::keys::bip39::Mnemonic;
+use bdk::miniscript::Descriptor;
 use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 
@@ -117,6 +118,12 @@ impl fmt::Debug for Index {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_u32())
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct Descriptors {
+    pub external: Vec<Descriptor<String>>,
+    pub internal: Vec<Descriptor<String>>,
 }
 
 #[cfg(test)]

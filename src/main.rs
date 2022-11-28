@@ -11,6 +11,7 @@ mod types;
 mod util;
 
 use self::cli::{Cli, Commands, DangerCommands, ExportTypes};
+use self::util::bip::bip32;
 use self::util::io;
 
 fn main() -> Result<()> {
@@ -40,16 +41,22 @@ fn main() -> Result<()> {
             command::identity(name, || io::get_password("Password: "), network)
         }
         Commands::Export { export_type } => match export_type {
-            ExportTypes::Descriptors { name, account } => command::get_public_keys(
+            ExportTypes::Descriptors { name, account } => {
+                let descriptors = command::export::descriptors(
+                    name,
+                    || io::get_password("Password: "),
+                    network,
+                    Some(account),
+                )?;
+                println!("{:#?}", descriptors);
+                Ok(())
+            }
+            ExportTypes::BitcoinCore { name, account } => command::export::bitcoin_core(
                 name,
                 || io::get_password("Password: "),
                 network,
                 Some(account),
             ),
-            ExportTypes::BitcoinCore {
-                name: _,
-                account: _,
-            } => todo!(),
             ExportTypes::Electrum {
                 name,
                 script,
@@ -58,7 +65,7 @@ fn main() -> Result<()> {
                 name,
                 || io::get_password("Password: "),
                 network,
-                command::account_extended_derivation_path(script.as_u32(), network, Some(account))?,
+                bip32::account_extended_path(script.as_u32(), network, Some(account))?,
             ),
         },
         Commands::Derive {
