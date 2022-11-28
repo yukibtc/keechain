@@ -7,10 +7,13 @@ use std::str::FromStr;
 use anyhow::{anyhow, Result};
 use bdk::keys::bip39::Mnemonic;
 use bdk::miniscript::Descriptor;
+use bitcoin::util::bip32::ExtendedPrivKey;
+use bitcoin::Network;
 use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 
 use crate::util::aes::{self, Aes256Encryption};
+use crate::util::bip::bip32::ToBip32RootKey;
 use crate::util::{self, convert};
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -45,6 +48,13 @@ impl Seed {
 
     pub fn to_hex(&self) -> String {
         convert::bytes_to_hex_string(self.to_bytes().to_vec())
+    }
+}
+
+impl ToBip32RootKey for Seed {
+    type Err = anyhow::Error;
+    fn to_bip32_root_key(&self, network: Network) -> Result<ExtendedPrivKey, Self::Err> {
+        Ok(ExtendedPrivKey::new_master(network, &self.to_bytes())?)
     }
 }
 

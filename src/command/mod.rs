@@ -31,6 +31,7 @@ pub mod export;
 
 use crate::types::{Index, Seed, WordCount};
 use crate::util::aes::Aes256Encryption;
+use crate::util::bip::bip32::ToBip32RootKey;
 use crate::util::bip::bip85::FromBip85;
 use crate::util::{dir, time};
 
@@ -184,19 +185,6 @@ where
     Seed::decrypt(password, &content)
 }
 
-fn extended_private_key<S, PSW>(
-    name: S,
-    get_password: PSW,
-    network: Network,
-) -> Result<ExtendedPrivKey>
-where
-    S: Into<String>,
-    PSW: FnOnce() -> Result<String>,
-{
-    let seed: Seed = open(name, get_password)?;
-    Ok(ExtendedPrivKey::new_master(network, &seed.to_bytes())?)
-}
-
 fn descriptor(
     root_fingerprint: Fingerprint,
     pubkey: ExtendedPubKey,
@@ -247,7 +235,7 @@ fn descriptor(
 }
 
 pub fn derive<S, PSW>(
-    file_name: S,
+    name: S,
     get_password: PSW,
     network: Network,
     word_count: WordCount,
@@ -257,7 +245,8 @@ where
     S: Into<String>,
     PSW: FnOnce() -> Result<String>,
 {
-    let root: ExtendedPrivKey = extended_private_key(file_name, get_password, network)?;
+    let seed: Seed = open(name, get_password)?;
+    let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
     let secp = Secp256k1::new();
 
     let mnemonic: Mnemonic = Mnemonic::from_bip85(&secp, &root, word_count, index)?;
@@ -285,7 +274,8 @@ where
 {
     let mut psbt: PartiallySignedTransaction = decode(psbt_file.clone())?;
 
-    let root: ExtendedPrivKey = extended_private_key(name, get_password, network)?;
+    let seed: Seed = open(name, get_password)?;
+    let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
     let secp = Secp256k1::new();
     let root_fingerprint: Fingerprint = root.fingerprint(&secp);
 
@@ -363,7 +353,8 @@ where
     S: Into<String>,
     PSW: FnOnce() -> Result<String>,
 {
-    let root: ExtendedPrivKey = extended_private_key(name, get_password, network)?;
+    let seed: Seed = open(name, get_password)?;
+    let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
     let secp = Secp256k1::new();
     println!("Fingerprint: {}", root.fingerprint(&secp));
     Ok(())

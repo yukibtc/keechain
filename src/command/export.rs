@@ -13,9 +13,9 @@ use clap::ValueEnum;
 use secp256k1::Secp256k1;
 use serde_json::{json, Value};
 
-use super::{descriptor, extended_private_key};
-use crate::types::Descriptors;
-use crate::util::bip::bip32;
+use super::{descriptor, open};
+use crate::types::{Descriptors, Seed};
+use crate::util::bip::bip32::{self, ToBip32RootKey};
 use crate::util::dir;
 use crate::util::slip::slip132::ToSlip132;
 
@@ -56,7 +56,8 @@ where
     S: Into<String>,
     PSW: FnOnce() -> Result<String>,
 {
-    let root: ExtendedPrivKey = extended_private_key(name, get_password, network)?;
+    let seed: Seed = open(name, get_password)?;
+    let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
     let secp = Secp256k1::new();
     let root_fingerprint = root.fingerprint(&secp);
 
@@ -140,7 +141,8 @@ where
     S: Into<String>,
     PSW: FnOnce() -> Result<String>,
 {
-    let root: ExtendedPrivKey = extended_private_key(name, get_password, network)?;
+    let seed: Seed = open(name, get_password)?;
+    let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
     let secp = Secp256k1::new();
     let fingerprint = root.fingerprint(&secp);
 
