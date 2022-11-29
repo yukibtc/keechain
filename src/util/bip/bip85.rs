@@ -55,15 +55,16 @@ impl FromBip85 for Mnemonic {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::str::FromStr;
 
     use bitcoin::Network;
 
+    use super::*;
     use crate::types::{Index, Seed, WordCount};
 
     #[test]
     fn test_bip85() {
-        let mnemonic: &str = "easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt";
+        let mnemonic = Mnemonic::from_str("easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt").unwrap();
         let passphrase: Option<&str> = Some("mypassphrase");
         let seed = Seed::new(mnemonic, passphrase).unwrap();
 

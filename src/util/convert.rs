@@ -9,8 +9,8 @@ pub fn bytes_to_hex_string(bytes: Vec<u8>) -> String {
     hash.to_lowercase()
 }
 
-pub fn hex_to_bytes(hex_asm: &str) -> Vec<u8> {
-    let mut hex_bytes = hex_asm
+pub fn hex_to_bytes(hex: &str) -> Vec<u8> {
+    let mut hex_bytes = hex
         .as_bytes()
         .iter()
         .filter_map(|b| match b {

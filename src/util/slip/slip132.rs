@@ -15,20 +15,17 @@ pub trait ToSlip132 {
 impl ToSlip132 for ExtendedPubKey {
     type Err = anyhow::Error;
     fn to_slip132(&self, path: &DerivationPath) -> Result<String, Self::Err> {
-        let data = base58::from_check(&self.to_string())?;
+        let data: Vec<u8> = base58::from_check(&self.to_string())?;
 
         let mut iter = path.into_iter();
-        let purpose = iter.next();
+        let purpose: Option<&ChildNumber> = iter.next();
         let is_mainnet: bool = match iter.next() {
-            Some(coin) => match coin {
-                ChildNumber::Hardened { index: 0 } => true,
-                ChildNumber::Hardened { index: 1 } => false,
-                _ => return Err(anyhow!("Unsupported derivation path")),
-            },
-            None => return Err(anyhow!("Unsupported derivation path")),
+            Some(ChildNumber::Hardened { index: 0 }) => true,
+            Some(ChildNumber::Hardened { index: 1 }) => false,
+            _ => return Err(anyhow!("Unsupported derivation path")),
         };
 
-        let hex = match purpose {
+        let hex: &str = match purpose {
             Some(ChildNumber::Hardened { index: 44 }) => {
                 if is_mainnet {
                     "0488b21e"
@@ -53,26 +50,26 @@ impl ToSlip132 for ExtendedPubKey {
             _ => return Err(anyhow!("Unsupported derivation path")),
         };
 
-        let data = [convert::hex_to_bytes(hex), data[4..].to_vec()].concat();
+        let data: Vec<u8> = [convert::hex_to_bytes(hex), data[4..].to_vec()].concat();
         Ok(base58::check_encode_slice(&data))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     use std::str::FromStr;
 
+    use bdk::keys::bip39::Mnemonic;
     use bitcoin::util::bip32::ExtendedPrivKey;
     use bitcoin::Network;
     use secp256k1::Secp256k1;
 
+    use super::*;
     use crate::types::Seed;
 
     #[test]
     fn test_slip132() {
-        let mnemonic: &str = "easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt";
+        let mnemonic = Mnemonic::from_str("easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt").unwrap();
         let passphrase: Option<&str> = Some("mypassphrase");
         let seed = Seed::new(mnemonic, passphrase).unwrap();
 

@@ -126,7 +126,10 @@ where
         }));
     }
 
-    println!("importdescriptors '{}'", json!(bitcoin_core_descriptors));
+    println!(
+        "\nimportdescriptors '{}'\n",
+        json!(bitcoin_core_descriptors)
+    );
 
     Ok(())
 }
@@ -162,12 +165,10 @@ where
 
     let home_dir = dir::home();
     let file_name = format!("keechain-{}.json", pubkey.fingerprint());
-    let mut file: File = File::options()
-        .create(true)
-        .write(true)
-        .open(home_dir.join(file_name))?;
+    let path = home_dir.join(file_name);
+    let mut file: File = File::options().create(true).write(true).open(&path)?;
     file.write_all(electrum_json.to_string().as_bytes())?;
-    println!("New electrum file exported.");
+    println!("Electrum file exported: {}", path.display());
 
     Ok(())
 }

@@ -23,6 +23,7 @@ pub struct Cli {
 #[derive(Debug, Subcommand)]
 pub enum Commands {
     /// Generate BIP39 Seed Phrase
+    #[command(arg_required_else_help = true)]
     Generate {
         /// Keychain name
         #[arg(required = true)]
@@ -32,12 +33,14 @@ pub enum Commands {
         word_count: WordCount,
     },
     /// Restore BIP39 Seed Phrase
+    #[command(arg_required_else_help = true)]
     Restore {
         /// Keychain name
         #[arg(required = true)]
         name: String,
     },
     /// Get fingerprint
+    #[command(arg_required_else_help = true)]
     Identity {
         /// Keychain name
         #[arg(required = true)]
@@ -64,6 +67,7 @@ pub enum Commands {
         index: Index,
     },
     /// Decode PSBT
+    #[command(arg_required_else_help = true)]
     Decode {
         /// PSBT file
         #[arg(required = true)]
@@ -89,12 +93,14 @@ pub enum Commands {
 #[derive(Debug, Subcommand)]
 pub enum DangerCommands {
     /// View mnemonic and passphrase
+    #[command(arg_required_else_help = true)]
     ViewSeed {
         /// Keychain name
         #[arg(required = true)]
         name: String,
     },
     /// Delete keychain
+    #[command(arg_required_else_help = true)]
     Wipe {
         /// Keychain name
         #[arg(required = true)]
@@ -105,6 +111,7 @@ pub enum DangerCommands {
 #[derive(Debug, Subcommand)]
 pub enum ExportTypes {
     /// Export descriptors
+    #[command(arg_required_else_help = true)]
     Descriptors {
         /// Keychain name
         #[arg(required = true)]
@@ -114,6 +121,7 @@ pub enum ExportTypes {
         account: u32,
     },
     /// Export Bitcoin Core descriptors
+    #[command(arg_required_else_help = true)]
     BitcoinCore {
         /// Keychain name
         #[arg(required = true)]
@@ -123,6 +131,7 @@ pub enum ExportTypes {
         account: u32,
     },
     /// Export Electrum file
+    #[command(arg_required_else_help = true)]
     Electrum {
         /// Keychain name
         #[arg(required = true)]

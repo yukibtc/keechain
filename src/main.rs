@@ -1,7 +1,10 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use std::str::FromStr;
+
 use anyhow::Result;
+use bdk::keys::bip39::Mnemonic;
 use bitcoin::Network;
 use clap::Parser;
 
@@ -26,12 +29,8 @@ fn main() -> Result<()> {
                 name,
                 io::get_password_with_confirmation,
                 || {
-                    if let Ok(result) = io::ask("Do you want to use a passphrase?") {
-                        if result {
-                            Ok(Some(io::get_input("Passphrase")?))
-                        } else {
-                            Ok(None)
-                        }
+                    if io::ask("Do you want to use a passphrase?")? {
+                        Ok(Some(io::get_input("Passphrase")?))
                     } else {
                         Ok(None)
                     }
@@ -49,14 +48,10 @@ fn main() -> Result<()> {
         Commands::Restore { name } => command::restore(
             name,
             io::get_password_with_confirmation,
-            || io::get_input("Seed"),
+            || Ok(Mnemonic::from_str(&io::get_input("Seed")?)?),
             || {
-                if let Ok(result) = io::ask("Do you want to use a passphrase?") {
-                    if result {
-                        Ok(Some(io::get_input("Passphrase")?))
-                    } else {
-                        Ok(None)
-                    }
+                if io::ask("Do you want to use a passphrase?")? {
+                    Ok(Some(io::get_input("Passphrase")?))
                 } else {
                     Ok(None)
                 }

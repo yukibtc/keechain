@@ -1,7 +1,6 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::PathBuf;
@@ -114,7 +113,7 @@ where
     let entropy: Vec<u8> = entropy(word_count);
     let mnemonic = Mnemonic::from_entropy(&entropy)?;
     let passphrase: Option<String> = get_passphrase()?;
-    let seed = Seed::new(mnemonic.to_string(), passphrase)?;
+    let seed = Seed::new(mnemonic, passphrase)?;
 
     let mut file: File = File::options()
         .create_new(true)
@@ -122,7 +121,7 @@ where
         .open(keychain_file)?;
     file.write_all(&seed.encrypt(password)?)?;
 
-    Ok(mnemonic)
+    Ok(seed.mnemonic())
 }
 
 pub fn restore<S, PSW, M, P>(
@@ -134,7 +133,7 @@ pub fn restore<S, PSW, M, P>(
 where
     S: Into<String>,
     PSW: FnOnce() -> Result<String>,
-    M: FnOnce() -> Result<String>,
+    M: FnOnce() -> Result<Mnemonic>,
     P: FnOnce() -> Result<Option<String>>,
 {
     let keychain_file: PathBuf = dir::get_keychain_file(name)?;
@@ -149,9 +148,8 @@ where
         return Err(anyhow!("Invalid password"));
     }
 
-    let mnemonic: String = get_mnemonic()?;
+    let mnemonic: Mnemonic = get_mnemonic()?;
     let passphrase: Option<String> = get_passphrase()?;
-
     let seed = Seed::new(mnemonic, passphrase)?;
 
     let mut file: File = File::options()
@@ -318,7 +316,7 @@ where
 
     if finalized {
         let mut psbt_file = psbt_file;
-        rename_psbt_to_signed(&mut psbt_file)?;
+        dir::rename_psbt_to_signed(&mut psbt_file)?;
         let mut file: File = File::options()
             .create_new(true)
             .write(true)
@@ -330,22 +328,6 @@ where
     }
 
     Ok(())
-}
-
-fn rename_psbt_to_signed(psbt_file: &mut PathBuf) -> Result<()> {
-    if let Some(mut file_name) = psbt_file.file_name().and_then(OsStr::to_str) {
-        if let Some(ext) = psbt_file.extension().and_then(OsStr::to_str) {
-            let splitted: Vec<&str> = file_name.split(&format!(".{}", ext)).collect();
-            file_name = match splitted.first() {
-                Some(name) => *name,
-                None => return Err(anyhow!("Impossible to get file name")),
-            }
-        }
-        psbt_file.set_file_name(&format!("{}-signed.psbt", file_name));
-        Ok(())
-    } else {
-        Err(anyhow!("Impossible to get file name"))
-    }
 }
 
 pub fn identity<S, PSW>(name: S, get_password: PSW, network: Network) -> Result<()>

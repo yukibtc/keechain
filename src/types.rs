@@ -23,12 +23,12 @@ pub struct Seed {
 }
 
 impl Seed {
-    pub fn new<S>(mnemonic: S, passphrase: Option<S>) -> Result<Self>
+    pub fn new<S>(mnemonic: Mnemonic, passphrase: Option<S>) -> Result<Self>
     where
         S: Into<String>,
     {
         Ok(Self {
-            mnemonic: Mnemonic::from_str(&mnemonic.into())?,
+            mnemonic,
             passphrase: passphrase.map(|p| p.into()),
         })
     }
@@ -142,7 +142,7 @@ mod tests {
 
     #[test]
     fn test_seed() {
-        let mnemonic: &str = "easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt";
+        let mnemonic = Mnemonic::from_str("easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt").unwrap();
         let passphrase: Option<&str> = Some("mypassphrase");
         let seed = Seed::new(mnemonic, passphrase).unwrap();
         assert_eq!(&seed.to_hex(), "fb826595a0d679f5e9f8c799bd1decb8dc2ad3fb4e39a1ffaa4708a150e0e81ae55d3f340a188cd6188a2b76601aeae16945b36ae0ecfced9645029796c33713")
