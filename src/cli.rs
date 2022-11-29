@@ -42,6 +42,8 @@ pub enum Commands {
         #[arg(required = true)]
         name: String,
     },
+    /// List keychains
+    List,
     /// Get fingerprint
     #[command(arg_required_else_help = true)]
     Identity {

@@ -72,6 +72,13 @@ fn main() -> Result<()> {
                 }
             },
         ),
+        Commands::List => {
+            let names = util::dir::get_keychains_list()?;
+            for (index, name) in names.iter().enumerate() {
+                println!("{}. {}", index + 1, name);
+            }
+            Ok(())
+        }
         Commands::Identity { name } => command::identity(name, io::get_password, network),
         Commands::Export { export_type } => match export_type {
             ExportTypes::Descriptors { name, account } => {

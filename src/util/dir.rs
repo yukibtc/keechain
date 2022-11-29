@@ -2,9 +2,13 @@
 // Distributed under the MIT software license
 
 use std::ffi::OsStr;
+use std::fs;
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
+
+const KEYCHAIN_EXTENSION: &str = "keechain";
+const KEYCHAIN_DOT_EXTENSION: &str = ".keechain";
 
 pub fn home() -> PathBuf {
     match dirs::home_dir() {
@@ -26,12 +30,33 @@ pub fn keechain() -> Result<PathBuf> {
     })
 }
 
+pub fn keychains() -> Result<PathBuf> {
+    Ok(keechain()?.join("keychains"))
+}
+
+pub fn get_keychains_list() -> Result<Vec<String>> {
+    let paths = fs::read_dir(keychains()?)?;
+    let mut names: Vec<String> = Vec::new();
+    for path in paths {
+        let path: PathBuf = path?.path();
+        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+            if name.ends_with(KEYCHAIN_DOT_EXTENSION) {
+                let splitted: Vec<&str> = name.split(KEYCHAIN_DOT_EXTENSION).collect();
+                if let Some(value) = splitted.first() {
+                    names.push(value.to_string());
+                }
+            }
+        }
+    }
+    Ok(names)
+}
+
 pub fn get_keychain_file<S>(name: S) -> Result<PathBuf>
 where
     S: Into<String>,
 {
-    let mut keychain_file: PathBuf = keechain()?.join(name.into());
-    keychain_file.set_extension("keechain");
+    let mut keychain_file: PathBuf = keychains()?.join(name.into());
+    keychain_file.set_extension(KEYCHAIN_EXTENSION);
     Ok(keychain_file)
 }
 
