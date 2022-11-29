@@ -533,6 +533,7 @@ dependencies = [
  "bitcoin",
  "cbc",
  "clap",
+ "console",
  "dialoguer",
  "dirs",
  "env_logger",

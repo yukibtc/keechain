@@ -31,6 +31,9 @@ pub enum Commands {
         /// Word count
         #[arg(value_enum, default_value_t = WordCount::W24)]
         word_count: WordCount,
+        /// Add entropy from dice roll
+        #[arg(long, default_value_t = false)]
+        dice_roll: bool,
     },
     /// Restore BIP39 Seed Phrase
     #[command(arg_required_else_help = true)]

@@ -7,6 +7,7 @@ use anyhow::Result;
 use bdk::keys::bip39::Mnemonic;
 use bitcoin::Network;
 use clap::Parser;
+use console::Term;
 
 mod cli;
 mod command;
@@ -24,7 +25,11 @@ fn main() -> Result<()> {
     let network: Network = args.network;
 
     match args.command {
-        Commands::Generate { name, word_count } => {
+        Commands::Generate {
+            name,
+            word_count,
+            dice_roll,
+        } => {
             let mnemonic = command::generate(
                 name,
                 io::get_password_with_confirmation,
@@ -36,6 +41,16 @@ fn main() -> Result<()> {
                     }
                 },
                 word_count,
+                || {
+                    if dice_roll {
+                        let term = Term::stdout();
+                        let mut rolls: Vec<u8> = Vec::new();
+                        io::select_dice_roll(term, &mut rolls)?;
+                        Ok(Some(rolls))
+                    } else {
+                        Ok(None)
+                    }
+                },
             )?;
 
             println!("\n!!! WRITE DOWN YOUT SEED PHRASE !!!");

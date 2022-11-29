@@ -34,7 +34,7 @@ use crate::util::bip::bip32::ToBip32RootKey;
 use crate::util::bip::bip85::FromBip85;
 use crate::util::{dir, time};
 
-fn entropy(word_count: WordCount) -> Vec<u8> {
+fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
     let mut h = HmacEngine::<sha512::Hash>::new(b"keechain-entropy");
 
     // OS Random
@@ -82,21 +82,28 @@ fn entropy(word_count: WordCount) -> Vec<u8> {
         h.input(&time::timestamp_nanos().to_be_bytes());
     }
 
+    // Add custom entropy
+    if let Some(custom) = custom {
+        h.input(&custom);
+    }
+
     let entropy: [u8; 64] = Hmac::from_engine(h).into_inner();
     let len: u32 = word_count.as_u32() * 4 / 3;
     entropy[0..len as usize].to_vec()
 }
 
-pub fn generate<S, PSW, P>(
+pub fn generate<S, PSW, P, E>(
     name: S,
     get_password: PSW,
     get_passphrase: P,
     word_count: WordCount,
+    get_custom_entropy: E,
 ) -> Result<Mnemonic>
 where
     S: Into<String>,
     PSW: FnOnce() -> Result<String>,
     P: FnOnce() -> Result<Option<String>>,
+    E: FnOnce() -> Result<Option<Vec<u8>>>,
 {
     let keychain_file: PathBuf = dir::get_keychain_file(name)?;
     if keychain_file.exists() {
@@ -110,7 +117,8 @@ where
         return Err(anyhow!("Invalid password"));
     }
 
-    let entropy: Vec<u8> = entropy(word_count);
+    let custom_entropy: Option<Vec<u8>> = get_custom_entropy()?;
+    let entropy: Vec<u8> = entropy(word_count, custom_entropy);
     let mnemonic = Mnemonic::from_entropy(&entropy)?;
     let passphrase: Option<String> = get_passphrase()?;
     let seed = Seed::new(mnemonic, passphrase)?;

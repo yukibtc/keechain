@@ -10,6 +10,7 @@ KeeChain is a Bitcoin CLI application to transform your old **offline** computer
     - OS source: random bytes provided by OS
     - Dynamic events: timestamp, boot time, free memory, free SWAP, OS processes and load average
     - Static events: hostname, OS and kernel version and global CPU info
+    - Optional: add entropy from dice roll 🎲
 * Restore BIP39 seed phrase with an optional passphrase
 * Seed encryption with AES-256
 * Export:
