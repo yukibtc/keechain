@@ -4,6 +4,11 @@
 
 KeeChain is a Bitcoin CLI application to transform your old **offline** computer in a Signing Device (aka Hardware Wallet).
 
+## Getting started
+
+* [Build from source](doc/build.md) 
+* [Usage](doc/usage.md) 
+
 ## Features
 
 * Generate BIP39 seed phrase using many sources of entropy:
@@ -17,13 +22,11 @@ KeeChain is a Bitcoin CLI application to transform your old **offline** computer
     - Descriptors
     - Bitcoin Core descriptors (same as above but already formatted to be insered into the console using the `importdescriptors` command)
     - Electrum JSON file (BIP44, BIP49 and BIP84)
-* PSBT file signer
+* Sign and decode PSBT file
 * Deterministic Entropy (BIP85)
-
-## Getting started
-
-* [Build from source](doc/build.md) 
-* [Usage](doc/usage.md) 
+* Danger:
+    - View secrets: entropy, mnemonic, passphrase, HEX seed, BIP32 root key and fingerprint.
+    - Wipe: permanently delete keychain
 
 ## State
 
