@@ -22,7 +22,7 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
-    /// Generate BIP39 Seed Phrase
+    /// Generate mnemonic (BIP39)
     #[command(arg_required_else_help = true)]
     Generate {
         /// Keychain name
@@ -35,7 +35,7 @@ pub enum Commands {
         #[arg(long, default_value_t = false)]
         dice_roll: bool,
     },
-    /// Restore BIP39 Seed Phrase
+    /// Restore mnemonic (BIP39)
     #[command(arg_required_else_help = true)]
     Restore {
         /// Keychain name
@@ -44,7 +44,7 @@ pub enum Commands {
     },
     /// List keychains
     List,
-    /// Get fingerprint
+    /// View master fingerprint
     #[command(arg_required_else_help = true)]
     Identity {
         /// Keychain name
@@ -57,19 +57,6 @@ pub enum Commands {
         /// Type
         #[command(subcommand)]
         export_type: ExportTypes,
-    },
-    /// Derive BIP39 Seed Phrase (BIP85)
-    #[command(arg_required_else_help = true)]
-    Derive {
-        /// Keychain name
-        #[arg(required = true)]
-        name: String,
-        /// Word count
-        #[arg(required = true, value_enum)]
-        word_count: WordCount,
-        /// Index (must be between 0 and 2^31 - 1)
-        #[arg(required = true)]
-        index: Index,
     },
     /// Decode PSBT
     #[command(arg_required_else_help = true)]
@@ -87,6 +74,33 @@ pub enum Commands {
         /// PSBT file
         #[arg(required = true)]
         file: PathBuf,
+    },
+    /// Advanced
+    Advanced {
+        #[command(subcommand)]
+        command: AdvancedCommands,
+    },
+    /// Setting
+    Setting {
+        #[command(subcommand)]
+        command: SettingCommands,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum AdvancedCommands {
+    /// Deterministic entropy (BIP85)
+    #[command(arg_required_else_help = true)]
+    Derive {
+        /// Keychain name
+        #[arg(required = true)]
+        name: String,
+        /// Word count
+        #[arg(required = true, value_enum)]
+        word_count: WordCount,
+        /// Index (must be between 0 and 2^31 - 1)
+        #[arg(required = true)]
+        index: Index,
     },
     /// Danger
     Danger {
@@ -107,6 +121,27 @@ pub enum DangerCommands {
     /// Delete keychain
     #[command(arg_required_else_help = true)]
     Wipe {
+        /// Keychain name
+        #[arg(required = true)]
+        name: String,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum SettingCommands {
+    /// Rename keychain
+    #[command(arg_required_else_help = true)]
+    Rename {
+        /// Keychain name
+        #[arg(required = true)]
+        name: String,
+        /// New keychain name
+        #[arg(required = true)]
+        new_name: String,
+    },
+    /// Change keychain password
+    #[command(arg_required_else_help = true)]
+    ChangePassword {
         /// Keychain name
         #[arg(required = true)]
         name: String,

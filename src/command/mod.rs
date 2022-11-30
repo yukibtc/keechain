@@ -25,13 +25,13 @@ use rand::RngCore;
 use secp256k1::Secp256k1;
 use sysinfo::{System, SystemExt};
 
-pub mod danger;
+pub mod advanced;
 pub mod export;
+pub mod setting;
 
-use crate::types::{Index, Seed, WordCount};
+use crate::types::{Seed, WordCount};
 use crate::util::aes::Aes256Encryption;
 use crate::util::bip::bip32::ToBip32RootKey;
-use crate::util::bip::bip85::FromBip85;
 use crate::util::{dir, time};
 
 fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
@@ -238,26 +238,6 @@ fn descriptor(
     };
 
     Ok(Descriptor::from_str(&descriptor)?)
-}
-
-pub fn derive<S, PSW>(
-    name: S,
-    get_password: PSW,
-    network: Network,
-    word_count: WordCount,
-    index: Index,
-) -> Result<()>
-where
-    S: Into<String>,
-    PSW: FnOnce() -> Result<String>,
-{
-    let seed: Seed = open(name, get_password)?;
-    let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
-    let secp = Secp256k1::new();
-
-    let mnemonic: Mnemonic = Mnemonic::from_bip85(&secp, &root, word_count, index)?;
-    println!("Mnemonic: {}", mnemonic);
-    Ok(())
 }
 
 pub fn decode(psbt_file: PathBuf) -> Result<PartiallySignedTransaction> {

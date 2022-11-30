@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use anyhow::Result;
 use bitcoin::Network;
 
-use super::open;
+use crate::command::open;
 use crate::types::Seed;
 use crate::util::bip::bip32::ToBip32RootKey;
 use crate::util::{convert, dir};

@@ -14,7 +14,7 @@ mod command;
 mod types;
 mod util;
 
-use self::cli::{Cli, Commands, DangerCommands, ExportTypes};
+use self::cli::{AdvancedCommands, Cli, Commands, DangerCommands, ExportTypes, SettingCommands};
 use self::util::bip::bip32;
 use self::util::io;
 
@@ -101,29 +101,39 @@ fn main() -> Result<()> {
                 bip32::account_extended_path(script.as_u32(), network, Some(account))?,
             ),
         },
-        Commands::Derive {
-            name,
-            word_count,
-            index,
-        } => command::derive(name, io::get_password, network, word_count, index),
         Commands::Decode { file } => {
             let psbt = command::decode(file)?;
             println!("{:#?}", psbt);
             Ok(())
         }
         Commands::Sign { name, file } => command::sign(name, io::get_password, network, file),
-        Commands::Danger { command } => match command {
-            DangerCommands::ViewSeed { name } => {
-                command::danger::view_seed(name, io::get_password, network)
-            }
-            DangerCommands::Wipe { name } => {
-                if io::ask("Are you really sure? This action is permanent!")? && io::ask("Again, are you really sure? THIS ACTION IS PERMANENT AND YOU MAY LOSE ALL YOUR FUNDS!")? {
-                    command::danger::wipe(name, io::get_password)?;
-                } else {
-                    println!("Aborted.");
+        Commands::Advanced { command } => match command {
+            AdvancedCommands::Derive {
+                name,
+                word_count,
+                index,
+            } => command::advanced::derive(name, io::get_password, network, word_count, index),
+            AdvancedCommands::Danger { command } => match command {
+                DangerCommands::ViewSeed { name } => {
+                    command::advanced::danger::view_seed(name, io::get_password, network)
                 }
-                Ok(())
-            }
+                DangerCommands::Wipe { name } => {
+                    if io::ask("Are you really sure? This action is permanent!")? && io::ask("Again, are you really sure? THIS ACTION IS PERMANENT AND YOU MAY LOSE ALL YOUR FUNDS!")? {
+                        command::advanced::danger::wipe(name, io::get_password)?;
+                    } else {
+                        println!("Aborted.");
+                    }
+                    Ok(())
+                }
+            },
+        },
+        Commands::Setting { command } => match command {
+            SettingCommands::Rename { name, new_name } => command::setting::rename(name, new_name),
+            SettingCommands::ChangePassword { name } => command::setting::change_password(
+                name,
+                io::get_password,
+                io::get_password_with_confirmation,
+            ),
         },
     }
 }

@@ -18,7 +18,7 @@ pub fn get_password() -> Result<String> {
 
 pub fn get_password_with_confirmation() -> Result<String> {
     Ok(Password::new()
-        .with_prompt("Password")
+        .with_prompt("New password")
         .with_confirmation("Confirm password", "Passwords mismatching")
         .interact()?)
 }
