@@ -115,7 +115,10 @@ fn main() -> Result<()> {
             } => command::advanced::derive(name, io::get_password, network, word_count, index),
             AdvancedCommands::Danger { command } => match command {
                 DangerCommands::ViewSecrets { name } => {
-                    command::advanced::danger::view_secrets(name, io::get_password, network)
+                    let secrets =
+                        command::advanced::danger::view_secrets(name, io::get_password, network)?;
+                    secrets.print();
+                    Ok(())
                 }
                 DangerCommands::Wipe { name } => {
                     if io::ask("Are you really sure? This action is permanent!")? && io::ask("Again, are you really sure? THIS ACTION IS PERMANENT AND YOU MAY LOSE ALL YOUR FUNDS!")? {

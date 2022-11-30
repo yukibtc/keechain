@@ -7,9 +7,11 @@ use std::str::FromStr;
 use anyhow::{anyhow, Result};
 use bdk::keys::bip39::Mnemonic;
 use bdk::miniscript::Descriptor;
-use bitcoin::util::bip32::ExtendedPrivKey;
+use bitcoin::util::bip32::{ExtendedPrivKey, Fingerprint};
 use bitcoin::Network;
 use clap::ValueEnum;
+use prettytable::{row, Table};
+use secp256k1::Secp256k1;
 use serde::{Deserialize, Serialize};
 
 use crate::util::aes::{self, Aes256Encryption};
@@ -134,6 +136,55 @@ impl fmt::Debug for Index {
 pub struct Descriptors {
     pub external: Vec<Descriptor<String>>,
     pub internal: Vec<Descriptor<String>>,
+}
+
+pub struct Secrets {
+    pub entropy: String,
+    pub mnemonic: Mnemonic,
+    pub passphrase: Option<String>,
+    pub seed_hex: String,
+    pub network: Network,
+    pub root_key: ExtendedPrivKey,
+    pub fingerprint: Fingerprint,
+}
+
+impl Secrets {
+    pub fn new(seed: Seed, network: Network) -> Result<Self> {
+        let secp = Secp256k1::new();
+        let mnemonic: Mnemonic = seed.mnemonic();
+        let root_key: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
+
+        Ok(Self {
+            entropy: convert::bytes_to_hex_string(mnemonic.to_entropy()),
+            mnemonic,
+            passphrase: seed.passphrase(),
+            seed_hex: seed.to_hex(),
+            network,
+            root_key,
+            fingerprint: root_key.fingerprint(&secp),
+        })
+    }
+
+    pub fn print(&self) {
+        let mut table = Table::new();
+
+        table.add_row(row![
+            format!("Entropy ({} bits)", self.entropy.len() / 2 * 8),
+            self.entropy
+        ]);
+        table.add_row(row!["Mnemonic (BIP39)", self.mnemonic]);
+
+        if let Some(passphrase) = &self.passphrase {
+            table.add_row(row!["Passphrase (BIP39)", passphrase]);
+        }
+
+        table.add_row(row!["Seed HEX (BIP39)", self.seed_hex]);
+        table.add_row(row!["Network", self.network]);
+        table.add_row(row!["Root Key (BIP32)", self.root_key]);
+        table.add_row(row!["Fingerprint (BIP32)", self.fingerprint]);
+
+        table.printstd();
+    }
 }
 
 #[cfg(test)]
