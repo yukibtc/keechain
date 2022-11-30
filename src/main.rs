@@ -79,7 +79,11 @@ fn main() -> Result<()> {
             }
             Ok(())
         }
-        Commands::Identity { name } => command::identity(name, io::get_password, network),
+        Commands::Identity { name } => {
+            let fingerprint = command::identity(name, io::get_password, network)?;
+            println!("Fingerprint: {}", fingerprint);
+            Ok(())
+        }
         Commands::Export { export_type } => match export_type {
             ExportTypes::Descriptors { name, account } => {
                 let descriptors =
@@ -88,31 +92,50 @@ fn main() -> Result<()> {
                 Ok(())
             }
             ExportTypes::BitcoinCore { name, account } => {
-                command::export::bitcoin_core(name, io::get_password, network, Some(account))
+                let descriptors =
+                    command::export::bitcoin_core(name, io::get_password, network, Some(account))?;
+                println!("{}", descriptors);
+                Ok(())
             }
             ExportTypes::Electrum {
                 name,
                 script,
                 account,
-            } => command::export::electrum(
-                name,
-                io::get_password,
-                network,
-                bip32::account_extended_path(script.as_u32(), network, Some(account))?,
-            ),
+            } => {
+                let path = command::export::electrum(
+                    name,
+                    io::get_password,
+                    network,
+                    bip32::account_extended_path(script.as_u32(), network, Some(account))?,
+                )?;
+                println!("Electrum file exported: {}", path.display());
+                Ok(())
+            }
         },
         Commands::Decode { file } => {
             let psbt = command::decode(file)?;
             println!("{:#?}", psbt);
             Ok(())
         }
-        Commands::Sign { name, file } => command::sign(name, io::get_password, network, file),
+        Commands::Sign { name, file } => {
+            if command::sign(name, io::get_password, network, file)? {
+                println!("Signed.")
+            } else {
+                println!("PSBT signing not finalized");
+            }
+            Ok(())
+        }
         Commands::Advanced { command } => match command {
             AdvancedCommands::Derive {
                 name,
                 word_count,
                 index,
-            } => command::advanced::derive(name, io::get_password, network, word_count, index),
+            } => {
+                let mnemonic =
+                    command::advanced::derive(name, io::get_password, network, word_count, index)?;
+                println!("Mnemonic: {}", mnemonic);
+                Ok(())
+            }
             AdvancedCommands::Danger { command } => match command {
                 DangerCommands::ViewSecrets { name } => {
                     let secrets =

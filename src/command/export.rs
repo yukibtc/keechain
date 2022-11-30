@@ -4,10 +4,11 @@
 use std::fmt;
 use std::fs::File;
 use std::io::Write;
+use std::path::PathBuf;
 
 use anyhow::Result;
 
-use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey};
+use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
 use bitcoin::Network;
 use clap::ValueEnum;
 use secp256k1::Secp256k1;
@@ -100,7 +101,7 @@ pub fn bitcoin_core<S, PSW>(
     get_password: PSW,
     network: Network,
     account: Option<u32>,
-) -> Result<()>
+) -> Result<String>
 where
     S: Into<String>,
     PSW: FnOnce() -> Result<String>,
@@ -126,12 +127,10 @@ where
         }));
     }
 
-    println!(
+    Ok(format!(
         "\nimportdescriptors '{}'\n",
         json!(bitcoin_core_descriptors)
-    );
-
-    Ok(())
+    ))
 }
 
 pub fn electrum<S, PSW>(
@@ -139,7 +138,7 @@ pub fn electrum<S, PSW>(
     get_password: PSW,
     network: Network,
     path: DerivationPath,
-) -> Result<()>
+) -> Result<PathBuf>
 where
     S: Into<String>,
     PSW: FnOnce() -> Result<String>,
@@ -147,9 +146,9 @@ where
     let seed: Seed = open(name, get_password)?;
     let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
     let secp = Secp256k1::new();
-    let fingerprint = root.fingerprint(&secp);
+    let fingerprint: Fingerprint = root.fingerprint(&secp);
 
-    let pubkey = ExtendedPubKey::from_priv(&secp, &root.derive_priv(&secp, &path)?);
+    let pubkey: ExtendedPubKey = ExtendedPubKey::from_priv(&secp, &root.derive_priv(&secp, &path)?);
 
     let electrum_json = json!({
         "keystore": {
@@ -163,12 +162,10 @@ where
         "seed_version": 48
     });
 
-    let home_dir = dir::home();
-    let file_name = format!("keechain-{}.json", pubkey.fingerprint());
-    let path = home_dir.join(file_name);
+    let home_dir: PathBuf = dir::home();
+    let file_name: String = format!("keechain-{}.json", pubkey.fingerprint());
+    let path: PathBuf = home_dir.join(file_name);
     let mut file: File = File::options().create(true).write(true).open(&path)?;
     file.write_all(electrum_json.to_string().as_bytes())?;
-    println!("Electrum file exported: {}", path.display());
-
-    Ok(())
+    Ok(path)
 }

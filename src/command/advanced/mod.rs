@@ -20,7 +20,7 @@ pub fn derive<S, PSW>(
     network: Network,
     word_count: WordCount,
     index: Index,
-) -> Result<()>
+) -> Result<Mnemonic>
 where
     S: Into<String>,
     PSW: FnOnce() -> Result<String>,
@@ -29,7 +29,5 @@ where
     let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
     let secp = Secp256k1::new();
 
-    let mnemonic: Mnemonic = Mnemonic::from_bip85(&secp, &root, word_count, index)?;
-    println!("Mnemonic: {}", mnemonic);
-    Ok(())
+    Mnemonic::from_bip85(&secp, &root, word_count, index)
 }

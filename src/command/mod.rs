@@ -253,7 +253,12 @@ pub fn decode(psbt_file: PathBuf) -> Result<PartiallySignedTransaction> {
     Ok(PartiallySignedTransaction::from_str(&psbt)?)
 }
 
-pub fn sign<S, PSW>(name: S, get_password: PSW, network: Network, psbt_file: PathBuf) -> Result<()>
+pub fn sign<S, PSW>(
+    name: S,
+    get_password: PSW,
+    network: Network,
+    psbt_file: PathBuf,
+) -> Result<bool>
 where
     S: Into<String>,
     PSW: FnOnce() -> Result<String>,
@@ -310,15 +315,12 @@ where
             .write(true)
             .open(psbt_file)?;
         file.write_all(psbt.to_string().as_bytes())?;
-        println!("Signed.")
-    } else {
-        println!("PSBT signing not finalized");
     }
 
-    Ok(())
+    Ok(finalized)
 }
 
-pub fn identity<S, PSW>(name: S, get_password: PSW, network: Network) -> Result<()>
+pub fn identity<S, PSW>(name: S, get_password: PSW, network: Network) -> Result<Fingerprint>
 where
     S: Into<String>,
     PSW: FnOnce() -> Result<String>,
@@ -326,6 +328,5 @@ where
     let seed: Seed = open(name, get_password)?;
     let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
     let secp = Secp256k1::new();
-    println!("Fingerprint: {}", root.fingerprint(&secp));
-    Ok(())
+    Ok(root.fingerprint(&secp))
 }
