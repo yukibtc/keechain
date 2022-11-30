@@ -1,6 +1,8 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use std::fs::File;
+use std::io::Write;
 use std::path::PathBuf;
 
 use anyhow::Result;
@@ -54,6 +56,11 @@ where
 {
     let _ = open(name.clone(), get_password)?;
     let keychain_file: PathBuf = dir::get_keychain_file(name)?;
+    let mut file: File = File::options()
+        .write(true)
+        .truncate(true)
+        .open(keychain_file.as_path())?;
+    file.write_all(&[0u8; 21])?;
     std::fs::remove_file(keychain_file)?;
     Ok(())
 }
