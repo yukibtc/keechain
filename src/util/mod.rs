@@ -10,7 +10,6 @@ pub mod bip;
 pub mod convert;
 pub mod dir;
 pub mod hash;
-pub mod io;
 pub mod slip;
 pub mod time;
 

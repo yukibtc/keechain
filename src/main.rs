@@ -14,9 +14,9 @@ mod command;
 mod types;
 mod util;
 
+use self::cli::io;
 use self::cli::{AdvancedCommands, Cli, Commands, DangerCommands, ExportTypes, SettingCommands};
 use self::util::bip::bip32;
-use self::util::io;
 
 fn main() -> Result<()> {
     env_logger::init();

@@ -6,6 +6,8 @@ use std::path::PathBuf;
 use bitcoin::Network;
 use clap::{Parser, Subcommand};
 
+pub mod io;
+
 use crate::command::export::ElectrumExportSupportedScripts;
 use crate::types::{Index, WordCount};
 
