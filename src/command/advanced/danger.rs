@@ -4,30 +4,46 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
+use bitcoin::util::bip32::{ExtendedPrivKey, Fingerprint};
 use bitcoin::Network;
+use prettytable::{row, Table};
+use secp256k1::Secp256k1;
 
 use crate::command::open;
 use crate::types::Seed;
 use crate::util::bip::bip32::ToBip32RootKey;
 use crate::util::{convert, dir};
 
-pub fn view_seed<S, PSW>(file_name: S, get_password: PSW, network: Network) -> Result<()>
+pub fn view_secrets<S, PSW>(name: S, get_password: PSW, network: Network) -> Result<()>
 where
     S: Into<String>,
     PSW: FnOnce() -> Result<String>,
 {
-    let seed: Seed = open(file_name, get_password)?;
+    let seed: Seed = open(name, get_password)?;
     let mnemonic = seed.mnemonic();
     let entropy = convert::bytes_to_hex_string(mnemonic.to_entropy());
-    println!("\n################################################################\n");
-    println!("Entropy: {} ({} bits)", entropy, entropy.len() / 2 * 8);
-    println!("BIP39 Mnemonic: {}", mnemonic);
+    let secp = Secp256k1::new();
+    let root_key: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
+    let fingerprint: Fingerprint = root_key.fingerprint(&secp);
+
+    let mut table = Table::new();
+
+    table.add_row(row![
+        format!("Entropy ({} bits)", entropy.len() / 2 * 8),
+        entropy
+    ]);
+    table.add_row(row!["Mnemonic (BIP39)", mnemonic]);
+
     if let Some(passphrase) = seed.passphrase() {
-        println!("BIP39 Passphrase: {}", passphrase);
+        table.add_row(row!["Passphrase (BIP39)", passphrase]);
     }
-    println!("BIP39 Seed (hex): {}", seed.to_hex());
-    println!("BIP32 Root Key: {}", seed.to_bip32_root_key(network)?);
-    println!("\n################################################################\n");
+
+    table.add_row(row!["Seed HEX (BIP39)", seed.to_hex()]);
+    table.add_row(row!["Network", network]);
+    table.add_row(row!["Root Key (BIP32)", root_key]);
+    table.add_row(row!["Fingerprint (BIP32)", fingerprint]);
+
+    table.printstd();
     Ok(())
 }
 

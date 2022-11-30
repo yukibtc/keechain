@@ -111,9 +111,9 @@ pub enum AdvancedCommands {
 
 #[derive(Debug, Subcommand)]
 pub enum DangerCommands {
-    /// View mnemonic and passphrase
+    /// View secrets
     #[command(arg_required_else_help = true)]
-    ViewSeed {
+    ViewSecrets {
         /// Keychain name
         #[arg(required = true)]
         name: String,
