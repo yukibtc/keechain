@@ -49,7 +49,9 @@ fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
         let dynamic_events: Vec<u8> = vec![
             time::timestamp_nanos().to_be_bytes().to_vec(),
             system_info.boot_time().to_be_bytes().to_vec(),
+            system_info.total_memory().to_be_bytes().to_vec(),
             system_info.free_memory().to_be_bytes().to_vec(),
+            system_info.total_swap().to_be_bytes().to_vec(),
             system_info.free_swap().to_be_bytes().to_vec(),
             format!("{:?}", system_info.processes()).as_bytes().to_vec(),
             format!("{:?}", system_info.load_average())
@@ -62,16 +64,25 @@ fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
 
         // Static events
         let static_events: Vec<u8> = vec![
-            format!("{:?}", system_info.host_name()).as_bytes().to_vec(),
-            format!("{:?}", system_info.long_os_version())
+            system_info
+                .host_name()
+                .unwrap_or_else(|| rand::random::<u128>().to_string())
                 .as_bytes()
                 .to_vec(),
-            format!("{:?}", system_info.kernel_version())
+            system_info
+                .long_os_version()
+                .unwrap_or_else(|| rand::random::<u128>().to_string())
+                .as_bytes()
+                .to_vec(),
+            system_info
+                .kernel_version()
+                .unwrap_or_else(|| rand::random::<u128>().to_string())
                 .as_bytes()
                 .to_vec(),
             format!("{:?}", system_info.global_cpu_info())
                 .as_bytes()
                 .to_vec(),
+            format!("{:?}", system_info.users()).as_bytes().to_vec(),
         ]
         .concat();
 

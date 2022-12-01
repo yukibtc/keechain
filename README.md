@@ -13,8 +13,8 @@ KeeChain is a Bitcoin CLI application to transform your old **offline** computer
 
 * Generate BIP39 seed phrase using many sources of entropy:
     - OS source: random bytes provided by OS
-    - Dynamic events: timestamp, boot time, free memory, free SWAP, OS processes and load average
-    - Static events: hostname, OS and kernel version and global CPU info
+    - Dynamic events: timestamp, boot time, total and free memory, total and free SWAP, OS processes and load average
+    - Static events: hostname, OS and kernel version, global CPU info and device users
     - Optional: dice roll 🎲
 * Restore BIP39 seed phrase with an optional passphrase
 * Seed encryption with AES-256
