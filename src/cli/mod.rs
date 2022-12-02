@@ -19,11 +19,14 @@ pub struct Cli {
     #[clap(short, long, default_value_t = Network::Bitcoin)]
     pub network: Network,
     #[command(subcommand)]
-    pub command: Commands,
+    pub command: Command,
 }
 
 #[derive(Debug, Subcommand)]
-pub enum Commands {
+pub enum Command {
+    /// Launch GUI
+    #[cfg(feature = "gui")]
+    Launch,
     /// Generate mnemonic (BIP39)
     #[command(arg_required_else_help = true)]
     Generate {
@@ -80,17 +83,17 @@ pub enum Commands {
     /// Advanced
     Advanced {
         #[command(subcommand)]
-        command: AdvancedCommands,
+        command: AdvancedCommand,
     },
     /// Setting
     Setting {
         #[command(subcommand)]
-        command: SettingCommands,
+        command: SettingCommand,
     },
 }
 
 #[derive(Debug, Subcommand)]
-pub enum AdvancedCommands {
+pub enum AdvancedCommand {
     /// Deterministic entropy (BIP85)
     #[command(arg_required_else_help = true)]
     Derive {
@@ -107,12 +110,12 @@ pub enum AdvancedCommands {
     /// Danger
     Danger {
         #[command(subcommand)]
-        command: DangerCommands,
+        command: DangerCommand,
     },
 }
 
 #[derive(Debug, Subcommand)]
-pub enum DangerCommands {
+pub enum DangerCommand {
     /// View secrets
     #[command(arg_required_else_help = true)]
     ViewSecrets {
@@ -130,7 +133,7 @@ pub enum DangerCommands {
 }
 
 #[derive(Debug, Subcommand)]
-pub enum SettingCommands {
+pub enum SettingCommand {
     /// Rename keychain
     #[command(arg_required_else_help = true)]
     Rename {

@@ -11,11 +11,13 @@ use console::Term;
 
 mod cli;
 mod command;
+#[cfg(feature = "gui")]
+mod gui;
 mod types;
 mod util;
 
 use self::cli::io;
-use self::cli::{AdvancedCommands, Cli, Commands, DangerCommands, ExportTypes, SettingCommands};
+use self::cli::{AdvancedCommand, Cli, Command, DangerCommand, ExportTypes, SettingCommand};
 use self::util::bip::bip32;
 
 fn main() -> Result<()> {
@@ -25,7 +27,9 @@ fn main() -> Result<()> {
     let network: Network = args.network;
 
     match args.command {
-        Commands::Generate {
+        #[cfg(feature = "gui")]
+        Command::Launch => gui::launch(network),
+        Command::Generate {
             name,
             word_count,
             dice_roll,
@@ -60,7 +64,7 @@ fn main() -> Result<()> {
 
             Ok(())
         }
-        Commands::Restore { name } => command::restore(
+        Command::Restore { name } => command::restore(
             name,
             io::get_password_with_confirmation,
             || Ok(Mnemonic::from_str(&io::get_input("Seed")?)?),
@@ -72,19 +76,19 @@ fn main() -> Result<()> {
                 }
             },
         ),
-        Commands::List => {
+        Command::List => {
             let names = util::dir::get_keychains_list()?;
             for (index, name) in names.iter().enumerate() {
                 println!("{}. {}", index + 1, name);
             }
             Ok(())
         }
-        Commands::Identity { name } => {
+        Command::Identity { name } => {
             let fingerprint = command::identity(name, io::get_password, network)?;
             println!("Fingerprint: {}", fingerprint);
             Ok(())
         }
-        Commands::Export { export_type } => match export_type {
+        Command::Export { export_type } => match export_type {
             ExportTypes::Descriptors { name, account } => {
                 let descriptors =
                     command::export::descriptors(name, io::get_password, network, Some(account))?;
@@ -112,8 +116,8 @@ fn main() -> Result<()> {
                 Ok(())
             }
         },
-        Commands::Decode { file } => command::decode(file, network)?.print(),
-        Commands::Sign { name, file } => {
+        Command::Decode { file } => command::decode(file, network)?.print(),
+        Command::Sign { name, file } => {
             if command::sign(name, io::get_password, network, file)? {
                 println!("Signed.")
             } else {
@@ -121,8 +125,8 @@ fn main() -> Result<()> {
             }
             Ok(())
         }
-        Commands::Advanced { command } => match command {
-            AdvancedCommands::Derive {
+        Command::Advanced { command } => match command {
+            AdvancedCommand::Derive {
                 name,
                 word_count,
                 index,
@@ -132,14 +136,14 @@ fn main() -> Result<()> {
                 println!("Mnemonic: {}", mnemonic);
                 Ok(())
             }
-            AdvancedCommands::Danger { command } => match command {
-                DangerCommands::ViewSecrets { name } => {
+            AdvancedCommand::Danger { command } => match command {
+                DangerCommand::ViewSecrets { name } => {
                     let secrets =
                         command::advanced::danger::view_secrets(name, io::get_password, network)?;
                     secrets.print();
                     Ok(())
                 }
-                DangerCommands::Wipe { name } => {
+                DangerCommand::Wipe { name } => {
                     if io::ask("Are you really sure? This action is permanent!")? && io::ask("Again, are you really sure? THIS ACTION IS PERMANENT AND YOU MAY LOSE ALL YOUR FUNDS!")? {
                         command::advanced::danger::wipe(name, io::get_password)?;
                     } else {
@@ -149,9 +153,9 @@ fn main() -> Result<()> {
                 }
             },
         },
-        Commands::Setting { command } => match command {
-            SettingCommands::Rename { name, new_name } => command::setting::rename(name, new_name),
-            SettingCommands::ChangePassword { name } => command::setting::change_password(
+        Command::Setting { command } => match command {
+            SettingCommand::Rename { name, new_name } => command::setting::rename(name, new_name),
+            SettingCommand::ChangePassword { name } => command::setting::change_password(
                 name,
                 io::get_password,
                 io::get_password_with_confirmation,

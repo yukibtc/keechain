@@ -2,7 +2,7 @@
 
 ## Description
 
-KeeChain is a Bitcoin CLI application to transform your old **offline** computer in a Signing Device (aka Hardware Wallet).
+KeeChain is a Bitcoin application to transform your old **offline** computer in a Signing Device (aka Hardware Wallet).
 
 ## Getting started
 

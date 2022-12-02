@@ -26,11 +26,9 @@ Follow this instructions: https://www.rust-lang.org/tools/install
 
 ## Build
 
-```
-cargo build --release
-```
+Follow instruction for your OS:
 
-When build is completed, you can find `keechain` binary in `target/release` folder.
+* [Unix](build-unix.md) 
 
 ## Usage
 
