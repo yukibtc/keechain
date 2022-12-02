@@ -112,11 +112,7 @@ fn main() -> Result<()> {
                 Ok(())
             }
         },
-        Commands::Decode { file } => {
-            let psbt = command::decode(file)?;
-            println!("{:#?}", psbt);
-            Ok(())
-        }
+        Commands::Decode { file } => command::decode(file, network)?.print(),
         Commands::Sign { name, file } => {
             if command::sign(name, io::get_password, network, file)? {
                 println!("Signed.")

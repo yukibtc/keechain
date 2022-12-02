@@ -29,6 +29,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "216261ddc8289130e551ddcd5ce8a064710c0d064a4d2895c67151c92b5443f6"
 
 [[package]]
+name = "arrayvec"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8da52d66c7071e2e3fa2a1e5c6d088fec47b593032b254f5e980de8ea54454d6"
+
+[[package]]
 name = "async-trait"
 version = "0.1.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -604,6 +610,7 @@ dependencies = [
  "dialoguer",
  "dirs",
  "env_logger",
+ "num-format",
  "prettytable-rs",
  "rand",
  "secp256k1",
@@ -679,6 +686,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc51db7b362b205941f71232e56c625156eb9a929f8cf74a428fd5bc094a4afc"
 dependencies = [
  "winapi",
+]
+
+[[package]]
+name = "num-format"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "54b862ff8df690cf089058c98b183676a7ed0f974cc08b426800093227cbff3b"
+dependencies = [
+ "arrayvec",
+ "itoa 1.0.4",
 ]
 
 [[package]]

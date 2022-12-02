@@ -7,12 +7,9 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use anyhow::{anyhow, Result};
-use bdk::database::MemoryDatabase;
+use bdk::descriptor;
 use bdk::keys::bip39::Mnemonic;
-use bdk::keys::DescriptorSecretKey;
 use bdk::miniscript::Descriptor;
-use bdk::wallet::AddressIndex;
-use bdk::{descriptor, SignOptions, Wallet};
 use bitcoin::hashes::hmac::{Hmac, HmacEngine};
 use bitcoin::hashes::{sha512, Hash, HashEngine};
 use bitcoin::psbt::PartiallySignedTransaction;
@@ -29,7 +26,7 @@ pub mod advanced;
 pub mod export;
 pub mod setting;
 
-use crate::types::{Seed, WordCount};
+use crate::types::{Psbt, Seed, WordCount};
 use crate::util::aes::Aes256Encryption;
 use crate::util::bip::bip32::ToBip32RootKey;
 use crate::util::{dir, time};
@@ -251,7 +248,7 @@ fn descriptor(
     Ok(Descriptor::from_str(&descriptor)?)
 }
 
-pub fn decode(psbt_file: PathBuf) -> Result<PartiallySignedTransaction> {
+pub fn decode(psbt_file: PathBuf, network: Network) -> Result<Psbt> {
     if !psbt_file.exists() && !psbt_file.is_file() {
         return Err(anyhow!("PSBT file not found."));
     }
@@ -261,7 +258,10 @@ pub fn decode(psbt_file: PathBuf) -> Result<PartiallySignedTransaction> {
     file.read_to_end(&mut content)?;
 
     let psbt: String = base64::encode(content);
-    Ok(PartiallySignedTransaction::from_str(&psbt)?)
+    Ok(Psbt::new(
+        PartiallySignedTransaction::from_str(&psbt)?,
+        network,
+    ))
 }
 
 pub fn sign<S, PSW>(
@@ -274,49 +274,9 @@ where
     S: Into<String>,
     PSW: FnOnce() -> Result<String>,
 {
-    let mut psbt: PartiallySignedTransaction = decode(psbt_file.clone())?;
-
+    let mut psbt: Psbt = decode(psbt_file.clone(), network)?;
     let seed: Seed = open(name, get_password)?;
-    let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
-    let secp = Secp256k1::new();
-    let root_fingerprint: Fingerprint = root.fingerprint(&secp);
-
-    let mut paths: Vec<DerivationPath> = Vec::new();
-
-    for input in psbt.inputs.iter() {
-        for (fingerprint, path) in input.bip32_derivation.values() {
-            if fingerprint.eq(&root_fingerprint) {
-                paths.push(path.clone());
-            }
-        }
-    }
-
-    if paths.is_empty() {
-        return Err(anyhow!("Nothing to sign here."));
-    }
-
-    let mut finalized: bool = false;
-
-    for path in paths.into_iter() {
-        let child_priv: ExtendedPrivKey = root.derive_priv(&secp, &path)?;
-        let desc = DescriptorSecretKey::from_str(&child_priv.to_string())?;
-        let descriptor = match path.into_iter().next() {
-            Some(ChildNumber::Hardened { index: 44 }) => descriptor!(pkh(desc))?,
-            Some(ChildNumber::Hardened { index: 49 }) => descriptor!(sh(wpkh(desc)))?,
-            Some(ChildNumber::Hardened { index: 84 }) => descriptor!(wpkh(desc))?,
-            Some(ChildNumber::Hardened { index: 86 }) => descriptor!(tr(desc))?,
-            _ => return Err(anyhow!("Unsupported derivation path")),
-        };
-
-        let wallet = Wallet::new(descriptor, None, network, MemoryDatabase::default())?;
-
-        // Required for sign
-        let _ = wallet.get_address(AddressIndex::New)?;
-
-        if wallet.sign(&mut psbt, SignOptions::default())? {
-            finalized = true;
-        }
-    }
+    let finalized: bool = psbt.sign(seed)?;
 
     if finalized {
         let mut psbt_file = psbt_file;
@@ -325,7 +285,7 @@ where
             .create_new(true)
             .write(true)
             .open(psbt_file)?;
-        file.write_all(psbt.to_string().as_bytes())?;
+        file.write_all(&psbt.as_bytes()?)?;
     }
 
     Ok(finalized)

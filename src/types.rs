@@ -5,11 +5,18 @@ use std::fmt;
 use std::str::FromStr;
 
 use anyhow::{anyhow, Result};
+use bdk::database::MemoryDatabase;
 use bdk::keys::bip39::Mnemonic;
+use bdk::keys::DescriptorSecretKey;
 use bdk::miniscript::Descriptor;
-use bitcoin::util::bip32::{ExtendedPrivKey, Fingerprint};
-use bitcoin::Network;
+use bdk::wallet::AddressIndex;
+use bdk::{descriptor, SignOptions, Wallet};
+use bitcoin::psbt::PartiallySignedTransaction;
+use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
+use bitcoin::{Address, Network, TxOut};
 use clap::ValueEnum;
+use num_format::{Locale, ToFormattedString};
+use prettytable::format::FormatBuilder;
 use prettytable::{row, Table};
 use secp256k1::Secp256k1;
 use serde::{Deserialize, Serialize};
@@ -184,6 +191,123 @@ impl Secrets {
         table.add_row(row!["Fingerprint (BIP32)", self.fingerprint]);
 
         table.printstd();
+    }
+}
+
+pub struct Psbt {
+    psbt: PartiallySignedTransaction,
+    network: Network,
+}
+
+impl Psbt {
+    pub fn new(psbt: PartiallySignedTransaction, network: Network) -> Self {
+        Self { psbt, network }
+    }
+
+    pub fn sign(&mut self, seed: Seed) -> Result<bool> {
+        let root: ExtendedPrivKey = seed.to_bip32_root_key(self.network)?;
+        let secp = Secp256k1::new();
+        let root_fingerprint: Fingerprint = root.fingerprint(&secp);
+
+        let mut paths: Vec<DerivationPath> = Vec::new();
+
+        for input in self.psbt.inputs.iter() {
+            for (fingerprint, path) in input.bip32_derivation.values() {
+                if fingerprint.eq(&root_fingerprint) {
+                    paths.push(path.clone());
+                }
+            }
+        }
+
+        if paths.is_empty() {
+            return Err(anyhow!("Nothing to sign here."));
+        }
+
+        let mut finalized: bool = false;
+
+        for path in paths.into_iter() {
+            let child_priv: ExtendedPrivKey = root.derive_priv(&secp, &path)?;
+            let desc = DescriptorSecretKey::from_str(&child_priv.to_string())?;
+            let descriptor = match path.into_iter().next() {
+                Some(ChildNumber::Hardened { index: 44 }) => descriptor!(pkh(desc))?,
+                Some(ChildNumber::Hardened { index: 49 }) => descriptor!(sh(wpkh(desc)))?,
+                Some(ChildNumber::Hardened { index: 84 }) => descriptor!(wpkh(desc))?,
+                Some(ChildNumber::Hardened { index: 86 }) => descriptor!(tr(desc))?,
+                _ => return Err(anyhow!("Unsupported derivation path")),
+            };
+
+            let wallet = Wallet::new(descriptor, None, self.network, MemoryDatabase::default())?;
+
+            // Required for sign
+            let _ = wallet.get_address(AddressIndex::New)?;
+
+            if wallet.sign(&mut self.psbt, SignOptions::default())? {
+                finalized = true;
+            }
+        }
+        Ok(finalized)
+    }
+
+    pub fn as_base64(&self) -> String {
+        self.psbt.to_string()
+    }
+
+    pub fn as_bytes(&self) -> Result<Vec<u8>> {
+        Ok(base64::decode(self.as_base64())?)
+    }
+
+    fn output_table_row(&self, output: &TxOut) -> Result<String> {
+        let mut table = Table::new();
+        let format = FormatBuilder::new()
+            .column_separator('|')
+            .padding(0, 0)
+            .build();
+        table.set_format(format);
+        table.add_row(row![
+            format!(
+                "{} ",
+                Address::from_script(&output.script_pubkey, self.network)?
+            ),
+            format!(" {} SAT", output.value.to_formatted_string(&Locale::fr))
+        ]);
+        Ok(table.to_string())
+    }
+
+    pub fn print(&self) -> Result<()> {
+        let tx = self.psbt.clone().extract_tx();
+        let inputs_len: usize = tx.input.len();
+        let outputs_len: usize = tx.output.len();
+
+        let mut table = Table::new();
+
+        table.set_titles(row![
+            format!("Inputs ({})", inputs_len),
+            format!("Outputs ({})", outputs_len)
+        ]);
+
+        if inputs_len >= outputs_len {
+            for (index, input) in tx.input.iter().enumerate() {
+                let input = format!("{}", input.previous_output);
+                if let Some(output) = tx.output.get(index) {
+                    table.add_row(row![input, self.output_table_row(output)?]);
+                } else {
+                    table.add_row(row![input, ""]);
+                }
+            }
+        } else {
+            for (index, output) in tx.output.iter().enumerate() {
+                let output = self.output_table_row(output)?;
+                if let Some(input) = tx.input.get(index) {
+                    table.add_row(row![format!("{}", input.previous_output), output]);
+                } else {
+                    table.add_row(row!["", output]);
+                }
+            }
+        }
+
+        table.printstd();
+
+        Ok(())
     }
 }
 
