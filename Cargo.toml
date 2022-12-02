@@ -10,6 +10,7 @@ license = "MIT"
 readme = "README.md"
 keywords = ["bitcoin", "signer", "psbt", "offline", "cli"]
 categories = ["command-line-utilities"]
+rust-version = "1.64"
 
 [dependencies]
 aes = "0.8.2"
