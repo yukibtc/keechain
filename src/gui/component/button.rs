@@ -3,7 +3,7 @@
 
 use eframe::egui::{self, Response, Ui, WidgetText};
 
-const BUTTON_SIZE: [f32; 2] = [180.0, 20.0];
+const BUTTON_SIZE: [f32; 2] = [180.0, 22.0];
 
 pub struct Button {
     text: WidgetText,

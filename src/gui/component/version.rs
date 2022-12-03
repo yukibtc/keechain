@@ -9,13 +9,14 @@ pub struct Version {
 
 impl Version {
     pub fn new() -> Self {
+        let mut text = format!("{} v{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+
+        if cfg!(debug_assertions) {
+            text.push_str(" (debug)");
+        }
+
         Self {
-            text: RichText::new(format!(
-                "{} v{}",
-                env!("CARGO_PKG_NAME"),
-                env!("CARGO_PKG_VERSION")
-            ))
-            .small(),
+            text: RichText::new(text).small(),
         }
     }
 
