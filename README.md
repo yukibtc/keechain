@@ -20,7 +20,7 @@ KeeChain is a Bitcoin application to transform your old **offline** computer in 
 * Seed encryption with AES-256
 * Export:
     - Descriptors
-    - Bitcoin Core descriptors (same as above but already formatted to be insered into the console using the `importdescriptors` command)
+    - Bitcoin Core descriptors (same as above but already formatted to be inserted into the console using the `importdescriptors` command)
     - Electrum JSON file (BIP44, BIP49 and BIP84)
 * Sign and decode PSBT file
 * Deterministic Entropy (BIP85)
