@@ -11,7 +11,7 @@ use egui::TextStyle::*;
 
 mod layout;
 
-use self::layout::open::OpenLayout;
+use self::layout::start::StartLayoutData;
 use crate::types::Seed;
 
 const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(320.0, 500.0);
@@ -45,15 +45,20 @@ enum Command {
 
 #[derive(Clone)]
 enum AppStage {
-    Open,
+    Start,
     Menu(Menu),
     Command(Command),
 }
 
 impl Default for AppStage {
     fn default() -> Self {
-        Self::Open
+        Self::Start
     }
+}
+
+#[derive(Clone, Default)]
+pub struct AppLayoutData {
+    start: StartLayoutData,
 }
 
 #[derive(Clone)]
@@ -61,7 +66,7 @@ pub struct AppData {
     network: Network,
     stage: AppStage,
     seed: Option<Seed>,
-    open_layout: OpenLayout,
+    layouts: AppLayoutData,
 }
 
 impl AppData {
@@ -70,7 +75,7 @@ impl AppData {
             network: *network,
             stage: AppStage::default(),
             seed: None,
-            open_layout: OpenLayout::default(),
+            layouts: AppLayoutData::default(),
         }
     }
 
@@ -97,11 +102,11 @@ impl App for AppData {
         ctx.set_style(style);
 
         CentralPanel::default().show(ctx, |ui| match &self.stage {
-            AppStage::Open => layout::open::update_layout(self, ctx),
+            AppStage::Start => layout::start::update_layout(self, ctx),
             AppStage::Menu(menu) => {
                 ui.heading("Menu");
                 if ui.button("Lock").clicked() {
-                    self.stage = AppStage::Open;
+                    self.stage = AppStage::Start;
                 }
                 if ui.button("Exit").clicked() {
                     frame.close();
