@@ -1,7 +1,7 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-pub fn bytes_to_hex_string(bytes: Vec<u8>) -> String {
+pub fn bytes_to_hex(bytes: Vec<u8>) -> String {
     let mut hash: String = String::new();
     bytes
         .into_iter()

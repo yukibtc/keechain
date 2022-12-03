@@ -21,9 +21,9 @@ use prettytable::{row, Table};
 use secp256k1::Secp256k1;
 use serde::{Deserialize, Serialize};
 
-use crate::util::aes::{self, Aes256Encryption};
-use crate::util::bip::bip32::ToBip32RootKey;
-use crate::util::{self, convert};
+use crate::core::util::aes::{self, Aes256Encryption};
+use crate::core::util::bip::bip32::ToBip32RootKey;
+use crate::core::util::{self, convert};
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Seed {
@@ -56,7 +56,7 @@ impl Seed {
     }
 
     pub fn to_hex(&self) -> String {
-        convert::bytes_to_hex_string(self.to_bytes().to_vec())
+        convert::bytes_to_hex(self.to_bytes().to_vec())
     }
 }
 
@@ -162,7 +162,7 @@ impl Secrets {
         let root_key: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
 
         Ok(Self {
-            entropy: convert::bytes_to_hex_string(mnemonic.to_entropy()),
+            entropy: convert::bytes_to_hex(mnemonic.to_entropy()),
             mnemonic,
             passphrase: seed.passphrase(),
             seed_hex: seed.to_hex(),

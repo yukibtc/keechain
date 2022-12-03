@@ -9,7 +9,7 @@ use bitcoin::hashes::{sha512, Hash, HashEngine};
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey};
 use secp256k1::Secp256k1;
 
-use crate::types::{Index, WordCount};
+use crate::core::types::{Index, WordCount};
 
 pub trait FromBip85: Sized {
     type Err;
@@ -60,7 +60,7 @@ mod tests {
     use bitcoin::Network;
 
     use super::*;
-    use crate::types::{Index, Seed, WordCount};
+    use crate::core::types::{Index, Seed, WordCount};
 
     #[test]
     fn test_bip85() {

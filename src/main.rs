@@ -10,15 +10,15 @@ use clap::Parser;
 use console::Term;
 
 mod cli;
-mod command;
+mod core;
 #[cfg(feature = "gui")]
 mod gui;
-mod types;
-mod util;
 
 use self::cli::io;
 use self::cli::{AdvancedCommand, Cli, Command, DangerCommand, ExportTypes, SettingCommand};
-use self::util::bip::bip32;
+use self::core::command;
+use self::core::util::bip::bip32;
+use self::core::util::dir;
 
 fn main() -> Result<()> {
     env_logger::init();
@@ -34,7 +34,7 @@ fn main() -> Result<()> {
             word_count,
             dice_roll,
         } => {
-            let mnemonic = command::generate(
+            let seed = command::generate(
                 name,
                 io::get_password_with_confirmation,
                 || {
@@ -59,25 +59,28 @@ fn main() -> Result<()> {
 
             println!("\n!!! WRITE DOWN YOUT SEED PHRASE !!!");
             println!("\n################################################################\n");
-            println!("{}", mnemonic);
+            println!("{}", seed.mnemonic());
             println!("\n################################################################\n");
 
             Ok(())
         }
-        Command::Restore { name } => command::restore(
-            name,
-            io::get_password_with_confirmation,
-            || Ok(Mnemonic::from_str(&io::get_input("Seed")?)?),
-            || {
-                if io::ask("Do you want to use a passphrase?")? {
-                    Ok(Some(io::get_input("Passphrase")?))
-                } else {
-                    Ok(None)
-                }
-            },
-        ),
+        Command::Restore { name } => {
+            command::restore(
+                name,
+                io::get_password_with_confirmation,
+                || Ok(Mnemonic::from_str(&io::get_input("Seed")?)?),
+                || {
+                    if io::ask("Do you want to use a passphrase?")? {
+                        Ok(Some(io::get_input("Passphrase")?))
+                    } else {
+                        Ok(None)
+                    }
+                },
+            )?;
+            Ok(())
+        }
         Command::List => {
-            let names = util::dir::get_keychains_list()?;
+            let names = dir::get_keychains_list()?;
             for (index, name) in names.iter().enumerate() {
                 println!("{}. {}", index + 1, name);
             }

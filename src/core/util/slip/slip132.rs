@@ -5,7 +5,7 @@ use anyhow::{anyhow, Result};
 use bitcoin::util::base58;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPubKey};
 
-use crate::util::convert;
+use crate::core::util::convert;
 
 pub trait ToSlip132 {
     type Err;
@@ -65,7 +65,7 @@ mod tests {
     use secp256k1::Secp256k1;
 
     use super::*;
-    use crate::types::Seed;
+    use crate::core::types::Seed;
 
     #[test]
     fn test_slip132() {

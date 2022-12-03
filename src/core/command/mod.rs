@@ -26,10 +26,10 @@ pub mod advanced;
 pub mod export;
 pub mod setting;
 
-use crate::types::{Psbt, Seed, WordCount};
-use crate::util::aes::Aes256Encryption;
-use crate::util::bip::bip32::ToBip32RootKey;
-use crate::util::{dir, time};
+use crate::core::types::{Psbt, Seed, WordCount};
+use crate::core::util::aes::Aes256Encryption;
+use crate::core::util::bip::bip32::ToBip32RootKey;
+use crate::core::util::{dir, time};
 
 fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
     let mut h = HmacEngine::<sha512::Hash>::new(b"keechain-entropy");
@@ -106,7 +106,7 @@ pub fn generate<S, PSW, P, E>(
     get_passphrase: P,
     word_count: WordCount,
     get_custom_entropy: E,
-) -> Result<Mnemonic>
+) -> Result<Seed>
 where
     S: Into<String>,
     PSW: FnOnce() -> Result<String>,
@@ -137,7 +137,7 @@ where
         .open(keychain_file)?;
     file.write_all(&seed.encrypt(password)?)?;
 
-    Ok(seed.mnemonic())
+    Ok(seed)
 }
 
 pub fn restore<S, PSW, M, P>(
@@ -145,7 +145,7 @@ pub fn restore<S, PSW, M, P>(
     get_password: PSW,
     get_mnemonic: M,
     get_passphrase: P,
-) -> Result<()>
+) -> Result<Seed>
 where
     S: Into<String>,
     PSW: FnOnce() -> Result<String>,
@@ -174,7 +174,7 @@ where
         .open(keychain_file)?;
     file.write_all(&seed.encrypt(password)?)?;
 
-    Ok(())
+    Ok(seed)
 }
 
 pub fn open<S, PSW>(name: S, get_password: PSW) -> Result<Seed>

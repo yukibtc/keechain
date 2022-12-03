@@ -9,7 +9,7 @@ use clap::{Parser, Subcommand};
 pub mod io;
 
 use crate::command::export::ElectrumExportSupportedScripts;
-use crate::types::{Index, WordCount};
+use crate::core::types::{Index, WordCount};
 
 #[derive(Debug, Parser)]
 #[command(name = "keechain")]

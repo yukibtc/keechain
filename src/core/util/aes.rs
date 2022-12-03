@@ -76,8 +76,8 @@ mod tests {
     use bdk::keys::bip39::Mnemonic;
 
     use super::*;
-    use crate::types::Seed;
-    use crate::util;
+    use crate::core::types::Seed;
+    use crate::core::util;
 
     #[test]
     fn test_encryption_decryption() {
