@@ -9,9 +9,11 @@ use eframe::epaint::{FontId, Vec2};
 use eframe::{App, Frame, NativeOptions};
 use egui::TextStyle::*;
 
+mod component;
 mod layout;
 
-use self::layout::start::StartLayoutData;
+use self::component::Button;
+use self::layout::StartLayoutData;
 use crate::types::Seed;
 
 const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(320.0, 500.0);
@@ -19,19 +21,18 @@ const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(320.0, 500.0);
 pub fn launch(network: Network) -> Result<()> {
     let options = NativeOptions {
         fullscreen: false,
+        resizable: false,
         initial_window_size: Some(MIN_WINDOWS_SIZE),
         min_window_size: Some(MIN_WINDOWS_SIZE),
         ..Default::default()
     };
-
     let app = AppData::new(&network);
-
     eframe::run_native("KeeChain", options, Box::new(|_cc| Box::new(app)));
     Ok(())
 }
 
 #[derive(Clone)]
-enum Menu {
+pub enum Menu {
     Main,
     Advanced,
     Setting,
@@ -39,13 +40,15 @@ enum Menu {
 }
 
 #[derive(Clone)]
-enum Command {
+pub enum Command {
     Sign,
 }
 
 #[derive(Clone)]
-enum AppStage {
+pub enum AppStage {
     Start,
+    NewKeychain,
+    RestoreKeychain,
     Menu(Menu),
     Command(Command),
 }
@@ -103,16 +106,10 @@ impl App for AppData {
 
         CentralPanel::default().show(ctx, |ui| match &self.stage {
             AppStage::Start => layout::start::update_layout(self, ctx),
-            AppStage::Menu(menu) => {
-                ui.heading("Menu");
-                if ui.button("Lock").clicked() {
-                    self.stage = AppStage::Start;
-                }
-                if ui.button("Exit").clicked() {
-                    frame.close();
-                }
-            }
-            AppStage::Command(command) => {}
+            AppStage::NewKeychain => todo!(),
+            AppStage::RestoreKeychain => todo!(),
+            AppStage::Menu(menu) => layout::menu::update_layout(self, menu.clone(), ctx, frame),
+            AppStage::Command(_command) => {}
         });
     }
 }

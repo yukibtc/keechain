@@ -1,12 +1,11 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use eframe::egui::{
-    Align, Button, CentralPanel, ComboBox, Context, Key, Layout, RichText, TextEdit,
-};
+use eframe::egui::{Align, CentralPanel, ComboBox, Context, Key, Layout, RichText, TextEdit};
 use eframe::epaint::Color32;
 
 use crate::command;
+use crate::gui::component::{Button, Heading, Version};
 use crate::gui::{AppData, AppStage, Menu};
 use crate::util::dir;
 
@@ -28,7 +27,7 @@ impl StartLayoutData {
 pub fn update_layout(app: &mut AppData, ctx: &Context) {
     CentralPanel::default().show(ctx, |ui| {
         ui.with_layout(Layout::top_down(Align::Center), |ui| {
-            ui.heading("Open keychain");
+            Heading::new("Open keychain").render(ui);
 
             ui.add_space(15.0);
 
@@ -70,9 +69,21 @@ pub fn update_layout(app: &mut AppData, ctx: &Context) {
 
             let is_ready: bool =
                 !app.layouts.start.name.is_empty() && !app.layouts.start.password.is_empty();
-            let mut button = ui.add_enabled(is_ready, Button::new("Unlock"));
-            button.rect.min.x = 100.0;
-            button.rect.max.x = 100.0;
+            let button = Button::new("Unlock").enabled(is_ready).render(ui);
+
+            ui.add_space(10.0);
+            ui.separator();
+            ui.add_space(10.0);
+
+            if Button::new("New keychain").render(ui).clicked() {
+                app.set_stage(AppStage::NewKeychain);
+            }
+
+            ui.add_space(5.0);
+
+            if Button::new("Restore keychain").render(ui).clicked() {
+                app.set_stage(AppStage::RestoreKeychain);
+            }
 
             if is_ready && (ui.input().key_pressed(Key::Enter) || button.clicked()) {
                 match command::open(app.layouts.start.name.clone(), || {
@@ -86,6 +97,10 @@ pub fn update_layout(app: &mut AppData, ctx: &Context) {
                     Err(e) => app.layouts.start.error = Some(e.to_string()),
                 }
             }
+        });
+
+        ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
+            Version::new().render(ui)
         });
     });
 }
