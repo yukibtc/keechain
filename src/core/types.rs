@@ -21,7 +21,7 @@ use prettytable::{row, Table};
 use secp256k1::Secp256k1;
 use serde::{Deserialize, Serialize};
 
-use crate::core::util::aes::{self, Aes256Encryption};
+use crate::core::crypto::aes::{self, Aes256Encryption};
 use crate::core::util::bip::bip32::ToBip32RootKey;
 use crate::core::util::{self, convert};
 

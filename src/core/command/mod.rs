@@ -26,8 +26,8 @@ pub mod advanced;
 pub mod export;
 pub mod setting;
 
+use crate::core::crypto::aes::Aes256Encryption;
 use crate::core::types::{Psbt, Seed, WordCount};
-use crate::core::util::aes::Aes256Encryption;
 use crate::core::util::bip::bip32::ToBip32RootKey;
 use crate::core::util::{dir, time};
 

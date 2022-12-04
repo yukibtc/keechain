@@ -5,11 +5,9 @@ use anyhow::{anyhow, Result};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
-pub mod aes;
 pub mod bip;
 pub mod convert;
 pub mod dir;
-pub mod hash;
 pub mod slip;
 pub mod time;
 

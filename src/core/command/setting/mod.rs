@@ -6,8 +6,8 @@ use std::fs::{self, File};
 use std::io::Write;
 
 use crate::command::open;
+use crate::core::crypto::aes::Aes256Encryption;
 use crate::core::types::Seed;
-use crate::core::util::aes::Aes256Encryption;
 use crate::core::util::dir;
 
 pub fn rename<S>(name: S, new_name: S) -> Result<()>
