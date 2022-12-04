@@ -20,6 +20,14 @@ pub fn update_layout(app: &mut AppData, menu: Menu, ctx: &Context, frame: &mut F
 
             match menu {
                 Menu::Main => {
+                    if Button::new("Advanced").render(ui).clicked() {
+                        app.stage = AppStage::Menu(Menu::Advanced);
+                    }
+                    ui.add_space(5.0);
+                    if Button::new("Setting").render(ui).clicked() {
+                        app.stage = AppStage::Menu(Menu::Setting);
+                    }
+                    ui.add_space(5.0);
                     if Button::new("Lock").render(ui).clicked() {
                         app.stage = AppStage::Start;
                     }
@@ -28,9 +36,25 @@ pub fn update_layout(app: &mut AppData, menu: Menu, ctx: &Context, frame: &mut F
                         frame.close();
                     }
                 }
-                Menu::Advanced => todo!(),
-                Menu::Setting => todo!(),
-                Menu::Danger => todo!(),
+                Menu::Advanced => {
+                    if Button::new("Danger").render(ui).clicked() {
+                        app.stage = AppStage::Menu(Menu::Danger);
+                    }
+                    ui.add_space(5.0);
+                    if Button::new("Back").render(ui).clicked() {
+                        app.stage = AppStage::Menu(Menu::Main);
+                    }
+                }
+                Menu::Setting => {
+                    if Button::new("Back").render(ui).clicked() {
+                        app.stage = AppStage::Menu(Menu::Main);
+                    }
+                }
+                Menu::Danger => {
+                    if Button::new("Back").render(ui).clicked() {
+                        app.stage = AppStage::Menu(Menu::Advanced);
+                    }
+                }
             }
         });
 

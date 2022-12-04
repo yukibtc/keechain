@@ -5,9 +5,9 @@ use eframe::egui::{Align, CentralPanel, ComboBox, Context, Key, Layout, RichText
 use eframe::epaint::Color32;
 
 use crate::command;
-use crate::gui::component::{Button, Heading, Version};
+use crate::core::util::dir;
+use crate::gui::component::{Button, Heading, InputField, Version};
 use crate::gui::{AppData, AppStage, Menu};
-use crate::util::dir;
 
 #[derive(Clone, Default)]
 pub struct StartLayoutData {
@@ -31,57 +31,61 @@ pub fn update_layout(app: &mut AppData, ctx: &Context) {
 
             ui.add_space(15.0);
 
-            ui.horizontal(|ui| {
+            ui.with_layout(Layout::top_down(Align::Min), |ui| {
+                ui.add_space(1.0);
                 ui.label("Keychain");
-                ComboBox::from_id_source("name")
-                    .width(ui.available_width() - 10.0)
-                    .selected_text(if app.layouts.start.name.is_empty() {
-                        "Select keychain"
-                    } else {
-                        app.layouts.start.name.as_str()
-                    })
-                    .show_ui(ui, |ui| {
-                        if let Ok(list) = dir::get_keychains_list() {
-                            for value in list.into_iter() {
-                                ui.selectable_value(
-                                    &mut app.layouts.start.name,
-                                    value.clone(),
-                                    value.as_str(),
-                                );
+                ui.horizontal_wrapped(|ui| {
+                    ComboBox::from_id_source("name")
+                        .width(ui.available_width() - 10.0)
+                        .selected_text(if app.layouts.start.name.is_empty() {
+                            "Select keychain"
+                        } else {
+                            app.layouts.start.name.as_str()
+                        })
+                        .show_ui(ui, |ui| {
+                            if let Ok(list) = dir::get_keychains_list() {
+                                for value in list.into_iter() {
+                                    ui.selectable_value(
+                                        &mut app.layouts.start.name,
+                                        value.clone(),
+                                        value.as_str(),
+                                    );
+                                }
                             }
-                        }
-                    });
+                        });
+                })
             });
 
             ui.add_space(7.0);
-            ui.horizontal(|ui| {
-                ui.label("Password");
-                ui.add_sized(
-                    [ui.available_width(), 18.0],
-                    TextEdit::singleline(&mut app.layouts.start.password).password(true),
-                );
-            });
+
+            InputField::new("Password").render(
+                ui,
+                TextEdit::singleline(&mut app.layouts.start.password).password(true),
+            );
+
             ui.add_space(7.0);
+
             if let Some(error) = &app.layouts.start.error {
                 ui.label(RichText::new(error).color(Color32::RED));
             }
-            ui.add_space(10.0);
+
+            ui.add_space(25.0);
 
             let is_ready: bool =
                 !app.layouts.start.name.is_empty() && !app.layouts.start.password.is_empty();
-            let button = Button::new("Unlock").enabled(is_ready).render(ui);
+            let button = Button::new("Open").enabled(is_ready).render(ui);
 
             ui.add_space(10.0);
             ui.separator();
             ui.add_space(10.0);
 
-            if Button::new("New keychain").render(ui).clicked() {
+            if Button::new("New").render(ui).clicked() {
                 app.set_stage(AppStage::NewKeychain);
             }
 
             ui.add_space(5.0);
 
-            if Button::new("Restore keychain").render(ui).clicked() {
+            if Button::new("Restore").render(ui).clicked() {
                 app.set_stage(AppStage::RestoreKeychain);
             }
 

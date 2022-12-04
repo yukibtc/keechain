@@ -3,7 +3,7 @@
 
 use anyhow::Result;
 use bitcoin::Network;
-use eframe::egui::{self, CentralPanel, Context};
+use eframe::egui::{self, Context};
 use eframe::epaint::FontFamily::Proportional;
 use eframe::epaint::{FontId, Vec2};
 use eframe::{App, Frame, NativeOptions};
@@ -12,22 +12,29 @@ use egui::TextStyle::*;
 mod component;
 mod layout;
 
-use self::component::Button;
-use self::layout::StartLayoutData;
-use crate::types::Seed;
+use self::layout::{RestoreLayoutData, StartLayoutData};
+use crate::core::types::Seed;
 
-const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(320.0, 500.0);
+const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 530.0);
 
 pub fn launch(network: Network) -> Result<()> {
     let options = NativeOptions {
         fullscreen: false,
-        resizable: false,
+        resizable: true,
         initial_window_size: Some(MIN_WINDOWS_SIZE),
         min_window_size: Some(MIN_WINDOWS_SIZE),
         ..Default::default()
     };
     let app = AppData::new(&network);
-    eframe::run_native("KeeChain", options, Box::new(|_cc| Box::new(app)));
+    let app_name = format!(
+        "KeeChain{}",
+        if network.ne(&Network::Bitcoin) {
+            format!(" [{}]", network)
+        } else {
+            String::new()
+        }
+    );
+    eframe::run_native(&app_name, options, Box::new(|_cc| Box::new(app)));
     Ok(())
 }
 
@@ -62,6 +69,7 @@ impl Default for AppStage {
 #[derive(Clone, Default)]
 pub struct AppLayoutData {
     start: StartLayoutData,
+    restore: RestoreLayoutData,
 }
 
 #[derive(Clone)]
@@ -104,12 +112,12 @@ impl App for AppData {
         .into();
         ctx.set_style(style);
 
-        CentralPanel::default().show(ctx, |ui| match &self.stage {
+        match &self.stage {
             AppStage::Start => layout::start::update_layout(self, ctx),
             AppStage::NewKeychain => todo!(),
-            AppStage::RestoreKeychain => todo!(),
+            AppStage::RestoreKeychain => layout::restore::update_layout(self, ctx),
             AppStage::Menu(menu) => layout::menu::update_layout(self, menu.clone(), ctx, frame),
             AppStage::Command(_command) => {}
-        });
+        }
     }
 }
