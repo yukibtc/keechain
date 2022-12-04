@@ -18,7 +18,9 @@ use bitcoin::util::bip32::{
 };
 use bitcoin::Network;
 use rand::rngs::OsRng;
-use rand::RngCore;
+use rand::{RngCore, SeedableRng};
+use rand_chacha::ChaCha20Rng;
+use rand_hc::Hc128Rng;
 use secp256k1::Secp256k1;
 use sysinfo::{System, SystemExt};
 
@@ -34,10 +36,20 @@ use crate::core::util::{dir, time};
 fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
     let mut h = HmacEngine::<sha512::Hash>::new(b"keechain-entropy");
 
-    // OS Random
+    // TRNG & CSPRNG
     let mut os_random = [0u8; 32];
     OsRng.fill_bytes(&mut os_random);
     h.input(&os_random);
+
+    let mut hc = Hc128Rng::from_entropy();
+    let mut hc_random = [0u8; 32];
+    hc.fill_bytes(&mut hc_random);
+    h.input(&hc_random);
+
+    let mut chacha = ChaCha20Rng::from_entropy();
+    let mut chacha_random = [0u8; 32];
+    chacha.fill_bytes(&mut chacha_random);
+    h.input(&chacha_random);
 
     if System::IS_SUPPORTED {
         let system_info: System = System::new_all();
@@ -85,8 +97,7 @@ fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
 
         h.input(&static_events);
     } else {
-        println!("Impossible to fetch entropy from dynamic and static events: using only OS random and timestamp!");
-        println!("For a better entropy use another OS or dice roll generation");
+        log::warn!("impossible to fetch entropy from dynamic and static events");
         h.input(&time::timestamp_nanos().to_be_bytes());
     }
 

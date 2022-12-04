@@ -2,7 +2,7 @@
 
 ## Description
 
-KeeChain is a Bitcoin application to transform your old **offline** computer in a Signing Device (aka Hardware Wallet).
+KeeChain is a Bitcoin application to transform your **offline** computer in an AirGap Signing Device (aka Hardware Wallet).
 
 ## Getting started
 
@@ -12,7 +12,8 @@ KeeChain is a Bitcoin application to transform your old **offline** computer in 
 ## Features
 
 * Generate BIP39 seed phrase using many sources of entropy:
-    - OS source: random bytes provided by OS
+    - True random number generator (TRNG)
+    - Cryptographically secure pseudo-random number generator (CSPRNG)
     - Dynamic events: timestamp, boot time, total and free memory, total and free SWAP, OS processes and load average
     - Static events: hostname, OS and kernel version, global CPU info and device users
     - Optional: dice roll 🎲
