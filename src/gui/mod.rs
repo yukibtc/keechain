@@ -11,6 +11,7 @@ use egui::TextStyle::*;
 
 mod component;
 mod layout;
+mod theme;
 
 use self::layout::{RestoreLayoutData, StartLayoutData};
 use crate::core::types::Seed;
@@ -47,17 +48,11 @@ pub enum Menu {
 }
 
 #[derive(Clone)]
-pub enum Command {
-    Sign,
-}
-
-#[derive(Clone)]
 pub enum AppStage {
     Start,
     NewKeychain,
     RestoreKeychain,
     Menu(Menu),
-    Command(Command),
 }
 
 impl Default for AppStage {
@@ -72,6 +67,7 @@ pub struct AppLayoutData {
     restore: RestoreLayoutData,
 }
 
+#[allow(dead_code)]
 #[derive(Clone)]
 pub struct AppData {
     network: Network,
@@ -105,7 +101,7 @@ impl App for AppData {
         style.text_styles = [
             (Heading, FontId::new(28.0, Proportional)),
             (Body, FontId::new(18.0, Proportional)),
-            (Monospace, FontId::new(14.0, Proportional)),
+            (Monospace, FontId::new(18.0, Proportional)),
             (Button, FontId::new(18.0, Proportional)),
             (Small, FontId::new(14.0, Proportional)),
         ]
@@ -117,7 +113,6 @@ impl App for AppData {
             AppStage::NewKeychain => todo!(),
             AppStage::RestoreKeychain => layout::restore::update_layout(self, ctx),
             AppStage::Menu(menu) => layout::menu::update_layout(self, menu.clone(), ctx, frame),
-            AppStage::Command(_command) => {}
         }
     }
 }

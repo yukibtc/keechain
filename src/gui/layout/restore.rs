@@ -9,6 +9,7 @@ use eframe::epaint::Color32;
 
 use crate::command;
 use crate::gui::component::{Button, Heading, InputField, Version};
+use crate::gui::theme::color::BITCOIN_ORANGE;
 use crate::gui::{AppData, AppStage, Menu};
 
 #[derive(Clone, Default)]
@@ -42,28 +43,37 @@ pub fn update_layout(app: &mut AppData, ctx: &Context) {
 
                 ui.add_space(15.0);
 
-                InputField::new("Name")
-                    .render(ui, TextEdit::singleline(&mut app.layouts.restore.name));
+                InputField::new("Name").render(
+                    ui,
+                    TextEdit::singleline(&mut app.layouts.restore.name)
+                        .hint_text("Name of keychain"),
+                );
 
                 ui.add_space(7.0);
 
                 InputField::new("Password").render(
                     ui,
-                    TextEdit::singleline(&mut app.layouts.restore.password).password(true),
+                    TextEdit::singleline(&mut app.layouts.restore.password)
+                        .hint_text("Password")
+                        .password(true),
                 );
 
                 ui.add_space(7.0);
 
                 InputField::new("Confirm password").render(
                     ui,
-                    TextEdit::singleline(&mut app.layouts.restore.confirm_password).password(true),
+                    TextEdit::singleline(&mut app.layouts.restore.confirm_password)
+                        .hint_text("Confirm password")
+                        .password(true),
                 );
 
                 ui.add_space(7.0);
 
                 InputField::new("Mnemonic (BIP39)").render(
                     ui,
-                    TextEdit::multiline(&mut app.layouts.restore.mnemonic).desired_rows(5),
+                    TextEdit::multiline(&mut app.layouts.restore.mnemonic)
+                        .hint_text("Mnemonic")
+                        .desired_rows(5),
                 );
 
                 ui.add_space(7.0);
@@ -74,7 +84,7 @@ pub fn update_layout(app: &mut AppData, ctx: &Context) {
                     }
                     if let Some(passphrase) = app.layouts.restore.passphrase.as_mut() {
                         InputField::new("Passphrase (optional)")
-                            .render(ui, TextEdit::singleline(passphrase));
+                            .render(ui, TextEdit::singleline(passphrase).hint_text("Passphrase"));
                     }
                 } else {
                     app.layouts.restore.passphrase = None;
@@ -99,7 +109,10 @@ pub fn update_layout(app: &mut AppData, ctx: &Context) {
                     && !app.layouts.restore.confirm_password.is_empty()
                     && !app.layouts.restore.mnemonic.is_empty();
 
-                let button = Button::new("Restore").enabled(is_ready).render(ui);
+                let button = Button::new("Restore")
+                    .background_color(BITCOIN_ORANGE)
+                    .enabled(is_ready)
+                    .render(ui);
 
                 ui.add_space(5.0);
 

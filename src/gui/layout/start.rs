@@ -7,6 +7,7 @@ use eframe::epaint::Color32;
 use crate::command;
 use crate::core::util::dir;
 use crate::gui::component::{Button, Heading, InputField, Version};
+use crate::gui::theme::color::BITCOIN_ORANGE;
 use crate::gui::{AppData, AppStage, Menu};
 
 #[derive(Clone, Default)]
@@ -60,7 +61,9 @@ pub fn update_layout(app: &mut AppData, ctx: &Context) {
 
             InputField::new("Password").render(
                 ui,
-                TextEdit::singleline(&mut app.layouts.start.password).password(true),
+                TextEdit::singleline(&mut app.layouts.start.password)
+                    .hint_text("Password")
+                    .password(true),
             );
 
             ui.add_space(7.0);
@@ -73,13 +76,16 @@ pub fn update_layout(app: &mut AppData, ctx: &Context) {
 
             let is_ready: bool =
                 !app.layouts.start.name.is_empty() && !app.layouts.start.password.is_empty();
-            let button = Button::new("Open").enabled(is_ready).render(ui);
+            let button = Button::new("Open")
+                .background_color(BITCOIN_ORANGE)
+                .enabled(is_ready)
+                .render(ui);
 
             ui.add_space(10.0);
             ui.separator();
             ui.add_space(10.0);
 
-            if Button::new("New").render(ui).clicked() {
+            if Button::new("Create a new keychain").render(ui).clicked() {
                 app.set_stage(AppStage::NewKeychain);
             }
 
