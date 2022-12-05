@@ -3,11 +3,11 @@
 
 use anyhow::Result;
 use bitcoin::Network;
-use eframe::egui::{self, Context};
+use eframe::egui::{self, CentralPanel, Context};
 use eframe::epaint::FontFamily::Proportional;
 use eframe::epaint::{FontId, Vec2};
 use eframe::{App, Frame, NativeOptions};
-use egui::TextStyle::*;
+use egui::TextStyle::{Body, Button, Heading, Small};
 
 mod component;
 mod layout;
@@ -17,6 +17,7 @@ use self::layout::{RestoreLayoutData, StartLayoutData};
 use crate::core::types::Seed;
 
 const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 530.0);
+const GENERIC_FONT_HEIGHT: f32 = 18.0;
 
 pub fn launch(network: Network) -> Result<()> {
     let options = NativeOptions {
@@ -100,19 +101,18 @@ impl App for AppData {
         let mut style = (*ctx.style()).clone();
         style.text_styles = [
             (Heading, FontId::new(28.0, Proportional)),
-            (Body, FontId::new(18.0, Proportional)),
-            (Monospace, FontId::new(18.0, Proportional)),
-            (Button, FontId::new(18.0, Proportional)),
+            (Body, FontId::new(GENERIC_FONT_HEIGHT, Proportional)),
+            (Button, FontId::new(GENERIC_FONT_HEIGHT, Proportional)),
             (Small, FontId::new(14.0, Proportional)),
         ]
         .into();
         ctx.set_style(style);
 
-        match &self.stage {
-            AppStage::Start => layout::start::update_layout(self, ctx),
+        CentralPanel::default().show(ctx, |ui| match &self.stage {
+            AppStage::Start => layout::start::update_layout(self, ui),
             AppStage::NewKeychain => todo!(),
-            AppStage::RestoreKeychain => layout::restore::update_layout(self, ctx),
-            AppStage::Menu(menu) => layout::menu::update_layout(self, menu.clone(), ctx, frame),
-        }
+            AppStage::RestoreKeychain => layout::restore::update_layout(self, ui),
+            AppStage::Menu(menu) => layout::menu::update_layout(self, menu.clone(), ui, frame),
+        });
     }
 }

@@ -1,24 +1,24 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use eframe::egui::{self, Response, Ui, WidgetText};
-use eframe::epaint::Color32;
+use eframe::egui::{self, Response, RichText, Ui};
+use eframe::epaint::{Color32, Vec2};
 
 use crate::gui::theme::color::{DARK_GRAY, WHITE};
 
-const BUTTON_SIZE: [f32; 2] = [200.0, 22.0];
+const BUTTON_SIZE: Vec2 = egui::vec2(210.0, 28.0);
 
 pub struct Button {
-    text: WidgetText,
+    text: String,
     text_color: Color32,
     background_color: Color32,
     enabled: bool,
 }
 
 impl Button {
-    pub fn new<T>(text: T) -> Self
+    pub fn new<S>(text: S) -> Self
     where
-        T: Into<WidgetText>,
+        S: Into<String>,
     {
         Self {
             text: text.into(),
@@ -49,9 +49,10 @@ impl Button {
 
     pub fn render(self, ui: &mut Ui) -> Response {
         ui.add_enabled_ui(self.enabled, |ui| {
+            let text = RichText::new(self.text).color(self.text_color);
             ui.add_sized(
                 BUTTON_SIZE,
-                egui::Button::new(self.text.color(self.text_color)).fill(self.background_color),
+                egui::Button::new(text).fill(self.background_color),
             )
         })
         .inner
