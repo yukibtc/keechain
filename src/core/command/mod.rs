@@ -13,15 +13,12 @@ use bdk::miniscript::Descriptor;
 use bitcoin::hashes::hmac::{Hmac, HmacEngine};
 use bitcoin::hashes::{sha512, Hash, HashEngine};
 use bitcoin::psbt::PartiallySignedTransaction;
-use bitcoin::util::bip32::{
-    ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
-};
+use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPubKey, Fingerprint};
 use bitcoin::Network;
 use rand::rngs::OsRng;
 use rand::{RngCore, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 use rand_hc::Hc128Rng;
-use secp256k1::Secp256k1;
 use sysinfo::{System, SystemExt};
 
 pub mod advanced;
@@ -30,7 +27,7 @@ pub mod setting;
 
 use crate::core::crypto::aes::Aes256Encryption;
 use crate::core::types::{Psbt, Seed, WordCount};
-use crate::core::util::bip::bip32::ToBip32RootKey;
+use crate::core::util::bip::bip32::Bip32RootKey;
 use crate::core::util::{dir, time};
 
 fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
@@ -308,7 +305,5 @@ where
     PSW: FnOnce() -> Result<String>,
 {
     let seed: Seed = open(name, get_password)?;
-    let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
-    let secp = Secp256k1::new();
-    Ok(root.fingerprint(&secp))
+    seed.fingerprint(network)
 }

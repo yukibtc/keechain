@@ -11,7 +11,7 @@ pub mod danger;
 
 use crate::command::open;
 use crate::core::types::{Index, Seed, WordCount};
-use crate::core::util::bip::bip32::ToBip32RootKey;
+use crate::core::util::bip::bip32::Bip32RootKey;
 use crate::core::util::bip::bip85::FromBip85;
 
 pub fn derive<S, PSW>(

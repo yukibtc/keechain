@@ -16,7 +16,7 @@ use serde_json::{json, Value};
 
 use super::{descriptor, open};
 use crate::core::types::{Descriptors, Seed};
-use crate::core::util::bip::bip32::{self, ToBip32RootKey};
+use crate::core::util::bip::bip32::{self, Bip32RootKey};
 use crate::core::util::dir;
 use crate::core::util::slip::slip132::ToSlip132;
 

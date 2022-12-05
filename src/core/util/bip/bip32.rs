@@ -2,12 +2,13 @@
 // Distributed under the MIT software license
 
 use anyhow::Result;
-use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey};
+use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
 use bitcoin::Network;
 
-pub trait ToBip32RootKey {
+pub trait Bip32RootKey {
     type Err;
     fn to_bip32_root_key(&self, network: Network) -> Result<ExtendedPrivKey, Self::Err>;
+    fn fingerprint(&self, network: Network) -> Result<Fingerprint, Self::Err>;
 }
 
 pub fn account_extended_path(

@@ -22,7 +22,7 @@ use secp256k1::Secp256k1;
 use serde::{Deserialize, Serialize};
 
 use crate::core::crypto::aes::{self, Aes256Encryption};
-use crate::core::util::bip::bip32::ToBip32RootKey;
+use crate::core::util::bip::bip32::Bip32RootKey;
 use crate::core::util::{self, convert};
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -60,10 +60,16 @@ impl Seed {
     }
 }
 
-impl ToBip32RootKey for Seed {
+impl Bip32RootKey for Seed {
     type Err = anyhow::Error;
     fn to_bip32_root_key(&self, network: Network) -> Result<ExtendedPrivKey, Self::Err> {
         Ok(ExtendedPrivKey::new_master(network, &self.to_bytes())?)
+    }
+
+    fn fingerprint(&self, network: Network) -> Result<Fingerprint, Self::Err> {
+        let root: ExtendedPrivKey = self.to_bip32_root_key(network)?;
+        let secp = Secp256k1::new();
+        Ok(root.fingerprint(&secp))
     }
 }
 
@@ -268,7 +274,7 @@ impl Psbt {
                 "{} ",
                 Address::from_script(&output.script_pubkey, self.network)?
             ),
-            format!(" {} SAT", output.value.to_formatted_string(&Locale::fr))
+            format!(" {} sat", output.value.to_formatted_string(&Locale::fr))
         ]);
         Ok(table.to_string())
     }
