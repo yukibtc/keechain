@@ -23,7 +23,7 @@ pub fn update_layout(app: &mut AppData, menu: Menu, ui: &mut Ui, frame: &mut Fra
         match menu {
             Menu::Main => {
                 if Button::new("Sign").render(ui).clicked() {
-                    todo!()
+                    app.set_stage(AppStage::Sign);
                 }
                 ui.add_space(5.0);
                 if Button::new("Export").render(ui).clicked() {

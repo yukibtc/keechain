@@ -95,7 +95,7 @@ pub fn update_layout(app: &mut AppData, ui: &mut Ui) {
                 ui.label(RichText::new(error).color(Color32::RED));
             }
 
-            ui.add_space(10.0);
+            ui.add_space(15.0);
 
             let is_ready: bool = !app.layouts.restore.name.is_empty()
                 && !app.layouts.restore.password.is_empty()

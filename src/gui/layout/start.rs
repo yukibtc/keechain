@@ -30,8 +30,7 @@ impl Default for StartLayoutData {
             password: String::new(),
             error: None,
             logo: Arc::new(
-                RetainedImage::from_image_bytes("logo.png", LOGO)
-                    .expect("Impossible to load logo"),
+                RetainedImage::from_image_bytes("logo.png", LOGO).expect("Impossible to load logo"),
             ),
         }
     }

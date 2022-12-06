@@ -6,13 +6,14 @@ use bitcoin::Network;
 use eframe::egui::{self, CentralPanel, Context};
 use eframe::epaint::FontFamily::Proportional;
 use eframe::epaint::{FontId, Vec2};
-use eframe::{App, Frame, NativeOptions};
-use egui::TextStyle::{Body, Button, Heading, Small};
+use eframe::{App, Frame, NativeOptions, Theme};
+use egui::TextStyle::{Body, Button, Heading, Monospace, Small};
 
 mod component;
 mod layout;
 mod theme;
 
+use self::layout::sign::SignLayoutData;
 use self::layout::{RestoreLayoutData, StartLayoutData};
 use crate::core::types::Seed;
 
@@ -23,8 +24,12 @@ pub fn launch(network: Network) -> Result<()> {
     let options = NativeOptions {
         fullscreen: false,
         resizable: true,
+        always_on_top: true,
+        default_theme: Theme::Dark,
+        follow_system_theme: false,
         initial_window_size: Some(MIN_WINDOWS_SIZE),
         min_window_size: Some(MIN_WINDOWS_SIZE),
+        drag_and_drop_support: false,
         ..Default::default()
     };
     let app = AppData::new(&network);
@@ -54,6 +59,7 @@ pub enum AppStage {
     NewKeychain,
     RestoreKeychain,
     Menu(Menu),
+    Sign,
 }
 
 impl Default for AppStage {
@@ -66,9 +72,9 @@ impl Default for AppStage {
 pub struct AppLayoutData {
     start: StartLayoutData,
     restore: RestoreLayoutData,
+    sign: SignLayoutData,
 }
 
-#[allow(dead_code)]
 #[derive(Clone)]
 pub struct AppData {
     network: Network,
@@ -102,6 +108,7 @@ impl App for AppData {
         style.text_styles = [
             (Heading, FontId::new(28.0, Proportional)),
             (Body, FontId::new(GENERIC_FONT_HEIGHT, Proportional)),
+            (Monospace, FontId::new(GENERIC_FONT_HEIGHT, Proportional)),
             (Button, FontId::new(GENERIC_FONT_HEIGHT, Proportional)),
             (Small, FontId::new(14.0, Proportional)),
         ]
@@ -113,6 +120,7 @@ impl App for AppData {
             AppStage::NewKeychain => todo!(),
             AppStage::RestoreKeychain => layout::restore::update_layout(self, ui),
             AppStage::Menu(menu) => layout::menu::update_layout(self, menu.clone(), ui, frame),
+            AppStage::Sign => layout::sign::update_layout(self, ui),
         });
     }
 }

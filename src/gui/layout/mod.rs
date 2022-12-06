@@ -3,6 +3,7 @@
 
 pub mod menu;
 pub mod restore;
+pub mod sign;
 pub mod start;
 
 pub use self::restore::RestoreLayoutData;

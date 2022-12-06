@@ -49,5 +49,5 @@ sudo dnf group install "C Development Tools and Libraries" "Development Tools"
 GUI dependencies:
 
 ```
-sudo dnf install dnf install clang clang-devel clang-tools-extra speech-dispatcher-devel libxkbcommon-devel pkg-config openssl-devel libxcb-devel
+sudo dnf install dnf install clang clang-devel clang-tools-extra speech-dispatcher-devel libxkbcommon-devel pkg-config openssl-devel libxcb-devel gtk3-devel
 ```
