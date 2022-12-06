@@ -12,7 +12,6 @@ use bdk::keys::bip39::Mnemonic;
 use bdk::miniscript::Descriptor;
 use bitcoin::hashes::hmac::{Hmac, HmacEngine};
 use bitcoin::hashes::{sha512, Hash, HashEngine};
-use bitcoin::psbt::PartiallySignedTransaction;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPubKey, Fingerprint};
 use bitcoin::Network;
 use rand::rngs::OsRng;
@@ -23,10 +22,11 @@ use sysinfo::{System, SystemExt};
 
 pub mod advanced;
 pub mod export;
+pub mod psbt;
 pub mod setting;
 
 use crate::core::crypto::aes::Aes256Encryption;
-use crate::core::types::{Psbt, Seed, WordCount};
+use crate::core::types::{Seed, WordCount};
 use crate::core::util::bip::bip32::Bip32RootKey;
 use crate::core::util::{dir, time};
 
@@ -254,49 +254,6 @@ fn descriptor(
     };
 
     Ok(Descriptor::from_str(&descriptor)?)
-}
-
-pub fn decode(psbt_file: PathBuf, network: Network) -> Result<Psbt> {
-    if !psbt_file.exists() && !psbt_file.is_file() {
-        return Err(anyhow!("PSBT file not found."));
-    }
-
-    let mut file: File = File::open(psbt_file)?;
-    let mut content: Vec<u8> = Vec::new();
-    file.read_to_end(&mut content)?;
-
-    let psbt: String = base64::encode(content);
-    Ok(Psbt::new(
-        PartiallySignedTransaction::from_str(&psbt)?,
-        network,
-    ))
-}
-
-pub fn sign<S, PSW>(
-    name: S,
-    get_password: PSW,
-    network: Network,
-    psbt_file: PathBuf,
-) -> Result<bool>
-where
-    S: Into<String>,
-    PSW: FnOnce() -> Result<String>,
-{
-    let mut psbt: Psbt = decode(psbt_file.clone(), network)?;
-    let seed: Seed = open(name, get_password)?;
-    let finalized: bool = psbt.sign(seed)?;
-
-    if finalized {
-        let mut psbt_file = psbt_file;
-        dir::rename_psbt_to_signed(&mut psbt_file)?;
-        let mut file: File = File::options()
-            .create_new(true)
-            .write(true)
-            .open(psbt_file)?;
-        file.write_all(&psbt.as_bytes()?)?;
-    }
-
-    Ok(finalized)
 }
 
 pub fn identity<S, PSW>(name: S, get_password: PSW, network: Network) -> Result<Fingerprint>

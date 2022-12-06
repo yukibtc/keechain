@@ -2,6 +2,9 @@
 // Distributed under the MIT software license
 
 use std::fmt;
+use std::fs::File;
+use std::io::Write;
+use std::path::Path;
 use std::str::FromStr;
 
 use anyhow::{anyhow, Result};
@@ -200,6 +203,7 @@ impl Secrets {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Psbt {
     psbt: PartiallySignedTransaction,
     network: Network,
@@ -210,7 +214,7 @@ impl Psbt {
         Self { psbt, network }
     }
 
-    pub fn sign(&mut self, seed: Seed) -> Result<bool> {
+    pub fn sign(&mut self, seed: &Seed) -> Result<bool> {
         let root: ExtendedPrivKey = seed.to_bip32_root_key(self.network)?;
         let secp = Secp256k1::new();
         let root_fingerprint: Fingerprint = root.fingerprint(&secp);
@@ -252,6 +256,18 @@ impl Psbt {
             }
         }
         Ok(finalized)
+    }
+
+    pub fn save_to_file<P>(&self, path: P) -> Result<()>
+    where
+        P: AsRef<Path>,
+    {
+        let mut file: File = File::options()
+            .create_new(true)
+            .write(true)
+            .open(path.as_ref())?;
+        file.write_all(&self.as_bytes()?)?;
+        Ok(())
     }
 
     pub fn as_base64(&self) -> String {

@@ -119,9 +119,9 @@ fn main() -> Result<()> {
                 Ok(())
             }
         },
-        Command::Decode { file } => command::decode(file, network)?.print(),
+        Command::Decode { file } => command::psbt::decode_file(file, network)?.print(),
         Command::Sign { name, file } => {
-            if command::sign(name, io::get_password, network, file)? {
+            if command::psbt::sign_file(name, io::get_password, network, file)? {
                 println!("Signed.")
             } else {
                 println!("PSBT signing not finalized");
