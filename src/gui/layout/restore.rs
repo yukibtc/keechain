@@ -10,10 +10,10 @@ use eframe::epaint::Color32;
 use crate::command;
 use crate::gui::component::{Button, Heading, InputField, Version};
 use crate::gui::theme::color::ORANGE;
-use crate::gui::{AppData, AppStage, Menu};
+use crate::gui::{AppState, Menu, Stage};
 
 #[derive(Clone, Default)]
-pub struct RestoreLayoutData {
+pub struct RestoreState {
     name: String,
     mnemonic: String,
     use_passphrase: bool,
@@ -23,7 +23,7 @@ pub struct RestoreLayoutData {
     error: Option<String>,
 }
 
-impl RestoreLayoutData {
+impl RestoreState {
     pub fn clear(&mut self) {
         self.name = String::new();
         self.mnemonic = String::new();
@@ -35,7 +35,7 @@ impl RestoreLayoutData {
     }
 }
 
-pub fn update_layout(app: &mut AppData, ui: &mut Ui) {
+pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
     ScrollArea::vertical().show(ui, |ui| {
         ui.with_layout(Layout::top_down(Align::Center), |ui| {
             ui.set_max_width(ui.available_width() - 20.0);
@@ -111,7 +111,7 @@ pub fn update_layout(app: &mut AppData, ui: &mut Ui) {
 
             if Button::new("Back").render(ui).clicked() {
                 app.layouts.restore.clear();
-                app.set_stage(AppStage::Start);
+                app.set_stage(Stage::Start);
             }
 
             if is_ready && (ui.input().key_pressed(Key::Enter) || button.clicked()) {
@@ -128,7 +128,7 @@ pub fn update_layout(app: &mut AppData, ui: &mut Ui) {
                             Ok(seed) => {
                                 app.layouts.restore.clear();
                                 app.set_seed(Some(seed));
-                                app.set_stage(AppStage::Menu(Menu::Main));
+                                app.set_stage(Stage::Menu(Menu::Main));
                             }
                             Err(e) => app.layouts.restore.error = Some(e.to_string()),
                         },

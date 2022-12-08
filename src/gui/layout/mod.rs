@@ -6,5 +6,5 @@ pub mod restore;
 pub mod sign;
 pub mod start;
 
-pub use self::restore::RestoreLayoutData;
-pub use self::start::StartLayoutData;
+pub use self::restore::RestoreState;
+pub use self::start::StartState;

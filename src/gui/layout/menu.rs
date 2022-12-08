@@ -6,11 +6,11 @@ use eframe::Frame;
 
 use crate::gui::component::{Button, Heading, Version};
 use crate::gui::theme::color::DARK_RED;
-use crate::gui::{AppData, AppStage, Menu};
+use crate::gui::{AppState, Menu, Stage};
 
-pub fn update_layout(app: &mut AppData, menu: Menu, ui: &mut Ui, frame: &mut Frame) {
+pub fn update_layout(app: &mut AppState, menu: Menu, ui: &mut Ui, frame: &mut Frame) {
     if app.seed.is_none() {
-        app.set_stage(AppStage::Start);
+        app.set_stage(Stage::Start);
     }
 
     ui.with_layout(Layout::top_down(Align::Center), |ui| {
@@ -23,7 +23,7 @@ pub fn update_layout(app: &mut AppData, menu: Menu, ui: &mut Ui, frame: &mut Fra
         match menu {
             Menu::Main => {
                 if Button::new("Sign").render(ui).clicked() {
-                    app.set_stage(AppStage::Sign);
+                    app.set_stage(Stage::Sign);
                 }
                 ui.add_space(5.0);
                 if Button::new("Export").render(ui).clicked() {
@@ -31,15 +31,15 @@ pub fn update_layout(app: &mut AppData, menu: Menu, ui: &mut Ui, frame: &mut Fra
                 }
                 ui.add_space(5.0);
                 if Button::new("Advanced").render(ui).clicked() {
-                    app.stage = AppStage::Menu(Menu::Advanced);
+                    app.stage = Stage::Menu(Menu::Advanced);
                 }
                 ui.add_space(5.0);
                 if Button::new("Setting").render(ui).clicked() {
-                    app.stage = AppStage::Menu(Menu::Setting);
+                    app.stage = Stage::Menu(Menu::Setting);
                 }
                 ui.add_space(5.0);
                 if Button::new("Lock").render(ui).clicked() {
-                    app.stage = AppStage::Start;
+                    app.stage = Stage::Start;
                 }
                 ui.add_space(5.0);
                 if Button::new("Exit").render(ui).clicked() {
@@ -52,21 +52,21 @@ pub fn update_layout(app: &mut AppData, menu: Menu, ui: &mut Ui, frame: &mut Fra
                     .render(ui)
                     .clicked()
                 {
-                    app.stage = AppStage::Menu(Menu::Danger);
+                    app.stage = Stage::Menu(Menu::Danger);
                 }
                 ui.add_space(5.0);
                 if Button::new("Back").render(ui).clicked() {
-                    app.stage = AppStage::Menu(Menu::Main);
+                    app.stage = Stage::Menu(Menu::Main);
                 }
             }
             Menu::Setting => {
                 if Button::new("Back").render(ui).clicked() {
-                    app.stage = AppStage::Menu(Menu::Main);
+                    app.stage = Stage::Menu(Menu::Main);
                 }
             }
             Menu::Danger => {
                 if Button::new("Back").render(ui).clicked() {
-                    app.stage = AppStage::Menu(Menu::Advanced);
+                    app.stage = Stage::Menu(Menu::Advanced);
                 }
             }
         }

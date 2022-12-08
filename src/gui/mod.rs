@@ -13,8 +13,8 @@ mod component;
 mod layout;
 mod theme;
 
-use self::layout::sign::SignLayoutData;
-use self::layout::{RestoreLayoutData, StartLayoutData};
+use self::layout::sign::SignState;
+use self::layout::{RestoreState, StartState};
 use crate::core::types::Seed;
 
 const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 530.0);
@@ -32,7 +32,7 @@ pub fn launch(network: Network) -> Result<()> {
         drag_and_drop_support: false,
         ..Default::default()
     };
-    let app = AppData::new(&network);
+    let app = AppState::new(&network);
     let app_name = format!(
         "KeeChain{}",
         if network.ne(&Network::Bitcoin) {
@@ -54,7 +54,7 @@ pub enum Menu {
 }
 
 #[derive(Clone)]
-pub enum AppStage {
+pub enum Stage {
     Start,
     NewKeychain,
     RestoreKeychain,
@@ -62,38 +62,38 @@ pub enum AppStage {
     Sign,
 }
 
-impl Default for AppStage {
+impl Default for Stage {
     fn default() -> Self {
         Self::Start
     }
 }
 
 #[derive(Clone, Default)]
-pub struct AppLayoutData {
-    start: StartLayoutData,
-    restore: RestoreLayoutData,
-    sign: SignLayoutData,
+pub struct AppLayoutStates {
+    start: StartState,
+    restore: RestoreState,
+    sign: SignState,
 }
 
 #[derive(Clone)]
-pub struct AppData {
+pub struct AppState {
     network: Network,
-    stage: AppStage,
+    stage: Stage,
     seed: Option<Seed>,
-    layouts: AppLayoutData,
+    layouts: AppLayoutStates,
 }
 
-impl AppData {
+impl AppState {
     pub fn new(network: &Network) -> Self {
         Self {
             network: *network,
-            stage: AppStage::default(),
+            stage: Stage::default(),
             seed: None,
-            layouts: AppLayoutData::default(),
+            layouts: AppLayoutStates::default(),
         }
     }
 
-    fn set_stage(&mut self, stage: AppStage) {
+    fn set_stage(&mut self, stage: Stage) {
         self.stage = stage;
     }
 
@@ -102,7 +102,7 @@ impl AppData {
     }
 }
 
-impl App for AppData {
+impl App for AppState {
     fn update(&mut self, ctx: &Context, frame: &mut Frame) {
         let mut style = (*ctx.style()).clone();
         style.text_styles = [
@@ -116,11 +116,11 @@ impl App for AppData {
         ctx.set_style(style);
 
         CentralPanel::default().show(ctx, |ui| match &self.stage {
-            AppStage::Start => layout::start::update_layout(self, ui),
-            AppStage::NewKeychain => todo!(),
-            AppStage::RestoreKeychain => layout::restore::update_layout(self, ui),
-            AppStage::Menu(menu) => layout::menu::update_layout(self, menu.clone(), ui, frame),
-            AppStage::Sign => layout::sign::update_layout(self, ui),
+            Stage::Start => layout::start::update_layout(self, ui),
+            Stage::NewKeychain => todo!(),
+            Stage::RestoreKeychain => layout::restore::update_layout(self, ui),
+            Stage::Menu(menu) => layout::menu::update_layout(self, menu.clone(), ui, frame),
+            Stage::Sign => layout::sign::update_layout(self, ui),
         });
     }
 }

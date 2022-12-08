@@ -11,19 +11,19 @@ use crate::command;
 use crate::core::util::dir;
 use crate::gui::component::{Button, InputField, Version};
 use crate::gui::theme::color::ORANGE;
-use crate::gui::{AppData, AppStage, Menu};
+use crate::gui::{AppState, Menu, Stage};
 
 const LOGO: &[u8] = include_bytes!("../../../assets/logo.png");
 
 #[derive(Clone)]
-pub struct StartLayoutData {
+pub struct StartState {
     name: String,
     password: String,
     error: Option<String>,
     logo: Arc<RetainedImage>,
 }
 
-impl Default for StartLayoutData {
+impl Default for StartState {
     fn default() -> Self {
         Self {
             name: String::new(),
@@ -36,7 +36,7 @@ impl Default for StartLayoutData {
     }
 }
 
-impl StartLayoutData {
+impl StartState {
     pub fn clear(&mut self) {
         self.name = String::new();
         self.password = String::new();
@@ -44,7 +44,7 @@ impl StartLayoutData {
     }
 }
 
-pub fn update_layout(app: &mut AppData, ui: &mut Ui) {
+pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
     ScrollArea::vertical().show(ui, |ui| {
         ui.with_layout(Layout::top_down(Align::Center), |ui| {
             ui.set_max_width(ui.available_width() - 20.0);
@@ -115,14 +115,14 @@ pub fn update_layout(app: &mut AppData, ui: &mut Ui) {
 
             if Button::new("Create a new keychain").render(ui).clicked() {
                 app.layouts.start.clear();
-                app.set_stage(AppStage::NewKeychain);
+                app.set_stage(Stage::NewKeychain);
             }
 
             ui.add_space(5.0);
 
             if Button::new("Restore").render(ui).clicked() {
                 app.layouts.start.clear();
-                app.set_stage(AppStage::RestoreKeychain);
+                app.set_stage(Stage::RestoreKeychain);
             }
 
             if is_ready && (ui.input().key_pressed(Key::Enter) || button.clicked()) {
@@ -132,7 +132,7 @@ pub fn update_layout(app: &mut AppData, ui: &mut Ui) {
                     Ok(seed) => {
                         app.layouts.start.clear();
                         app.set_seed(Some(seed));
-                        app.set_stage(AppStage::Menu(Menu::Main));
+                        app.set_stage(Stage::Menu(Menu::Main));
                     }
                     Err(e) => app.layouts.start.error = Some(e.to_string()),
                 }

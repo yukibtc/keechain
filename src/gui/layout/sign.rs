@@ -10,7 +10,7 @@ use crate::core::command;
 use crate::core::types::Psbt;
 use crate::gui::component::{Button, Heading, Version};
 use crate::gui::theme::color::{DARK_GREEN, DARK_RED, ORANGE, RED};
-use crate::gui::{AppData, AppStage, Menu};
+use crate::gui::{AppState, Menu, Stage};
 
 #[allow(dead_code)]
 #[derive(Clone)]
@@ -20,13 +20,13 @@ pub struct PsbtFile {
 }
 
 #[derive(Clone, Default)]
-pub struct SignLayoutData {
+pub struct SignState {
     psbt_file: Option<PsbtFile>,
     error: Option<String>,
     finish: bool,
 }
 
-impl SignLayoutData {
+impl SignState {
     pub fn clear(&mut self) {
         self.psbt_file = None;
         self.error = None;
@@ -34,9 +34,9 @@ impl SignLayoutData {
     }
 }
 
-pub fn update_layout(app: &mut AppData, ui: &mut Ui) {
+pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
     if app.seed.is_none() {
-        app.set_stage(AppStage::Start);
+        app.set_stage(Stage::Start);
     }
 
     ui.with_layout(Layout::top_down(Align::Center), |ui| {
@@ -125,7 +125,7 @@ pub fn update_layout(app: &mut AppData, ui: &mut Ui) {
 
         if Button::new("Back").render(ui).clicked() {
             app.layouts.sign.clear();
-            app.stage = AppStage::Menu(Menu::Main);
+            app.stage = Stage::Menu(Menu::Main);
         }
     });
 
