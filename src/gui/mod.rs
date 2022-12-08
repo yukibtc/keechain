@@ -46,8 +46,22 @@ pub fn launch(network: Network) -> Result<()> {
 }
 
 #[derive(Clone)]
+pub enum ExportTypes {
+    Descriptors,
+    BitcoinCore,
+    Electrum,
+}
+
+#[derive(Clone)]
+pub enum Command {
+    Sign,
+    Export(ExportTypes),
+}
+
+#[derive(Clone)]
 pub enum Menu {
     Main,
+    Export,
     Advanced,
     Setting,
     Danger,
@@ -59,7 +73,7 @@ pub enum Stage {
     NewKeychain,
     RestoreKeychain,
     Menu(Menu),
-    Sign,
+    Command(Command),
 }
 
 impl Default for Stage {
@@ -120,7 +134,12 @@ impl App for AppState {
             Stage::NewKeychain => todo!(),
             Stage::RestoreKeychain => layout::restore::update_layout(self, ui),
             Stage::Menu(menu) => layout::menu::update_layout(self, menu.clone(), ui, frame),
-            Stage::Sign => layout::sign::update_layout(self, ui),
+            Stage::Command(cmd) => match cmd {
+                Command::Sign => layout::sign::update_layout(self, ui),
+                Command::Export(export_type) => {
+                    layout::export::update_layout(self, export_type.clone(), ui)
+                }
+            },
         });
     }
 }
