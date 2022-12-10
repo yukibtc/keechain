@@ -14,7 +14,7 @@ mod layout;
 mod theme;
 
 use self::layout::sign::SignState;
-use self::layout::{RestoreState, StartState};
+use self::layout::{NewKeychainState, RestoreState, StartState};
 use crate::core::types::Seed;
 
 const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 530.0);
@@ -85,6 +85,7 @@ impl Default for Stage {
 #[derive(Clone, Default)]
 pub struct AppLayoutStates {
     start: StartState,
+    new_keychain: NewKeychainState,
     restore: RestoreState,
     sign: SignState,
 }
@@ -131,7 +132,7 @@ impl App for AppState {
 
         CentralPanel::default().show(ctx, |ui| match &self.stage {
             Stage::Start => layout::start::update_layout(self, ui),
-            Stage::NewKeychain => todo!(),
+            Stage::NewKeychain => layout::new_keychain::update_layout(self, ui),
             Stage::RestoreKeychain => layout::restore::update_layout(self, ui),
             Stage::Menu(menu) => layout::menu::update_layout(self, menu.clone(), ui, frame),
             Stage::Command(cmd) => match cmd {
