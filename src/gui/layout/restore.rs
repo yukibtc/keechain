@@ -59,6 +59,7 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
 
             InputField::new("Confirm password")
                 .placeholder("Confirm password")
+                .is_password()
                 .render(ui, &mut app.layouts.restore.confirm_password);
 
             ui.add_space(7.0);
