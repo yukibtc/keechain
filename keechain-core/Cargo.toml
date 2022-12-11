@@ -32,7 +32,6 @@ sysinfo = "0.26.8"
 # to remove
 anyhow = "1.0.66"
 clap = "4.0"
-thiserror = "1.0.37"
 
 # move to keechain-cli
 num-format = "0.4.3"
