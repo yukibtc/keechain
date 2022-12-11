@@ -61,13 +61,13 @@ mod tests {
     use bitcoin::Network;
 
     use super::*;
-    use crate::core::types::{Index, Seed, WordCount};
+    use crate::types::{Index, Seed, WordCount};
 
     #[test]
     fn test_bip85() {
         let mnemonic = Mnemonic::from_str("easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt").unwrap();
         let passphrase: Option<&str> = Some("mypassphrase");
-        let seed = Seed::new(mnemonic, passphrase).unwrap();
+        let seed = Seed::new(mnemonic, passphrase);
 
         let root = ExtendedPrivKey::new_master(Network::Bitcoin, &seed.to_bytes()).unwrap();
         let secp = Secp256k1::new();

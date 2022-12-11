@@ -90,8 +90,8 @@ mod tests {
     use bdk::keys::bip39::Mnemonic;
 
     use super::*;
-    use crate::core::types::Seed;
-    use crate::core::util;
+    use crate::types::Seed;
+    use crate::util;
 
     #[test]
     fn test_encryption_decryption() {
@@ -127,7 +127,7 @@ mod tests {
         let key: &str = "supersecretpassword";
         let mnemonic = Mnemonic::from_str("easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt").unwrap();
         let passphrase: Option<&str> = Some("mypassphrase");
-        let seed = Seed::new(mnemonic, passphrase).unwrap();
+        let seed = Seed::new(mnemonic, passphrase);
 
         let encrypted_seed: Vec<u8> = encrypt(key, &util::serialize(seed.clone()).unwrap());
         let decrypted_seed: Seed =

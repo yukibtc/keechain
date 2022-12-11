@@ -6,7 +6,6 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use bdk::descriptor;
 use bdk::keys::bip39::Mnemonic;
 use bdk::miniscript::Descriptor;
 use bitcoin::hashes::hmac::{Hmac, HmacEngine};
@@ -257,8 +256,8 @@ fn descriptor(
         _ => return Err(Error::Generic("Unsupported derivation path".to_string())),
     };
 
-    Ok(Descriptor::from_str(&descriptor)
-        .map_err(|e| Error::Parse(format!("Impossible to parse descriptor: {}", e)))?)
+    Descriptor::from_str(&descriptor)
+        .map_err(|e| Error::Parse(format!("Impossible to parse descriptor: {}", e)))
 }
 
 pub fn identity<S, PSW>(name: S, get_password: PSW, network: Network) -> Result<Fingerprint>

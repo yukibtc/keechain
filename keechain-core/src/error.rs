@@ -34,16 +34,16 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::IO(err) => write!(f, "{}", err.to_string()),
-            Self::Aes(err) => write!(f, "{}", err.to_string()),
-            Self::Secp256k1(err) => write!(f, "{}", err.to_string()),
-            Self::BIP32(err) => write!(f, "{}", err.to_string()),
-            Self::BIP39(err) => write!(f, "{}", err.to_string()),
-            Self::Base58(err) => write!(f, "{}", err.to_string()),
-            Self::Base64(err) => write!(f, "{}", err.to_string()),
-            Self::BDK(err) => write!(f, "{}", err.to_string()),
-            Self::Parse(err) => write!(f, "{}", err.to_string()),
-            Self::Generic(err) => write!(f, "{}", err.to_string()),
+            Self::IO(err) => write!(f, "{}", err),
+            Self::Aes(err) => write!(f, "{}", err),
+            Self::Secp256k1(err) => write!(f, "{}", err),
+            Self::BIP32(err) => write!(f, "{}", err),
+            Self::BIP39(err) => write!(f, "{}", err),
+            Self::Base58(err) => write!(f, "{}", err),
+            Self::Base64(err) => write!(f, "{}", err),
+            Self::BDK(err) => write!(f, "{}", err),
+            Self::Parse(err) => write!(f, "{}", err),
+            Self::Generic(err) => write!(f, "{}", err),
         }
     }
 }
