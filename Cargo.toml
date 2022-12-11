@@ -17,7 +17,6 @@ default = []
 gui = ["dep:eframe", "dep:egui_extras", "dep:image", "dep:rfd"]
 
 [dependencies]
-anyhow = "1.0.66"
 clap = { version = "4.0.27", features = ["derive"] }
 console = "0.15.2"
 dialoguer = "0.10.2"

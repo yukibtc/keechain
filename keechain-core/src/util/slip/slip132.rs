@@ -1,10 +1,10 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use anyhow::{anyhow, Result};
 use bitcoin::util::base58;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPubKey};
 
+use crate::error::{Error, Result};
 use crate::util::convert;
 
 pub trait ToSlip132 {
@@ -13,7 +13,7 @@ pub trait ToSlip132 {
 }
 
 impl ToSlip132 for ExtendedPubKey {
-    type Err = anyhow::Error;
+    type Err = Error;
     fn to_slip132(&self, path: &DerivationPath) -> Result<String, Self::Err> {
         let data: Vec<u8> = base58::from_check(&self.to_string())?;
 
@@ -22,7 +22,7 @@ impl ToSlip132 for ExtendedPubKey {
         let is_mainnet: bool = match iter.next() {
             Some(ChildNumber::Hardened { index: 0 }) => true,
             Some(ChildNumber::Hardened { index: 1 }) => false,
-            _ => return Err(anyhow!("Unsupported derivation path")),
+            _ => return Err(Error::Generic("Unsupported derivation path".to_string())),
         };
 
         let hex: &str = match purpose {
@@ -47,7 +47,7 @@ impl ToSlip132 for ExtendedPubKey {
                     "045f1cf6"
                 }
             }
-            _ => return Err(anyhow!("Unsupported derivation path")),
+            _ => return Err(Error::Generic("Unsupported derivation path".to_string())),
         };
 
         let data: Vec<u8> = [convert::hex_to_bytes(hex), data[4..].to_vec()].concat();
@@ -60,9 +60,9 @@ mod tests {
     use std::str::FromStr;
 
     use bdk::keys::bip39::Mnemonic;
+    use bitcoin::secp256k1::Secp256k1;
     use bitcoin::util::bip32::ExtendedPrivKey;
     use bitcoin::Network;
-    use secp256k1::Secp256k1;
 
     use super::*;
     use crate::core::types::Seed;

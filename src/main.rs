@@ -3,12 +3,12 @@
 
 use std::str::FromStr;
 
-use anyhow::Result;
 use clap::Parser;
 use console::Term;
 use keechain_core::bdk::keys::bip39::Mnemonic;
 use keechain_core::bitcoin::Network;
 use keechain_core::command;
+use keechain_core::error::Result;
 use keechain_core::util::bip::bip32;
 use keechain_core::util::dir;
 

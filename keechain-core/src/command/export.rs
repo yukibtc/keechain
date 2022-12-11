@@ -6,15 +6,14 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
-use anyhow::Result;
-
+use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
 use bitcoin::Network;
 use clap::ValueEnum;
-use secp256k1::Secp256k1;
 use serde_json::{json, Value};
 
 use super::{descriptor, open};
+use crate::error::Result;
 use crate::types::{Descriptors, Seed};
 use crate::util::bip::bip32::{self, Bip32RootKey};
 use crate::util::dir;

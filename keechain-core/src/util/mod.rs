@@ -1,7 +1,6 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use anyhow::{anyhow, Result};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -11,13 +10,15 @@ pub mod dir;
 pub mod slip;
 pub mod time;
 
+use crate::error::{Error, Result};
+
 pub fn serialize<T>(data: T) -> Result<Vec<u8>>
 where
     T: Serialize,
 {
     match serde_json::to_string(&data) {
         Ok(data) => Ok(data.into_bytes()),
-        Err(_) => Err(anyhow!("Failed to serialize data")),
+        Err(_) => Err(Error::Generic("Failed to serialize data".to_string())),
     }
 }
 
@@ -27,6 +28,6 @@ where
 {
     match serde_json::from_slice::<T>(&data) {
         Ok(data) => Ok(data),
-        Err(_) => Err(anyhow!("Failed to deserialize data")),
+        Err(_) => Err(Error::Generic("Failed to deserialize data".to_string())),
     }
 }

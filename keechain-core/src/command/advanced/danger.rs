@@ -5,10 +5,10 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
-use anyhow::Result;
 use bitcoin::Network;
 
 use crate::command::open;
+use crate::error::Result;
 use crate::types::{Secrets, Seed};
 use crate::util::dir;
 

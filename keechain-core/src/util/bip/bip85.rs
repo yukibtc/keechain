@@ -6,9 +6,10 @@
 use bdk::keys::bip39::Mnemonic;
 use bitcoin::hashes::hmac::{Hmac, HmacEngine};
 use bitcoin::hashes::{sha512, Hash, HashEngine};
+use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey};
-use secp256k1::Secp256k1;
 
+use crate::error::Error;
 use crate::types::{Index, WordCount};
 
 pub trait FromBip85: Sized {
@@ -20,11 +21,11 @@ pub trait FromBip85: Sized {
         index: Index,
     ) -> Result<Self, Self::Err>
     where
-        C: secp256k1::Signing;
+        C: bitcoin::secp256k1::Signing;
 }
 
 impl FromBip85 for Mnemonic {
-    type Err = anyhow::Error;
+    type Err = Error;
     fn from_bip85<C>(
         secp: &Secp256k1<C>,
         root: &ExtendedPrivKey,
@@ -32,7 +33,7 @@ impl FromBip85 for Mnemonic {
         index: Index,
     ) -> Result<Self, Self::Err>
     where
-        C: secp256k1::Signing,
+        C: bitcoin::secp256k1::Signing,
     {
         let word_count: u32 = word_count.as_u32();
         let path: Vec<ChildNumber> = vec![

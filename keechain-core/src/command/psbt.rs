@@ -6,17 +6,17 @@ use std::io::Read;
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use anyhow::{anyhow, Result};
 use bitcoin::psbt::PartiallySignedTransaction;
 use bitcoin::Network;
 
 use super::open;
+use crate::error::{Error, Result};
 use crate::types::{Psbt, Seed};
 use crate::util::dir;
 
 pub fn decode_file(psbt_file: PathBuf, network: Network) -> Result<Psbt> {
     if !psbt_file.exists() && !psbt_file.is_file() {
-        return Err(anyhow!("PSBT file not found."));
+        return Err(Error::Generic("PSBT file not found.".to_string()));
     }
 
     let mut file: File = File::open(psbt_file)?;
@@ -25,7 +25,8 @@ pub fn decode_file(psbt_file: PathBuf, network: Network) -> Result<Psbt> {
 
     let psbt: String = base64::encode(content);
     Ok(Psbt::new(
-        PartiallySignedTransaction::from_str(&psbt)?,
+        PartiallySignedTransaction::from_str(&psbt)
+            .map_err(|e| Error::Parse(format!("Impossible to parse PSBT: {}", e)))?,
         network,
     ))
 }

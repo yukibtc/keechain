@@ -1,13 +1,13 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use anyhow::Result;
 use eframe::egui::{self, CentralPanel, Context};
 use eframe::epaint::FontFamily::Proportional;
 use eframe::epaint::{FontId, Vec2};
 use eframe::{App, Frame, NativeOptions, Theme};
 use egui::TextStyle::{Body, Button, Heading, Monospace, Small};
 use keechain_core::bitcoin::Network;
+use keechain_core::error::Result;
 use keechain_core::types::Seed;
 
 mod component;

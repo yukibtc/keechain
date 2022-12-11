@@ -6,7 +6,6 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use anyhow::{anyhow, Result};
 use bdk::descriptor;
 use bdk::keys::bip39::Mnemonic;
 use bdk::miniscript::Descriptor;
@@ -26,6 +25,7 @@ pub mod psbt;
 pub mod setting;
 
 use crate::crypto::aes::Aes256Encryption;
+use crate::error::{Error, Result};
 use crate::types::{Seed, WordCount};
 use crate::util::bip::bip32::Bip32RootKey;
 use crate::util::{dir, time};
@@ -123,21 +123,21 @@ where
 {
     let keychain_file: PathBuf = dir::get_keychain_file(name)?;
     if keychain_file.exists() {
-        return Err(anyhow!(
-            "There is already a file with the same name! Please, choose another name."
+        return Err(Error::Generic(
+            "There is already a file with the same name! Please, choose another name.".to_string(),
         ));
     }
 
     let password: String = get_password()?;
     if password.is_empty() {
-        return Err(anyhow!("Invalid password"));
+        return Err(Error::Generic("Invalid password".to_string()));
     }
 
     let custom_entropy: Option<Vec<u8>> = get_custom_entropy()?;
     let entropy: Vec<u8> = entropy(word_count, custom_entropy);
     let mnemonic = Mnemonic::from_entropy(&entropy)?;
     let passphrase: Option<String> = get_passphrase()?;
-    let seed = Seed::new(mnemonic, passphrase)?;
+    let seed = Seed::new(mnemonic, passphrase);
 
     let mut file: File = File::options()
         .create_new(true)
@@ -162,19 +162,19 @@ where
 {
     let keychain_file: PathBuf = dir::get_keychain_file(name)?;
     if keychain_file.exists() {
-        return Err(anyhow!(
-            "There is already a file with the same name! Please, choose another name."
+        return Err(Error::Generic(
+            "There is already a file with the same name! Please, choose another name.".to_string(),
         ));
     }
 
     let password: String = get_password()?;
     if password.is_empty() {
-        return Err(anyhow!("Invalid password"));
+        return Err(Error::Generic("Invalid password".to_string()));
     }
 
     let mnemonic: Mnemonic = get_mnemonic()?;
     let passphrase: Option<String> = get_passphrase()?;
-    let seed = Seed::new(mnemonic, passphrase)?;
+    let seed = Seed::new(mnemonic, passphrase);
 
     let mut file: File = File::options()
         .create_new(true)
@@ -194,7 +194,7 @@ where
 
     // Check if mnemonic file exist
     if !keychain_file.exists() {
-        return Err(anyhow!("File not found."));
+        return Err(Error::Generic("File not found.".to_string()));
     }
 
     // Read seed from file
@@ -217,15 +217,19 @@ fn descriptor(
 
     let purpose: &ChildNumber = match iter_path.next() {
         Some(child) => child,
-        None => return Err(anyhow!("Invalid derivation path: purpose not provided")),
+        None => {
+            return Err(Error::Generic(
+                "Invalid derivation path: purpose not provided".to_string(),
+            ))
+        }
     };
 
     let coin: &ChildNumber = match iter_path.next() {
         Some(ChildNumber::Hardened { index: 0 }) => &ChildNumber::Hardened { index: 0 },
         Some(ChildNumber::Hardened { index: 1 }) => &ChildNumber::Hardened { index: 1 },
         _ => {
-            return Err(anyhow!(
-                "Invalid derivation path: coin invalid or not provided"
+            return Err(Error::Generic(
+                "Invalid derivation path: coin invalid or not provided".to_string(),
             ))
         }
     };
@@ -250,10 +254,11 @@ fn descriptor(
         ChildNumber::Hardened { index: 49 } => format!("sh(wpkh({}))", descriptor),
         ChildNumber::Hardened { index: 84 } => format!("wpkh({})", descriptor),
         ChildNumber::Hardened { index: 86 } => format!("tr({})", descriptor),
-        _ => return Err(anyhow!("Unsupported derivation path")),
+        _ => return Err(Error::Generic("Unsupported derivation path".to_string())),
     };
 
-    Ok(Descriptor::from_str(&descriptor)?)
+    Ok(Descriptor::from_str(&descriptor)
+        .map_err(|e| Error::Parse(format!("Impossible to parse descriptor: {}", e)))?)
 }
 
 pub fn identity<S, PSW>(name: S, get_password: PSW, network: Network) -> Result<Fingerprint>

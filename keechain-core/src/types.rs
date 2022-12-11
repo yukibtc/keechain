@@ -7,24 +7,24 @@ use std::io::Write;
 use std::path::Path;
 use std::str::FromStr;
 
-use anyhow::{anyhow, Result};
 use bdk::database::MemoryDatabase;
 use bdk::keys::bip39::Mnemonic;
 use bdk::keys::DescriptorSecretKey;
 use bdk::miniscript::Descriptor;
 use bdk::wallet::AddressIndex;
-use bdk::{descriptor, SignOptions, Wallet};
+use bdk::{SignOptions, Wallet};
 use bitcoin::psbt::PartiallySignedTransaction;
+use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
 use bitcoin::{Address, Network, TxOut};
 use clap::ValueEnum;
 use num_format::{Locale, ToFormattedString};
 use prettytable::format::FormatBuilder;
 use prettytable::{row, Table};
-use secp256k1::Secp256k1;
 use serde::{Deserialize, Serialize};
 
 use crate::crypto::aes::{self, Aes256Encryption};
+use crate::error::{Error, Result};
 use crate::util::bip::bip32::Bip32RootKey;
 use crate::util::{self, convert};
 
@@ -35,14 +35,14 @@ pub struct Seed {
 }
 
 impl Seed {
-    pub fn new<S>(mnemonic: Mnemonic, passphrase: Option<S>) -> Result<Self>
+    pub fn new<S>(mnemonic: Mnemonic, passphrase: Option<S>) -> Self
     where
         S: Into<String>,
     {
-        Ok(Self {
+        Self {
             mnemonic,
             passphrase: passphrase.map(|p| p.into()),
-        })
+        }
     }
 
     pub fn mnemonic(&self) -> Mnemonic {
@@ -64,7 +64,7 @@ impl Seed {
 }
 
 impl Bip32RootKey for Seed {
-    type Err = anyhow::Error;
+    type Err = Error;
     fn to_bip32_root_key(&self, network: Network) -> Result<ExtendedPrivKey, Self::Err> {
         Ok(ExtendedPrivKey::new_master(network, &self.to_bytes())?)
     }
@@ -77,7 +77,7 @@ impl Bip32RootKey for Seed {
 }
 
 impl Aes256Encryption for Seed {
-    type Err = anyhow::Error;
+    type Err = Error;
     fn encrypt<K>(&self, key: K) -> Result<Vec<u8>, Self::Err>
     where
         K: AsRef<[u8]>,
@@ -92,10 +92,10 @@ impl Aes256Encryption for Seed {
     {
         match aes::decrypt(key, content) {
             Ok(data) => util::deserialize(data),
-            Err(aes::Error::WrongBlockMode) => Err(anyhow!(
-                "Impossible to decrypt file: invalid password or content"
+            Err(aes::Error::WrongBlockMode) => Err(Error::Generic(
+                "Impossible to decrypt file: invalid password or content".to_string(),
             )),
-            Err(e) => Err(anyhow!(e.to_string())),
+            Err(e) => Err(Error::Aes(e)),
         }
     }
 }
@@ -125,7 +125,7 @@ impl Index {
         if index & (1 << 31) == 0 {
             Ok(Self(index))
         } else {
-            Err(anyhow!("Invalid index"))
+            Err(Error::Generic("Invalid index".to_string()))
         }
     }
 
@@ -135,9 +135,11 @@ impl Index {
 }
 
 impl FromStr for Index {
-    type Err = anyhow::Error;
+    type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let index: u32 = s.parse()?;
+        let index: u32 = s
+            .parse()
+            .map_err(|_| Error::Parse("Impossible to parse index".to_string()))?;
         Self::new(index)
     }
 }
@@ -230,23 +232,24 @@ impl Psbt {
         }
 
         if paths.is_empty() {
-            return Err(anyhow!("Nothing to sign here."));
+            return Err(Error::Generic("Nothing to sign here.".to_string()));
         }
 
         let mut finalized: bool = false;
 
         for path in paths.into_iter() {
             let child_priv: ExtendedPrivKey = root.derive_priv(&secp, &path)?;
-            let desc = DescriptorSecretKey::from_str(&child_priv.to_string())?;
+            let desc = DescriptorSecretKey::from_str(&child_priv.to_string())
+                .map_err(|e| Error::Parse(format!("Impossible to parse descriptor: {}", e)))?;
             let descriptor = match path.into_iter().next() {
-                Some(ChildNumber::Hardened { index: 44 }) => descriptor!(pkh(desc))?,
-                Some(ChildNumber::Hardened { index: 49 }) => descriptor!(sh(wpkh(desc)))?,
-                Some(ChildNumber::Hardened { index: 84 }) => descriptor!(wpkh(desc))?,
-                Some(ChildNumber::Hardened { index: 86 }) => descriptor!(tr(desc))?,
-                _ => return Err(anyhow!("Unsupported derivation path")),
+                Some(ChildNumber::Hardened { index: 44 }) => format!("pkh({})", desc),
+                Some(ChildNumber::Hardened { index: 49 }) => format!("sh(wpkh({}))", desc),
+                Some(ChildNumber::Hardened { index: 84 }) => format!("wpkh({})", desc),
+                Some(ChildNumber::Hardened { index: 86 }) => format!("tr({})", desc),
+                _ => return Err(Error::Generic("Unsupported derivation path".to_string())),
             };
 
-            let wallet = Wallet::new(descriptor, None, self.network, MemoryDatabase::default())?;
+            let wallet = Wallet::new(&descriptor, None, self.network, MemoryDatabase::default())?;
 
             // Required for sign
             let _ = wallet.get_address(AddressIndex::New)?;
@@ -288,7 +291,8 @@ impl Psbt {
         table.add_row(row![
             format!(
                 "{} ",
-                Address::from_script(&output.script_pubkey, self.network)?
+                Address::from_script(&output.script_pubkey, self.network)
+                    .map_err(|e| Error::Generic(e.to_string()))?
             ),
             format!(" {} sat", output.value.to_formatted_string(&Locale::fr))
         ]);

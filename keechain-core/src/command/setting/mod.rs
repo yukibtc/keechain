@@ -1,12 +1,12 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use anyhow::Result;
 use std::fs::{self, File};
 use std::io::Write;
 
 use crate::command::open;
 use crate::crypto::aes::Aes256Encryption;
+use crate::error::Result;
 use crate::types::Seed;
 use crate::util::dir;
 

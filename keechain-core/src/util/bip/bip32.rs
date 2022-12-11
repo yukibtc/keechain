@@ -1,9 +1,10 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use anyhow::Result;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
 use bitcoin::Network;
+
+use crate::error::Result;
 
 pub trait Bip32RootKey {
     type Err;

@@ -1,9 +1,9 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use anyhow::Result;
 use console::Term;
 use dialoguer::{Confirm, Input, Password, Select};
+use keechain_core::error::Result;
 
 pub fn get_input<S>(prompt: S) -> Result<String>
 where

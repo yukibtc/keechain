@@ -5,7 +5,7 @@ use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, Result};
+use crate::error::{Error, Result};
 
 const KEYCHAIN_EXTENSION: &str = "keechain";
 const KEYCHAIN_DOT_EXTENSION: &str = ".keechain";
@@ -66,12 +66,12 @@ pub fn rename_psbt_to_signed(psbt_file: &mut PathBuf) -> Result<()> {
             let splitted: Vec<&str> = file_name.split(&format!(".{}", ext)).collect();
             file_name = match splitted.first() {
                 Some(name) => *name,
-                None => return Err(anyhow!("Impossible to get file name")),
+                None => return Err(Error::Generic("Impossible to get file name".to_string())),
             }
         }
         psbt_file.set_file_name(&format!("{}-signed.psbt", file_name));
         Ok(())
     } else {
-        Err(anyhow!("Impossible to get file name"))
+        Err(Error::Generic("Impossible to get file name".to_string()))
     }
 }
