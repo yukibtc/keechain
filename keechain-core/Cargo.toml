@@ -32,5 +32,4 @@ sysinfo = "0.26.8"
 clap = "4.0"
 
 # move to keechain-cli
-num-format = "0.4.3"
 prettytable-rs = "0.9.0"

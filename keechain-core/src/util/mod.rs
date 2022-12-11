@@ -7,6 +7,7 @@ use serde::Serialize;
 pub mod bip;
 pub mod convert;
 pub mod dir;
+pub mod format;
 pub mod slip;
 pub mod time;
 

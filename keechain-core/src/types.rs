@@ -18,7 +18,6 @@ use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
 use bitcoin::{Address, Network, TxOut};
 use clap::ValueEnum;
-use num_format::{Locale, ToFormattedString};
 use prettytable::format::FormatBuilder;
 use prettytable::{row, Table};
 use serde::{Deserialize, Serialize};
@@ -26,7 +25,7 @@ use serde::{Deserialize, Serialize};
 use crate::crypto::aes::{self, Aes256Encryption};
 use crate::error::{Error, Result};
 use crate::util::bip::bip32::Bip32RootKey;
-use crate::util::{self, convert};
+use crate::util::{self, convert, format};
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Seed {
@@ -294,7 +293,7 @@ impl Psbt {
                 Address::from_script(&output.script_pubkey, self.network)
                     .map_err(|e| Error::Generic(e.to_string()))?
             ),
-            format!(" {} sat", output.value.to_formatted_string(&Locale::fr))
+            format!(" {} sat", format::number(output.value as usize))
         ]);
         Ok(table.to_string())
     }
