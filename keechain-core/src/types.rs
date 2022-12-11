@@ -24,9 +24,9 @@ use prettytable::{row, Table};
 use secp256k1::Secp256k1;
 use serde::{Deserialize, Serialize};
 
-use crate::core::crypto::aes::{self, Aes256Encryption};
-use crate::core::util::bip::bip32::Bip32RootKey;
-use crate::core::util::{self, convert};
+use crate::crypto::aes::{self, Aes256Encryption};
+use crate::util::bip::bip32::Bip32RootKey;
+use crate::util::{self, convert};
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Seed {

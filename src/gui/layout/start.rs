@@ -6,9 +6,9 @@ use std::sync::Arc;
 use eframe::egui::{self, Align, ComboBox, Key, Layout, RichText, ScrollArea, Ui};
 use eframe::epaint::{Color32, FontId};
 use egui_extras::RetainedImage;
+use keechain_core::command;
+use keechain_core::util::dir;
 
-use crate::command;
-use crate::core::util::dir;
 use crate::gui::component::{Button, InputField, Version};
 use crate::gui::theme::color::ORANGE;
 use crate::gui::{AppState, Menu, Stage};

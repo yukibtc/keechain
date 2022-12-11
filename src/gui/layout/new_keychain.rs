@@ -3,9 +3,9 @@
 
 use eframe::egui::{Align, Key, Layout, RichText, ScrollArea, Ui};
 use eframe::epaint::Color32;
+use keechain_core::types::{Seed, WordCount};
 
 use crate::command;
-use crate::core::types::{Seed, WordCount};
 use crate::gui::component::{Button, Heading, InputField, Version};
 use crate::gui::theme::color::ORANGE;
 use crate::gui::{AppState, Menu, Stage};

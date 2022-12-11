@@ -9,7 +9,7 @@ use bitcoin::hashes::{sha512, Hash, HashEngine};
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey};
 use secp256k1::Secp256k1;
 
-use crate::core::types::{Index, WordCount};
+use crate::types::{Index, WordCount};
 
 pub trait FromBip85: Sized {
     type Err;

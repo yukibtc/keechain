@@ -2,12 +2,13 @@
 // Distributed under the MIT software license
 
 use anyhow::Result;
-use bitcoin::Network;
 use eframe::egui::{self, CentralPanel, Context};
 use eframe::epaint::FontFamily::Proportional;
 use eframe::epaint::{FontId, Vec2};
 use eframe::{App, Frame, NativeOptions, Theme};
 use egui::TextStyle::{Body, Button, Heading, Monospace, Small};
+use keechain_core::bitcoin::Network;
+use keechain_core::types::Seed;
 
 mod component;
 mod layout;
@@ -15,7 +16,6 @@ mod theme;
 
 use self::layout::sign::SignState;
 use self::layout::{NewKeychainState, RestoreState, StartState};
-use crate::core::types::Seed;
 
 const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 530.0);
 const GENERIC_FONT_HEIGHT: f32 = 18.0;

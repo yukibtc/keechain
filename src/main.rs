@@ -4,21 +4,20 @@
 use std::str::FromStr;
 
 use anyhow::Result;
-use bdk::keys::bip39::Mnemonic;
-use bitcoin::Network;
 use clap::Parser;
 use console::Term;
+use keechain_core::bdk::keys::bip39::Mnemonic;
+use keechain_core::bitcoin::Network;
+use keechain_core::command;
+use keechain_core::util::bip::bip32;
+use keechain_core::util::dir;
 
 mod cli;
-mod core;
 #[cfg(feature = "gui")]
 mod gui;
 
 use self::cli::io;
 use self::cli::{AdvancedCommand, Cli, Command, DangerCommand, ExportTypes, SettingCommand};
-use self::core::command;
-use self::core::util::bip::bip32;
-use self::core::util::dir;
 
 fn main() -> Result<()> {
     env_logger::init();

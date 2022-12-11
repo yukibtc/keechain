@@ -1,0 +1,39 @@
+[package]
+name = "keechain-core"
+version = "0.1.0"
+edition = "2021"
+description = "KeeChain Core"
+authors = ["Yuki Kishimoto <yukikishimoto@proton.me>"]
+homepage = "https://github.com/yukibtc/keechain"
+repository = "https://github.com/yukibtc/keechain.git"
+license = "MIT"
+readme = "README.md"
+keywords = ["keechain", "bitcoin", "signer", "psbt", "offline"]
+categories = ["command-line-utilities"]
+rust-version = "1.64"
+
+[dependencies]
+aes = "0.8.2"
+base64 = "0.13.1"
+bdk = { version = "0.25.0", default-features = false, features = ["keys-bip39"] }
+bitcoin = "0.29.2"
+cbc = { version = "0.1.2", features = ["alloc"] }
+dirs = "4.0.0"
+log = "0.4.17"
+rand = "0.8.5"
+rand_chacha = "0.3.1"
+rand_hc = "0.3.1"
+secp256k1 = "0.24.1"
+serde = "1.0.147"
+serde_json = "1.0.74"
+sha2 = "0.10.1"
+sysinfo = "0.26.8"
+
+# to remove
+anyhow = "1.0.66"
+clap = "4.0"
+thiserror = "1.0.37"
+
+# move to keechain-cli
+num-format = "0.4.3"
+prettytable-rs = "0.9.0"

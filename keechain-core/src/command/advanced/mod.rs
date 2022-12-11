@@ -10,9 +10,9 @@ use secp256k1::Secp256k1;
 pub mod danger;
 
 use crate::command::open;
-use crate::core::types::{Index, Seed, WordCount};
-use crate::core::util::bip::bip32::Bip32RootKey;
-use crate::core::util::bip::bip85::FromBip85;
+use crate::types::{Index, Seed, WordCount};
+use crate::util::bip::bip32::Bip32RootKey;
+use crate::util::bip::bip85::FromBip85;
 
 pub fn derive<S, PSW>(
     name: S,

@@ -9,8 +9,8 @@ use anyhow::Result;
 use bitcoin::Network;
 
 use crate::command::open;
-use crate::core::types::{Secrets, Seed};
-use crate::core::util::dir;
+use crate::types::{Secrets, Seed};
+use crate::util::dir;
 
 pub fn view_secrets<S, PSW>(name: S, get_password: PSW, network: Network) -> Result<Secrets>
 where

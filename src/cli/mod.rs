@@ -3,13 +3,13 @@
 
 use std::path::PathBuf;
 
-use bitcoin::Network;
 use clap::{Parser, Subcommand};
+use keechain_core::bitcoin::Network;
+use keechain_core::types::{Index, WordCount};
 
 pub mod io;
 
 use crate::command::export::ElectrumExportSupportedScripts;
-use crate::core::types::{Index, WordCount};
 
 #[derive(Debug, Parser)]
 #[command(name = "keechain")]

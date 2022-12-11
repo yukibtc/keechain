@@ -5,7 +5,7 @@ use anyhow::{anyhow, Result};
 use bitcoin::util::base58;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPubKey};
 
-use crate::core::util::convert;
+use crate::util::convert;
 
 pub trait ToSlip132 {
     type Err;

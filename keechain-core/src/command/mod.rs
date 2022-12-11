@@ -25,10 +25,10 @@ pub mod export;
 pub mod psbt;
 pub mod setting;
 
-use crate::core::crypto::aes::Aes256Encryption;
-use crate::core::types::{Seed, WordCount};
-use crate::core::util::bip::bip32::Bip32RootKey;
-use crate::core::util::{dir, time};
+use crate::crypto::aes::Aes256Encryption;
+use crate::types::{Seed, WordCount};
+use crate::util::bip::bip32::Bip32RootKey;
+use crate::util::{dir, time};
 
 fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
     let mut h = HmacEngine::<sha512::Hash>::new(b"keechain-entropy");

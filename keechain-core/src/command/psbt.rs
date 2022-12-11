@@ -11,8 +11,8 @@ use bitcoin::psbt::PartiallySignedTransaction;
 use bitcoin::Network;
 
 use super::open;
-use crate::core::types::{Psbt, Seed};
-use crate::core::util::dir;
+use crate::types::{Psbt, Seed};
+use crate::util::dir;
 
 pub fn decode_file(psbt_file: PathBuf, network: Network) -> Result<Psbt> {
     if !psbt_file.exists() && !psbt_file.is_file() {
