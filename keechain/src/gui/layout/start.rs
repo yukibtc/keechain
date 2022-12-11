@@ -13,7 +13,7 @@ use crate::gui::component::{Button, InputField, Version};
 use crate::gui::theme::color::ORANGE;
 use crate::gui::{AppState, Menu, Stage};
 
-const LOGO: &[u8] = include_bytes!("../../../../assets/logo.png");
+const LOGO: &[u8] = include_bytes!("../../../assets/logo.png");
 
 #[derive(Clone)]
 pub struct StartState {

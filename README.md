@@ -6,8 +6,8 @@ KeeChain is a Bitcoin application to transform your **offline** computer in an A
 
 <table>
     <tr>
-        <td> <img src="./assets/gui.png" alt="GUI" style="max-height: 300px;"/> </td>
-        <td> <img src="./assets/terminal.png" alt="CLI" style="max-height: 300px;"/> </td>
+        <td> <img src="./doc/screenshots/gui.png" alt="GUI" style="max-height: 300px;"/> </td>
+        <td> <img src="./doc/screenshots/terminal.png" alt="CLI" style="max-height: 300px;"/> </td>
     </tr>
 </table>
 
