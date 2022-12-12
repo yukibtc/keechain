@@ -4,13 +4,11 @@
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::PathBuf;
-use std::str::FromStr;
 
 use bdk::keys::bip39::Mnemonic;
-use bdk::miniscript::Descriptor;
 use bitcoin::hashes::hmac::{Hmac, HmacEngine};
 use bitcoin::hashes::{sha512, Hash, HashEngine};
-use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPubKey, Fingerprint};
+use bitcoin::util::bip32::Fingerprint;
 use bitcoin::Network;
 use rand::rngs::OsRng;
 use rand::{RngCore, SeedableRng};
@@ -204,60 +202,6 @@ where
     let password: String = get_password()?;
 
     Seed::decrypt(password, &content)
-}
-
-fn descriptor(
-    root_fingerprint: Fingerprint,
-    pubkey: ExtendedPubKey,
-    path: &DerivationPath,
-    change: bool,
-) -> Result<Descriptor<String>> {
-    let mut iter_path = path.into_iter();
-
-    let purpose: &ChildNumber = match iter_path.next() {
-        Some(child) => child,
-        None => {
-            return Err(Error::Generic(
-                "Invalid derivation path: purpose not provided".to_string(),
-            ))
-        }
-    };
-
-    let coin: &ChildNumber = match iter_path.next() {
-        Some(ChildNumber::Hardened { index: 0 }) => &ChildNumber::Hardened { index: 0 },
-        Some(ChildNumber::Hardened { index: 1 }) => &ChildNumber::Hardened { index: 1 },
-        _ => {
-            return Err(Error::Generic(
-                "Invalid derivation path: coin invalid or not provided".to_string(),
-            ))
-        }
-    };
-
-    let account: &ChildNumber = match iter_path.next() {
-        Some(child) => child,
-        None => &ChildNumber::Hardened { index: 0 },
-    };
-
-    let descriptor: String = format!(
-        "[{}/{:#}/{:#}/{:#}]{}/{}/*",
-        root_fingerprint,
-        purpose,
-        coin,
-        account,
-        pubkey,
-        i32::from(change)
-    );
-
-    let descriptor: String = match purpose {
-        ChildNumber::Hardened { index: 44 } => format!("pkh({})", descriptor),
-        ChildNumber::Hardened { index: 49 } => format!("sh(wpkh({}))", descriptor),
-        ChildNumber::Hardened { index: 84 } => format!("wpkh({})", descriptor),
-        ChildNumber::Hardened { index: 86 } => format!("tr({})", descriptor),
-        _ => return Err(Error::Generic("Unsupported derivation path".to_string())),
-    };
-
-    Descriptor::from_str(&descriptor)
-        .map_err(|e| Error::Parse(format!("Impossible to parse descriptor: {}", e)))
 }
 
 pub fn identity<S, PSW>(name: S, get_password: PSW, network: Network) -> Result<Fingerprint>

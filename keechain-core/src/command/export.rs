@@ -5,15 +5,19 @@ use std::fmt;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use std::str::FromStr;
 
+use bdk::miniscript::Descriptor;
 use bitcoin::secp256k1::Secp256k1;
-use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
+use bitcoin::util::bip32::{
+    ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
+};
 use bitcoin::Network;
 use clap::ValueEnum;
 use serde_json::{json, Value};
 
-use super::{descriptor, open};
-use crate::error::Result;
+use super::open;
+use crate::error::{Error, Result};
 use crate::types::{Descriptors, Seed};
 use crate::util::bip::bip32::{self, Bip32RootKey};
 use crate::util::dir;
@@ -44,6 +48,60 @@ impl fmt::Display for ElectrumExportSupportedScripts {
             Self::NativeSegwit => write!(f, "native-segwit"),
         }
     }
+}
+
+pub fn descriptor(
+    root_fingerprint: Fingerprint,
+    pubkey: ExtendedPubKey,
+    path: &DerivationPath,
+    change: bool,
+) -> Result<Descriptor<String>> {
+    let mut iter_path = path.into_iter();
+
+    let purpose: &ChildNumber = match iter_path.next() {
+        Some(child) => child,
+        None => {
+            return Err(Error::Generic(
+                "Invalid derivation path: purpose not provided".to_string(),
+            ))
+        }
+    };
+
+    let coin: &ChildNumber = match iter_path.next() {
+        Some(ChildNumber::Hardened { index: 0 }) => &ChildNumber::Hardened { index: 0 },
+        Some(ChildNumber::Hardened { index: 1 }) => &ChildNumber::Hardened { index: 1 },
+        _ => {
+            return Err(Error::Generic(
+                "Invalid derivation path: coin invalid or not provided".to_string(),
+            ))
+        }
+    };
+
+    let account: &ChildNumber = match iter_path.next() {
+        Some(child) => child,
+        None => &ChildNumber::Hardened { index: 0 },
+    };
+
+    let descriptor: String = format!(
+        "[{}/{:#}/{:#}/{:#}]{}/{}/*",
+        root_fingerprint,
+        purpose,
+        coin,
+        account,
+        pubkey,
+        i32::from(change)
+    );
+
+    let descriptor: String = match purpose {
+        ChildNumber::Hardened { index: 44 } => format!("pkh({})", descriptor),
+        ChildNumber::Hardened { index: 49 } => format!("sh(wpkh({}))", descriptor),
+        ChildNumber::Hardened { index: 84 } => format!("wpkh({})", descriptor),
+        ChildNumber::Hardened { index: 86 } => format!("tr({})", descriptor),
+        _ => return Err(Error::Generic("Unsupported derivation path".to_string())),
+    };
+
+    Descriptor::from_str(&descriptor)
+        .map_err(|e| Error::Parse(format!("Impossible to parse descriptor: {}", e)))
 }
 
 pub fn descriptors<S, PSW>(
