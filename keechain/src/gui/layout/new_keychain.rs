@@ -1,7 +1,7 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use eframe::egui::{Align, Key, Layout, RichText, ScrollArea, Ui};
+use eframe::egui::{Align, ComboBox, Key, Layout, RichText, ScrollArea, Ui};
 use eframe::epaint::Color32;
 use keechain_core::keychain::KeeChain;
 use keechain_core::types::WordCount;
@@ -10,11 +10,14 @@ use crate::gui::component::{Button, Heading, InputField, Version};
 use crate::gui::theme::color::ORANGE;
 use crate::gui::{AppState, Menu, Stage};
 
+const WORD_COUNT_OPTIONS: [WordCount; 3] = [WordCount::W12, WordCount::W18, WordCount::W24];
+
 #[derive(Clone, Default)]
 pub struct NewKeychainState {
     name: String,
     password: String,
     confirm_password: String,
+    word_count: WordCount,
     keechain: Option<KeeChain>,
     confirm_saved_mnemonic: bool,
     error: Option<String>,
@@ -25,6 +28,7 @@ impl NewKeychainState {
         self.name = String::new();
         self.password = String::new();
         self.confirm_password = String::new();
+        self.word_count = WordCount::default();
         self.keechain = None;
         self.confirm_saved_mnemonic = false;
         self.error = None;
@@ -76,6 +80,27 @@ fn generate_layout(app: &mut AppState, ui: &mut Ui) {
 
     ui.add_space(7.0);
 
+    ui.with_layout(Layout::top_down(Align::Min), |ui| {
+        ui.add_space(1.0);
+        ui.label("Word count");
+        ui.horizontal_wrapped(|ui| {
+            ComboBox::from_id_source("word_count")
+                .width(ui.available_width() - 10.0)
+                .selected_text(app.layouts.new_keychain.word_count.as_u32().to_string())
+                .show_ui(ui, |ui| {
+                    for value in WORD_COUNT_OPTIONS.into_iter() {
+                        ui.selectable_value(
+                            &mut app.layouts.new_keychain.word_count,
+                            value,
+                            value.as_u32().to_string(),
+                        );
+                    }
+                });
+        })
+    });
+
+    ui.add_space(7.0);
+
     if let Some(error) = &app.layouts.new_keychain.error {
         ui.label(RichText::new(error).color(Color32::RED));
     }
@@ -106,7 +131,7 @@ fn generate_layout(app: &mut AppState, ui: &mut Ui) {
             match KeeChain::generate(
                 app.layouts.new_keychain.name.clone(),
                 || Ok(app.layouts.new_keychain.password.clone()),
-                WordCount::W24,
+                app.layouts.new_keychain.word_count,
                 || Ok(None),
             ) {
                 Ok(keechain) => {

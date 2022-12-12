@@ -117,6 +117,12 @@ pub enum WordCount {
     W24 = 24,
 }
 
+impl Default for WordCount {
+    fn default() -> Self {
+        Self::W24
+    }
+}
+
 impl WordCount {
     pub fn as_u32(&self) -> u32 {
         *self as u32
