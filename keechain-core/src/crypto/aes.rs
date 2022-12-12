@@ -129,9 +129,9 @@ mod tests {
         let passphrase: Option<&str> = Some("mypassphrase");
         let seed = Seed::new(mnemonic, passphrase);
 
-        let encrypted_seed: Vec<u8> = encrypt(key, &util::serialize(seed.clone()).unwrap());
+        let encrypted_seed: Vec<u8> = encrypt(key, &util::serde::serialize(seed.clone()).unwrap());
         let decrypted_seed: Seed =
-            util::deserialize(decrypt(key, &encrypted_seed).unwrap()).unwrap();
+            util::serde::deserialize(decrypt(key, &encrypted_seed).unwrap()).unwrap();
 
         assert_eq!(decrypted_seed, seed);
     }

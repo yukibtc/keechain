@@ -81,7 +81,7 @@ impl Aes256Encryption for Seed {
     where
         K: AsRef<[u8]>,
     {
-        let serialized_seed: Vec<u8> = util::serialize(self)?;
+        let serialized_seed: Vec<u8> = util::serde::serialize(self)?;
         Ok(aes::encrypt(key, &serialized_seed))
     }
 
@@ -90,7 +90,7 @@ impl Aes256Encryption for Seed {
         K: AsRef<[u8]>,
     {
         match aes::decrypt(key, content) {
-            Ok(data) => util::deserialize(data),
+            Ok(data) => util::serde::deserialize(data),
             Err(aes::Error::WrongBlockMode) => Err(Error::Generic(
                 "Impossible to decrypt file: invalid password or content".to_string(),
             )),
