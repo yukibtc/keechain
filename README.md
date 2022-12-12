@@ -18,14 +18,15 @@ KeeChain is a Bitcoin application to transform your **offline** computer in an A
 
 ## Features
 
-* Generate BIP39 seed phrase using many sources of entropy:
+* Generate mnemonic (BIP39) using many sources of entropy:
     - True random number generator (TRNG)
     - Cryptographically secure pseudo-random number generator (CSPRNG)
     - Dynamic events: timestamp, boot time, total and free memory, total and free SWAP, OS processes and load average
     - Static events: hostname, OS and kernel version, global CPU info and device users
     - Optional: dice roll 🎲
-* Restore BIP39 seed phrase with an optional passphrase
-* Seed encryption with AES-256
+* Restore mnemonic (BIP39)
+* Apply and, optionally, save passphrases (BIP39)
+* Keychain encryption with AES-256
 * Export:
     - Descriptors
     - Bitcoin Core descriptors (same as above but already formatted to be inserted into the console using the `importdescriptors` command)
