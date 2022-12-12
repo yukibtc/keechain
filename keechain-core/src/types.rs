@@ -44,6 +44,13 @@ impl Seed {
         }
     }
 
+    pub fn from_mnemonic(mnemonic: Mnemonic) -> Self {
+        Self {
+            mnemonic,
+            passphrase: None,
+        }
+    }
+
     pub fn mnemonic(&self) -> Mnemonic {
         self.mnemonic.clone()
     }

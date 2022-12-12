@@ -6,7 +6,7 @@ use std::sync::Arc;
 use eframe::egui::{self, Align, ComboBox, Key, Layout, RichText, ScrollArea, Ui};
 use eframe::epaint::{Color32, FontId};
 use egui_extras::RetainedImage;
-use keechain_core::command;
+use keechain_core::keychain::KeeChain;
 use keechain_core::util::dir;
 
 use crate::gui::component::{Button, InputField, Version};
@@ -126,12 +126,12 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
             }
 
             if is_ready && (ui.input().key_pressed(Key::Enter) || button.clicked()) {
-                match command::open(app.layouts.start.name.clone(), || {
+                match KeeChain::open(app.layouts.start.name.clone(), || {
                     Ok(app.layouts.start.password.clone())
                 }) {
-                    Ok(seed) => {
+                    Ok(keechain) => {
                         app.layouts.start.clear();
-                        app.set_seed(Some(seed));
+                        app.set_keechain(Some(keechain));
                         app.set_stage(Stage::Menu(Menu::Main));
                     }
                     Err(e) => app.layouts.start.error = Some(e.to_string()),

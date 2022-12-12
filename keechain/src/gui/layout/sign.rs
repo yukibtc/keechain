@@ -35,7 +35,7 @@ impl SignState {
 }
 
 pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
-    if app.seed.is_none() {
+    if app.keechain.is_none() {
         app.set_stage(Stage::Start);
     }
 
@@ -79,9 +79,9 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
                     .render(ui)
                     .clicked()
                 {
-                    if let Some(seed) = app.seed.as_ref() {
+                    if let Some(keechain) = app.keechain.as_ref() {
                         match command::psbt::sign_file_from_seed(
-                            seed,
+                            &keechain.keychain.seed(),
                             app.network,
                             psbt_file.path.clone(),
                         ) {

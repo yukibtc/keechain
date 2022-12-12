@@ -6,8 +6,8 @@ use std::str::FromStr;
 use eframe::egui::{Align, Key, Layout, RichText, ScrollArea, Ui};
 use eframe::epaint::Color32;
 use keechain_core::bdk::keys::bip39::Mnemonic;
+use keechain_core::keychain::KeeChain;
 
-use crate::command;
 use crate::gui::component::{Button, Heading, InputField, Version};
 use crate::gui::theme::color::ORANGE;
 use crate::gui::{AppState, Menu, Stage};
@@ -16,8 +16,6 @@ use crate::gui::{AppState, Menu, Stage};
 pub struct RestoreState {
     name: String,
     mnemonic: String,
-    use_passphrase: bool,
-    passphrase: Option<String>,
     password: String,
     confirm_password: String,
     error: Option<String>,
@@ -27,8 +25,6 @@ impl RestoreState {
     pub fn clear(&mut self) {
         self.name = String::new();
         self.mnemonic = String::new();
-        self.use_passphrase = false;
-        self.passphrase = None;
         self.password = String::new();
         self.confirm_password = String::new();
         self.error = None;
@@ -71,27 +67,6 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
 
             ui.add_space(7.0);
 
-            if app.layouts.restore.use_passphrase {
-                if app.layouts.restore.passphrase.is_none() {
-                    app.layouts.restore.passphrase = Some(String::new());
-                }
-                if let Some(passphrase) = app.layouts.restore.passphrase.as_mut() {
-                    InputField::new("Passphrase (optional)")
-                        .placeholder("Passphrase")
-                        .render(ui, passphrase);
-                }
-            } else {
-                app.layouts.restore.passphrase = None;
-            }
-
-            ui.add_space(5.0);
-
-            ui.with_layout(Layout::top_down(Align::Min), |ui| {
-                ui.checkbox(&mut app.layouts.restore.use_passphrase, "Use passphrase");
-            });
-
-            ui.add_space(7.0);
-
             if let Some(error) = &app.layouts.restore.error {
                 ui.label(RichText::new(error).color(Color32::RED));
             }
@@ -120,15 +95,14 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
                     app.layouts.restore.error = Some("Passwords not match".to_string());
                 } else {
                     match Mnemonic::from_str(&app.layouts.restore.mnemonic) {
-                        Ok(mnemonic) => match command::restore(
+                        Ok(mnemonic) => match KeeChain::restore(
                             app.layouts.restore.name.clone(),
                             || Ok(app.layouts.restore.password.clone()),
                             || Ok(mnemonic),
-                            || Ok(app.layouts.restore.passphrase.clone()),
                         ) {
-                            Ok(seed) => {
+                            Ok(keechain) => {
                                 app.layouts.restore.clear();
-                                app.set_seed(Some(seed));
+                                app.set_keechain(Some(keechain));
                                 app.set_stage(Stage::Menu(Menu::Main));
                             }
                             Err(e) => app.layouts.restore.error = Some(e.to_string()),

@@ -8,7 +8,7 @@ use eframe::{App, Frame, NativeOptions, Theme};
 use egui::TextStyle::{Body, Button, Heading, Monospace, Small};
 use keechain_core::bitcoin::Network;
 use keechain_core::error::Result;
-use keechain_core::types::Seed;
+use keechain_core::keychain::KeeChain;
 
 mod component;
 mod layout;
@@ -94,7 +94,7 @@ pub struct AppLayoutStates {
 pub struct AppState {
     network: Network,
     stage: Stage,
-    seed: Option<Seed>,
+    keechain: Option<KeeChain>,
     layouts: AppLayoutStates,
 }
 
@@ -103,7 +103,7 @@ impl AppState {
         Self {
             network: *network,
             stage: Stage::default(),
-            seed: None,
+            keechain: None,
             layouts: AppLayoutStates::default(),
         }
     }
@@ -112,8 +112,8 @@ impl AppState {
         self.stage = stage;
     }
 
-    fn set_seed(&mut self, seed: Option<Seed>) {
-        self.seed = seed;
+    fn set_keechain(&mut self, keechain: Option<KeeChain>) {
+        self.keechain = keechain;
     }
 }
 

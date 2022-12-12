@@ -3,9 +3,9 @@
 
 use eframe::egui::{Align, Key, Layout, RichText, ScrollArea, Ui};
 use eframe::epaint::Color32;
-use keechain_core::types::{Seed, WordCount};
+use keechain_core::keychain::KeeChain;
+use keechain_core::types::WordCount;
 
-use crate::command;
 use crate::gui::component::{Button, Heading, InputField, Version};
 use crate::gui::theme::color::ORANGE;
 use crate::gui::{AppState, Menu, Stage};
@@ -13,11 +13,9 @@ use crate::gui::{AppState, Menu, Stage};
 #[derive(Clone, Default)]
 pub struct NewKeychainState {
     name: String,
-    use_passphrase: bool,
-    passphrase: Option<String>,
     password: String,
     confirm_password: String,
-    seed: Option<Seed>,
+    keechain: Option<KeeChain>,
     confirm_saved_mnemonic: bool,
     error: Option<String>,
 }
@@ -25,11 +23,9 @@ pub struct NewKeychainState {
 impl NewKeychainState {
     pub fn clear(&mut self) {
         self.name = String::new();
-        self.use_passphrase = false;
-        self.passphrase = None;
         self.password = String::new();
         self.confirm_password = String::new();
-        self.seed = None;
+        self.keechain = None;
         self.confirm_saved_mnemonic = false;
         self.error = None;
     }
@@ -44,8 +40,8 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
 
             ui.add_space(15.0);
 
-            if let Some(seed) = app.layouts.new_keychain.seed.clone() {
-                show_mnemonic_layout(app, seed, ui);
+            if let Some(keechain) = app.layouts.new_keychain.keechain.clone() {
+                show_mnemonic_layout(app, keechain, ui);
             } else {
                 generate_layout(app, ui);
             }
@@ -80,30 +76,6 @@ fn generate_layout(app: &mut AppState, ui: &mut Ui) {
 
     ui.add_space(7.0);
 
-    if app.layouts.new_keychain.use_passphrase {
-        if app.layouts.new_keychain.passphrase.is_none() {
-            app.layouts.new_keychain.passphrase = Some(String::new());
-        }
-        if let Some(passphrase) = app.layouts.new_keychain.passphrase.as_mut() {
-            InputField::new("Passphrase (optional)")
-                .placeholder("Passphrase")
-                .render(ui, passphrase);
-        }
-    } else {
-        app.layouts.new_keychain.passphrase = None;
-    }
-
-    ui.add_space(5.0);
-
-    ui.with_layout(Layout::top_down(Align::Min), |ui| {
-        ui.checkbox(
-            &mut app.layouts.new_keychain.use_passphrase,
-            "Use passphrase",
-        );
-    });
-
-    ui.add_space(7.0);
-
     if let Some(error) = &app.layouts.new_keychain.error {
         ui.label(RichText::new(error).color(Color32::RED));
     }
@@ -113,7 +85,7 @@ fn generate_layout(app: &mut AppState, ui: &mut Ui) {
     let is_ready: bool = !app.layouts.new_keychain.name.is_empty()
         && !app.layouts.new_keychain.password.is_empty()
         && !app.layouts.new_keychain.confirm_password.is_empty()
-        && app.layouts.new_keychain.seed.is_none();
+        && app.layouts.new_keychain.keechain.is_none();
 
     let button = Button::new("Generate")
         .background_color(ORANGE)
@@ -131,15 +103,14 @@ fn generate_layout(app: &mut AppState, ui: &mut Ui) {
         if app.layouts.new_keychain.password != app.layouts.new_keychain.confirm_password {
             app.layouts.new_keychain.error = Some("Passwords not match".to_string());
         } else {
-            match command::generate(
+            match KeeChain::generate(
                 app.layouts.new_keychain.name.clone(),
                 || Ok(app.layouts.new_keychain.password.clone()),
-                || Ok(app.layouts.new_keychain.passphrase.clone()),
                 WordCount::W24,
                 || Ok(None),
             ) {
-                Ok(seed) => {
-                    app.layouts.new_keychain.seed = Some(seed);
+                Ok(keechain) => {
+                    app.layouts.new_keychain.keechain = Some(keechain);
                 }
                 Err(e) => app.layouts.new_keychain.error = Some(e.to_string()),
             }
@@ -147,10 +118,10 @@ fn generate_layout(app: &mut AppState, ui: &mut Ui) {
     }
 }
 
-fn show_mnemonic_layout(app: &mut AppState, seed: Seed, ui: &mut Ui) {
+fn show_mnemonic_layout(app: &mut AppState, keechain: KeeChain, ui: &mut Ui) {
     ui.add_space(25.0);
 
-    ui.label(RichText::new(seed.mnemonic().to_string()).monospace());
+    ui.label(RichText::new(keechain.keychain.seed.mnemonic().to_string()).monospace());
 
     ui.add_space(25.0);
 
@@ -169,7 +140,7 @@ fn show_mnemonic_layout(app: &mut AppState, seed: Seed, ui: &mut Ui) {
         .render(ui);
 
     if button.clicked() {
-        app.set_seed(Some(seed));
+        app.set_keechain(Some(keechain));
         app.layouts.restore.clear();
         app.set_stage(Stage::Menu(Menu::Main));
     }

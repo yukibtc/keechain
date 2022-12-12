@@ -7,7 +7,7 @@ use crate::gui::component::{Button, Heading, Version};
 use crate::gui::{AppState, ExportTypes, Menu, Stage};
 
 pub fn update_layout(app: &mut AppState, export_type: ExportTypes, ui: &mut Ui) {
-    if app.seed.is_none() {
+    if app.keechain.is_none() {
         app.set_stage(Stage::Start);
     }
 

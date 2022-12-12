@@ -9,7 +9,6 @@ use std::str::FromStr;
 use bitcoin::psbt::PartiallySignedTransaction;
 use bitcoin::Network;
 
-use super::open;
 use crate::error::{Error, Result};
 use crate::types::{Psbt, Seed};
 use crate::util::dir;
@@ -42,18 +41,4 @@ pub fn sign_file_from_seed(seed: &Seed, network: Network, psbt_file: PathBuf) ->
     }
 
     Ok(finalized)
-}
-
-pub fn sign_file<S, PSW>(
-    name: S,
-    get_password: PSW,
-    network: Network,
-    psbt_file: PathBuf,
-) -> Result<bool>
-where
-    S: Into<String>,
-    PSW: FnOnce() -> Result<String>,
-{
-    let seed: Seed = open(name, get_password)?;
-    sign_file_from_seed(&seed, network, psbt_file)
 }

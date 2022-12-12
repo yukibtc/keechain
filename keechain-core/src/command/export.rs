@@ -16,7 +16,6 @@ use bitcoin::Network;
 use clap::ValueEnum;
 use serde_json::{json, Value};
 
-use super::open;
 use crate::error::{Error, Result};
 use crate::types::{Descriptors, Seed};
 use crate::util::bip::bip32::{self, Bip32RootKey};
@@ -104,17 +103,7 @@ pub fn descriptor(
         .map_err(|e| Error::Parse(format!("Impossible to parse descriptor: {}", e)))
 }
 
-pub fn descriptors<S, PSW>(
-    name: S,
-    get_password: PSW,
-    network: Network,
-    account: Option<u32>,
-) -> Result<Descriptors>
-where
-    S: Into<String>,
-    PSW: FnOnce() -> Result<String>,
-{
-    let seed: Seed = open(name, get_password)?;
+pub fn descriptors(seed: Seed, network: Network, account: Option<u32>) -> Result<Descriptors> {
     let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
     let secp = Secp256k1::new();
     let root_fingerprint = root.fingerprint(&secp);
@@ -153,17 +142,8 @@ where
     Ok(descriptors)
 }
 
-pub fn bitcoin_core<S, PSW>(
-    name: S,
-    get_password: PSW,
-    network: Network,
-    account: Option<u32>,
-) -> Result<String>
-where
-    S: Into<String>,
-    PSW: FnOnce() -> Result<String>,
-{
-    let descriptors: Descriptors = descriptors(name, get_password, network, account)?;
+pub fn bitcoin_core(seed: Seed, network: Network, account: Option<u32>) -> Result<String> {
+    let descriptors: Descriptors = descriptors(seed, network, account)?;
     let mut bitcoin_core_descriptors: Vec<Value> = Vec::new();
 
     for external in descriptors.external.iter() {
@@ -190,17 +170,7 @@ where
     ))
 }
 
-pub fn electrum<S, PSW>(
-    name: S,
-    get_password: PSW,
-    network: Network,
-    path: DerivationPath,
-) -> Result<PathBuf>
-where
-    S: Into<String>,
-    PSW: FnOnce() -> Result<String>,
-{
-    let seed: Seed = open(name, get_password)?;
+pub fn electrum(seed: Seed, network: Network, path: DerivationPath) -> Result<PathBuf> {
     let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
     let secp = Secp256k1::new();
     let fingerprint: Fingerprint = root.fingerprint(&secp);

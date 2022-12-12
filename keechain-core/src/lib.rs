@@ -7,5 +7,6 @@ pub extern crate bitcoin;
 pub mod command;
 pub mod crypto;
 pub mod error;
+pub mod keychain;
 pub mod types;
 pub mod util;

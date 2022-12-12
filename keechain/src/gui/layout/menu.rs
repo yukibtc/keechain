@@ -3,13 +3,14 @@
 
 use eframe::egui::{Align, Layout, Ui};
 use eframe::Frame;
+use keechain_core::util::bip::bip32::Bip32RootKey;
 
 use crate::gui::component::{Button, Heading, Version};
 use crate::gui::theme::color::DARK_RED;
 use crate::gui::{AppState, Command, ExportTypes, Menu, Stage};
 
 pub fn update_layout(app: &mut AppState, menu: Menu, ui: &mut Ui, frame: &mut Frame) {
-    if app.seed.is_none() {
+    if app.keechain.is_none() {
         app.set_stage(Stage::Start);
     }
 
@@ -17,6 +18,20 @@ pub fn update_layout(app: &mut AppState, menu: Menu, ui: &mut Ui, frame: &mut Fr
         ui.set_max_width(ui.available_width() - 20.0);
 
         Heading::new("Menu").render(ui);
+
+        ui.add_space(15.0);
+
+        if let Some(keechain) = &app.keechain {
+            ui.group(|ui| {
+                if let Ok(fingerprint) = keechain.keychain.seed.fingerprint(app.network) {
+                    ui.label(format!("Fingerprint: {}", fingerprint));
+                }
+                ui.label(format!(
+                    "Passphrase: {}",
+                    keechain.keychain.seed.passphrase().is_some()
+                ));
+            });
+        }
 
         ui.add_space(15.0);
 
