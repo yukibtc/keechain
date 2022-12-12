@@ -41,6 +41,10 @@ pub fn update_layout(app: &mut AppState, menu: Menu, ui: &mut Ui, frame: &mut Fr
                     app.set_stage(Stage::Command(Command::Sign));
                 }
                 ui.add_space(5.0);
+                if Button::new("Passphrase").render(ui).clicked() {
+                    app.set_stage(Stage::Command(Command::Passphrase));
+                }
+                ui.add_space(5.0);
                 if Button::new("Export").render(ui).clicked() {
                     app.stage = Stage::Menu(Menu::Export);
                 }

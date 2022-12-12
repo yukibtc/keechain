@@ -15,7 +15,7 @@ mod layout;
 mod theme;
 
 use self::layout::sign::SignState;
-use self::layout::{NewKeychainState, RestoreState, StartState};
+use self::layout::{NewKeychainState, PassphraseState, RestoreState, StartState};
 
 const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 530.0);
 const GENERIC_FONT_HEIGHT: f32 = 18.0;
@@ -54,6 +54,7 @@ pub enum ExportTypes {
 
 #[derive(Clone)]
 pub enum Command {
+    Passphrase,
     Sign,
     Export(ExportTypes),
 }
@@ -88,6 +89,7 @@ pub struct AppLayoutStates {
     new_keychain: NewKeychainState,
     restore: RestoreState,
     sign: SignState,
+    passphrase: PassphraseState,
 }
 
 #[derive(Clone)]
@@ -136,6 +138,7 @@ impl App for AppState {
             Stage::RestoreKeychain => layout::restore::update_layout(self, ui),
             Stage::Menu(menu) => layout::menu::update_layout(self, menu.clone(), ui, frame),
             Stage::Command(cmd) => match cmd {
+                Command::Passphrase => layout::passphrase::update_layout(self, ui),
                 Command::Sign => layout::sign::update_layout(self, ui),
                 Command::Export(export_type) => {
                     layout::export::update_layout(self, export_type.clone(), ui)
