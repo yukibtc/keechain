@@ -22,7 +22,7 @@ pub fn keechain() -> Result<PathBuf> {
         Some(path) => {
             let path: PathBuf = path.join(".keechain");
             if !path.exists() {
-                std::fs::create_dir_all(path.clone())?;
+                std::fs::create_dir_all(path.as_path())?;
             }
             path
         }
@@ -31,7 +31,11 @@ pub fn keechain() -> Result<PathBuf> {
 }
 
 pub fn keychains() -> Result<PathBuf> {
-    Ok(keechain()?.join("keychains"))
+    let path: PathBuf = keechain()?.join("keychains");
+    if !path.exists() {
+        std::fs::create_dir_all(path.as_path())?;
+    }
+    Ok(path)
 }
 
 pub fn get_keychains_list() -> Result<Vec<String>> {
