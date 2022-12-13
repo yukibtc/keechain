@@ -57,6 +57,10 @@ pub fn update_layout(app: &mut AppState, menu: Menu, ui: &mut Ui, frame: &mut Fr
                     app.stage = Stage::Menu(Menu::Setting);
                 }
                 ui.add_space(5.0);
+                if Button::new("Other").render(ui).clicked() {
+                    app.stage = Stage::Menu(Menu::Other);
+                }
+                ui.add_space(5.0);
                 if Button::new("Lock").render(ui).clicked() {
                     app.stage = Stage::Start;
                 }
@@ -96,6 +100,18 @@ pub fn update_layout(app: &mut AppState, menu: Menu, ui: &mut Ui, frame: &mut Fr
                 }
             }
             Menu::Setting => {
+                if Button::new("Back").render(ui).clicked() {
+                    app.stage = Stage::Menu(Menu::Main);
+                }
+            }
+            Menu::Other => {
+                #[cfg(feature = "nostr")]
+                {
+                    if Button::new("Nostr").render(ui).clicked() {
+                        app.set_stage(Stage::Command(Command::Nostr));
+                    }
+                    ui.add_space(5.0);
+                }
                 if Button::new("Back").render(ui).clicked() {
                     app.stage = Stage::Menu(Menu::Main);
                 }

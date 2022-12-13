@@ -36,6 +36,8 @@ KeeChain is a Bitcoin application to transform your **offline** computer in an A
 * Danger:
     - View secrets: entropy, mnemonic, passphrase, HEX seed, BIP32 root key and fingerprint.
     - Wipe: permanently delete keychain
+* Optional:
+    - [Nostr](https://github.com/nostr-protocol/nostr) sign event delegation (NIP26)
 
 ## State
 

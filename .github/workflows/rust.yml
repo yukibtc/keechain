@@ -22,9 +22,12 @@ jobs:
           - version: 1.65.0 #MSRV
         build-args:
           [
-            -p keechain-core --no-default-features,
-            --no-default-features,
-            --features gui,
+            "-p keechain-core --no-default-features",
+            "-p keechain-core --features nostr",
+            "--no-default-features",
+            "--features nostr",
+            "--features gui",
+            "--features gui,nostr",
           ]
     steps:
     - name: Checkout
@@ -38,7 +41,7 @@ jobs:
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
     - name: Install GUI dependencies
-      if: ${{ matrix.build-args == '--features gui' }}
+      if: ${{ matrix.build-args == '--features gui' || matrix.build-args == '--features gui,nostr' }}
       run: sudo apt install build-essential libclang-dev libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev
     - name: Set default toolchain
       run: rustup default ${{ matrix.rust.version }}

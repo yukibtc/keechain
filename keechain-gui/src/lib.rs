@@ -15,6 +15,8 @@ mod layout;
 mod theme;
 
 use self::layout::sign::SignState;
+#[cfg(feature = "nostr")]
+use self::layout::NostrState;
 use self::layout::{NewKeychainState, PassphraseState, RestoreState, StartState};
 
 const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 530.0);
@@ -57,6 +59,8 @@ pub enum Command {
     Passphrase,
     Sign,
     Export(ExportTypes),
+    #[cfg(feature = "nostr")]
+    Nostr,
 }
 
 #[derive(Clone)]
@@ -65,6 +69,7 @@ pub enum Menu {
     Export,
     Advanced,
     Setting,
+    Other,
     Danger,
 }
 
@@ -90,6 +95,8 @@ pub struct AppLayoutStates {
     restore: RestoreState,
     sign: SignState,
     passphrase: PassphraseState,
+    #[cfg(feature = "nostr")]
+    nostr: NostrState,
 }
 
 #[derive(Clone)]
@@ -143,6 +150,8 @@ impl App for AppState {
                 Command::Export(export_type) => {
                     layout::export::update_layout(self, export_type.clone(), ui)
                 }
+                #[cfg(feature = "nostr")]
+                Command::Nostr => layout::nostr::update_layout(self, ui),
             },
         });
     }
