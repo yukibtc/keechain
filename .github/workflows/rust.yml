@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        rust:
+          - version: 1.65.0 #MSRV
         build-args:
           [
             --no-default-features,
@@ -37,15 +39,16 @@ jobs:
     - name: Install GUI dependencies
       if: ${{ matrix.build-args == '--features gui' }}
       run: sudo apt install build-essential libclang-dev libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev
+    - name: Set default toolchain
+      run: rustup default ${{ matrix.rust.version }}
+    - name: Set profile
+      run: rustup set profile minimal && rustup component add clippy
     - name: Build
-      run: cargo build ${{ matrix.build-args }} --all
+      run: cargo build ${{ matrix.build-args }}
     - name: Tests
-      run: cargo test ${{ matrix.build-args }} --all
+      run: cargo test ${{ matrix.build-args }}
     - name: Clippy
-      uses: actions-rs/clippy-check@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        args: ${{ matrix.build-args }} -- -D warnings
+      run: cargo clippy ${{ matrix.build-args }} -- -D warnings
   
   audit:
     name: Audit
