@@ -22,10 +22,9 @@ use prettytable::format::FormatBuilder;
 use prettytable::{row, Table};
 use serde::{Deserialize, Serialize};
 
-use crate::crypto::aes::{self, Aes256Encryption};
 use crate::error::{Error, Result};
 use crate::util::bip::bip32::Bip32RootKey;
-use crate::util::{self, convert, format};
+use crate::util::{convert, format};
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Seed {
@@ -79,30 +78,6 @@ impl Bip32RootKey for Seed {
         let root: ExtendedPrivKey = self.to_bip32_root_key(network)?;
         let secp = Secp256k1::new();
         Ok(root.fingerprint(&secp))
-    }
-}
-
-impl Aes256Encryption for Seed {
-    type Err = Error;
-    fn encrypt<K>(&self, key: K) -> Result<Vec<u8>, Self::Err>
-    where
-        K: AsRef<[u8]>,
-    {
-        let serialized_seed: Vec<u8> = util::serde::serialize(self)?;
-        Ok(aes::encrypt(key, &serialized_seed))
-    }
-
-    fn decrypt<K>(key: K, content: &[u8]) -> Result<Self, Self::Err>
-    where
-        K: AsRef<[u8]>,
-    {
-        match aes::decrypt(key, content) {
-            Ok(data) => util::serde::deserialize(data),
-            Err(aes::Error::WrongBlockMode) => Err(Error::Generic(
-                "Impossible to decrypt file: invalid password or content".to_string(),
-            )),
-            Err(e) => Err(Error::Aes(e)),
-        }
     }
 }
 

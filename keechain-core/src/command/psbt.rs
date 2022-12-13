@@ -13,6 +13,17 @@ use crate::error::{Error, Result};
 use crate::types::{Psbt, Seed};
 use crate::util::dir;
 
+pub fn decode<S>(psbt_base64: S, network: Network) -> Result<Psbt>
+where
+    S: Into<String>,
+{
+    Ok(Psbt::new(
+        PartiallySignedTransaction::from_str(&psbt_base64.into())
+            .map_err(|e| Error::Parse(format!("Impossible to parse PSBT: {}", e)))?,
+        network,
+    ))
+}
+
 pub fn decode_file(psbt_file: PathBuf, network: Network) -> Result<Psbt> {
     if !psbt_file.exists() && !psbt_file.is_file() {
         return Err(Error::Generic("PSBT file not found.".to_string()));
@@ -23,11 +34,7 @@ pub fn decode_file(psbt_file: PathBuf, network: Network) -> Result<Psbt> {
     file.read_to_end(&mut content)?;
 
     let psbt: String = base64::encode(content);
-    Ok(Psbt::new(
-        PartiallySignedTransaction::from_str(&psbt)
-            .map_err(|e| Error::Parse(format!("Impossible to parse PSBT: {}", e)))?,
-        network,
-    ))
+    decode(psbt, network)
 }
 
 pub fn sign_file_from_seed(seed: &Seed, network: Network, psbt_file: PathBuf) -> Result<bool> {
