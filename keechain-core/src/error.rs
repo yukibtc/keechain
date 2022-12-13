@@ -29,6 +29,9 @@ pub enum Error {
     Parse(String),
     /// Generic error
     Generic(String),
+    /// Bech32 error
+    #[cfg(feature = "nostr")]
+    Bech32(bech32::Error),
 }
 
 impl fmt::Display for Error {
@@ -44,6 +47,8 @@ impl fmt::Display for Error {
             Self::BDK(err) => write!(f, "{}", err),
             Self::Parse(err) => write!(f, "{}", err),
             Self::Generic(err) => write!(f, "{}", err),
+            #[cfg(feature = "nostr")]
+            Self::Bech32(err) => write!(f, "{}", err),
         }
     }
 }
@@ -95,5 +100,12 @@ impl From<base64::DecodeError> for Error {
 impl From<bdk::Error> for Error {
     fn from(err: bdk::Error) -> Self {
         Self::BDK(err.to_string())
+    }
+}
+
+#[cfg(feature = "nostr")]
+impl From<bech32::Error> for Error {
+    fn from(err: bech32::Error) -> Self {
+        Self::Bech32(err)
     }
 }

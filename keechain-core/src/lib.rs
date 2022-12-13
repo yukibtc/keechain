@@ -8,5 +8,7 @@ pub mod command;
 pub mod crypto;
 pub mod error;
 pub mod keychain;
+#[cfg(feature = "nostr")]
+pub mod nostr;
 pub mod types;
 pub mod util;

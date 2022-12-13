@@ -12,10 +12,15 @@ keywords = ["keechain", "bitcoin", "signer", "psbt", "offline"]
 categories = ["command-line-utilities"]
 rust-version = "1.65.0"
 
+[features]
+default = []
+nostr = ["dep:bech32"]
+
 [dependencies]
 aes = "0.8.2"
 base64 = "0.13.1"
 bdk = { version = "0.25.0", default-features = false, features = ["keys-bip39"] }
+bech32 = { version = "0.9", optional = true }
 bitcoin = "0.29.2"
 cbc = { version = "0.1.2", features = ["alloc"] }
 dirs = "4.0.0"
