@@ -6,9 +6,9 @@ use eframe::epaint::Color32;
 use keechain_core::keychain::KeeChain;
 use keechain_core::types::WordCount;
 
-use crate::gui::component::{Button, Heading, InputField, Version};
-use crate::gui::theme::color::ORANGE;
-use crate::gui::{AppState, Menu, Stage};
+use crate::component::{Button, Heading, InputField, Version};
+use crate::theme::color::ORANGE;
+use crate::{AppState, Menu, Stage};
 
 const WORD_COUNT_OPTIONS: [WordCount; 3] = [WordCount::W12, WordCount::W18, WordCount::W24];
 

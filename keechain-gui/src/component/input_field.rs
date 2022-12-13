@@ -3,7 +3,7 @@
 
 use eframe::egui::{self, Align, Layout, TextBuffer, TextEdit, Ui, WidgetText};
 
-use crate::gui::GENERIC_FONT_HEIGHT;
+use crate::GENERIC_FONT_HEIGHT;
 
 const INPUT_FIELD_HEIGHT: f32 = 28.0;
 

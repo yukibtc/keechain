@@ -14,8 +14,6 @@ use keechain_core::util::bip::bip32;
 use keechain_core::util::dir;
 
 mod cli;
-#[cfg(feature = "gui")]
-mod gui;
 
 use self::cli::io;
 use self::cli::{AdvancedCommand, Cli, Command, DangerCommand, ExportTypes, SettingCommand};
@@ -28,7 +26,7 @@ fn main() -> Result<()> {
 
     match args.command {
         #[cfg(feature = "gui")]
-        Command::Launch => gui::launch(network),
+        Command::Launch => keechain_gui::launch(network),
         Command::Generate {
             name,
             word_count,

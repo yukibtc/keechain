@@ -8,9 +8,9 @@ use keechain_core::command;
 use keechain_core::types::Psbt;
 use rfd::FileDialog;
 
-use crate::gui::component::{Button, Heading, Version};
-use crate::gui::theme::color::{DARK_GREEN, DARK_RED, ORANGE, RED};
-use crate::gui::{AppState, Menu, Stage};
+use crate::component::{Button, Heading, Version};
+use crate::theme::color::{DARK_GREEN, DARK_RED, ORANGE, RED};
+use crate::{AppState, Menu, Stage};
 
 #[allow(dead_code)]
 #[derive(Clone)]

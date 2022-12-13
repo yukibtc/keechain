@@ -5,9 +5,9 @@ use eframe::egui::{Align, Layout, Ui};
 use eframe::Frame;
 use keechain_core::util::bip::bip32::Bip32RootKey;
 
-use crate::gui::component::{Button, Heading, Version};
-use crate::gui::theme::color::DARK_RED;
-use crate::gui::{AppState, Command, ExportTypes, Menu, Stage};
+use crate::component::{Button, Heading, Version};
+use crate::theme::color::DARK_RED;
+use crate::{AppState, Command, ExportTypes, Menu, Stage};
 
 pub fn update_layout(app: &mut AppState, menu: Menu, ui: &mut Ui, frame: &mut Frame) {
     if app.keechain.is_none() {
@@ -27,7 +27,7 @@ pub fn update_layout(app: &mut AppState, menu: Menu, ui: &mut Ui, frame: &mut Fr
                     ui.label(format!("Fingerprint: {}", fingerprint));
                 }
                 ui.label(format!(
-                    "Passphrase: {}",
+                    "Using passphrase: {}",
                     keechain.keychain.seed.passphrase().is_some()
                 ));
             });

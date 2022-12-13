@@ -9,11 +9,11 @@ use egui_extras::RetainedImage;
 use keechain_core::keychain::KeeChain;
 use keechain_core::util::dir;
 
-use crate::gui::component::{Button, InputField, Version};
-use crate::gui::theme::color::ORANGE;
-use crate::gui::{AppState, Menu, Stage};
+use crate::component::{Button, InputField, Version};
+use crate::theme::color::ORANGE;
+use crate::{AppState, Menu, Stage};
 
-const LOGO: &[u8] = include_bytes!("../../../assets/logo.png");
+const LOGO: &[u8] = include_bytes!("../../assets/logo.png");
 
 #[derive(Clone)]
 pub struct StartState {

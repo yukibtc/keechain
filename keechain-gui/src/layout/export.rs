@@ -3,8 +3,8 @@
 
 use eframe::egui::{Align, Layout, Ui};
 
-use crate::gui::component::{Button, Heading, Version};
-use crate::gui::{AppState, ExportTypes, Menu, Stage};
+use crate::component::{Button, Heading, Version};
+use crate::{AppState, ExportTypes, Menu, Stage};
 
 pub fn update_layout(app: &mut AppState, export_type: ExportTypes, ui: &mut Ui) {
     if app.keechain.is_none() {

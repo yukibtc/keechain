@@ -8,9 +8,9 @@ use eframe::epaint::Color32;
 use keechain_core::bdk::keys::bip39::Mnemonic;
 use keechain_core::keychain::KeeChain;
 
-use crate::gui::component::{Button, Heading, InputField, Version};
-use crate::gui::theme::color::ORANGE;
-use crate::gui::{AppState, Menu, Stage};
+use crate::component::{Button, Heading, InputField, Version};
+use crate::theme::color::ORANGE;
+use crate::{AppState, Menu, Stage};
 
 #[derive(Clone, Default)]
 pub struct RestoreState {

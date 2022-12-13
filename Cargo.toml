@@ -2,6 +2,7 @@
 members = [
     "keechain",
     "keechain-core",
+    "keechain-gui",
 ]
 default-members = ["keechain"]
 

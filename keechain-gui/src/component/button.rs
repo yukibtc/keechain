@@ -4,7 +4,7 @@
 use eframe::egui::{self, Response, RichText, Ui};
 use eframe::epaint::{Color32, Vec2};
 
-use crate::gui::theme::color::{DARK_GRAY, WHITE};
+use crate::theme::color::{DARK_GRAY, WHITE};
 
 const BUTTON_SIZE: Vec2 = egui::vec2(210.0, 28.0);
 
