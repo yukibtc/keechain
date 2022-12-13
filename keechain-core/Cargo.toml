@@ -10,7 +10,7 @@ license = "MIT"
 readme = "README.md"
 keywords = ["keechain", "bitcoin", "signer", "psbt", "offline"]
 categories = ["command-line-utilities"]
-rust-version = "1.64"
+rust-version = "1.65.0"
 
 [dependencies]
 aes = "0.8.2"
@@ -29,7 +29,7 @@ sha2 = "0.10.1"
 sysinfo = "0.26.8"
 
 # to remove
-clap = "4.0"
+clap = { version = "4.0", features = ["derive"] }
 
 # move to keechain-cli
 prettytable-rs = "0.9.0"
