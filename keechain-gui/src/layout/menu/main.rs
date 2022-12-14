@@ -1,10 +1,10 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use eframe::egui::{Align, Layout, Ui};
+use eframe::egui::Ui;
 use eframe::Frame;
 
-use crate::component::{Button, Heading, Identity, Version};
+use crate::component::{Button, Heading, Identity, View};
 use crate::{AppState, Command, Menu, Stage};
 
 pub fn update_layout(app: &mut AppState, ui: &mut Ui, frame: &mut Frame) {
@@ -12,9 +12,7 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui, frame: &mut Frame) {
         app.set_stage(Stage::Start);
     }
 
-    ui.with_layout(Layout::top_down(Align::Center), |ui| {
-        ui.set_max_width(ui.available_width() - 20.0);
-
+    View::show(ui, |ui| {
         Heading::new("Menu").render(ui);
 
         ui.add_space(15.0);
@@ -55,9 +53,5 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui, frame: &mut Frame) {
         if Button::new("Exit").render(ui).clicked() {
             frame.close();
         }
-    });
-
-    ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
-        Version::new().render(ui)
     });
 }

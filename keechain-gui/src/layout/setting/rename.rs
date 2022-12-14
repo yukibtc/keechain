@@ -1,9 +1,9 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use eframe::egui::{Align, Key, Layout, RichText, Ui};
+use eframe::egui::{Key, RichText, Ui};
 
-use crate::component::{Button, Heading, InputField, Version};
+use crate::component::{Button, Heading, InputField, View};
 use crate::theme::color::{ORANGE, RED};
 use crate::{AppState, Menu, Stage};
 
@@ -25,9 +25,7 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
         app.set_stage(Stage::Start);
     }
 
-    ui.with_layout(Layout::top_down(Align::Center), |ui| {
-        ui.set_max_width(ui.available_width() - 20.0);
-
+    View::show(ui, |ui| {
         Heading::new("Rename keychain").render(ui);
 
         ui.add_space(15.0);
@@ -73,9 +71,5 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
             app.layouts.rename_keychain.clear();
             app.stage = Stage::Menu(Menu::Setting);
         }
-    });
-
-    ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
-        Version::new().render(ui)
     });
 }

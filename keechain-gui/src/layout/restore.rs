@@ -3,12 +3,12 @@
 
 use std::str::FromStr;
 
-use eframe::egui::{Align, Key, Layout, RichText, ScrollArea, Ui};
+use eframe::egui::{Key, RichText, Ui};
 use eframe::epaint::Color32;
 use keechain_core::bdk::keys::bip39::Mnemonic;
 use keechain_core::keychain::KeeChain;
 
-use crate::component::{Button, Heading, InputField, Version};
+use crate::component::{Button, Heading, InputField, View};
 use crate::theme::color::ORANGE;
 use crate::{AppState, Menu, Stage};
 
@@ -32,91 +32,81 @@ impl RestoreState {
 }
 
 pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
-    ScrollArea::vertical().show(ui, |ui| {
-        ui.with_layout(Layout::top_down(Align::Center), |ui| {
-            ui.set_max_width(ui.available_width() - 20.0);
+    View::show(ui, |ui| {
+        Heading::new("Restore keychain").render(ui);
 
-            Heading::new("Restore keychain").render(ui);
+        ui.add_space(15.0);
 
-            ui.add_space(15.0);
+        InputField::new("Name")
+            .placeholder("Name of keychain")
+            .render(ui, &mut app.layouts.restore.name);
 
-            InputField::new("Name")
-                .placeholder("Name of keychain")
-                .render(ui, &mut app.layouts.restore.name);
+        ui.add_space(7.0);
 
-            ui.add_space(7.0);
+        InputField::new("Password")
+            .placeholder("Password")
+            .is_password()
+            .render(ui, &mut app.layouts.restore.password);
 
-            InputField::new("Password")
-                .placeholder("Password")
-                .is_password()
-                .render(ui, &mut app.layouts.restore.password);
+        ui.add_space(7.0);
 
-            ui.add_space(7.0);
+        InputField::new("Confirm password")
+            .placeholder("Confirm password")
+            .is_password()
+            .render(ui, &mut app.layouts.restore.confirm_password);
 
-            InputField::new("Confirm password")
-                .placeholder("Confirm password")
-                .is_password()
-                .render(ui, &mut app.layouts.restore.confirm_password);
+        ui.add_space(7.0);
 
-            ui.add_space(7.0);
+        InputField::new("Mnemonic (BIP39)")
+            .placeholder("Mnemonic")
+            .rows(5)
+            .render(ui, &mut app.layouts.restore.mnemonic);
 
-            InputField::new("Mnemonic (BIP39)")
-                .placeholder("Mnemonic")
-                .rows(5)
-                .render(ui, &mut app.layouts.restore.mnemonic);
+        ui.add_space(7.0);
 
-            ui.add_space(7.0);
+        if let Some(error) = &app.layouts.restore.error {
+            ui.label(RichText::new(error).color(Color32::RED));
+        }
 
-            if let Some(error) = &app.layouts.restore.error {
-                ui.label(RichText::new(error).color(Color32::RED));
-            }
+        ui.add_space(15.0);
 
-            ui.add_space(15.0);
+        let is_ready: bool = !app.layouts.restore.name.is_empty()
+            && !app.layouts.restore.password.is_empty()
+            && !app.layouts.restore.confirm_password.is_empty()
+            && !app.layouts.restore.mnemonic.is_empty();
 
-            let is_ready: bool = !app.layouts.restore.name.is_empty()
-                && !app.layouts.restore.password.is_empty()
-                && !app.layouts.restore.confirm_password.is_empty()
-                && !app.layouts.restore.mnemonic.is_empty();
+        let button = Button::new("Restore")
+            .background_color(ORANGE)
+            .enabled(is_ready)
+            .render(ui);
 
-            let button = Button::new("Restore")
-                .background_color(ORANGE)
-                .enabled(is_ready)
-                .render(ui);
+        ui.add_space(5.0);
 
-            ui.add_space(5.0);
+        if Button::new("Back").render(ui).clicked() {
+            app.layouts.restore.clear();
+            app.set_stage(Stage::Start);
+        }
 
-            if Button::new("Back").render(ui).clicked() {
-                app.layouts.restore.clear();
-                app.set_stage(Stage::Start);
-            }
-
-            if is_ready && (ui.input().key_pressed(Key::Enter) || button.clicked()) {
-                if app.layouts.restore.password != app.layouts.restore.confirm_password {
-                    app.layouts.restore.error = Some("Passwords not match".to_string());
-                } else {
-                    match Mnemonic::from_str(&app.layouts.restore.mnemonic) {
-                        Ok(mnemonic) => match KeeChain::restore(
-                            app.layouts.restore.name.clone(),
-                            || Ok(app.layouts.restore.password.clone()),
-                            || Ok(mnemonic),
-                        ) {
-                            Ok(keechain) => {
-                                app.layouts.restore.clear();
-                                app.set_keechain(Some(keechain));
-                                app.set_stage(Stage::Menu(Menu::Main));
-                            }
-                            Err(e) => app.layouts.restore.error = Some(e.to_string()),
-                        },
+        if is_ready && (ui.input().key_pressed(Key::Enter) || button.clicked()) {
+            if app.layouts.restore.password != app.layouts.restore.confirm_password {
+                app.layouts.restore.error = Some("Passwords not match".to_string());
+            } else {
+                match Mnemonic::from_str(&app.layouts.restore.mnemonic) {
+                    Ok(mnemonic) => match KeeChain::restore(
+                        app.layouts.restore.name.clone(),
+                        || Ok(app.layouts.restore.password.clone()),
+                        || Ok(mnemonic),
+                    ) {
+                        Ok(keechain) => {
+                            app.layouts.restore.clear();
+                            app.set_keechain(Some(keechain));
+                            app.set_stage(Stage::Menu(Menu::Main));
+                        }
                         Err(e) => app.layouts.restore.error = Some(e.to_string()),
-                    }
+                    },
+                    Err(e) => app.layouts.restore.error = Some(e.to_string()),
                 }
             }
-        });
-
-        ui.add_space(20.0);
-
-        ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
-            Version::new().render(ui);
-        });
+        }
     });
 }

@@ -1,12 +1,12 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use eframe::egui::{Align, ComboBox, Key, Layout, RichText, ScrollArea, Ui};
+use eframe::egui::{Align, ComboBox, Key, Layout, RichText, Ui};
 use eframe::epaint::Color32;
 use keechain_core::keychain::KeeChain;
 use keechain_core::types::WordCount;
 
-use crate::component::{Button, Heading, InputField, Version};
+use crate::component::{Button, Heading, InputField, View};
 use crate::theme::color::ORANGE;
 use crate::{AppState, Menu, Stage};
 
@@ -36,26 +36,16 @@ impl NewKeychainState {
 }
 
 pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
-    ScrollArea::vertical().show(ui, |ui| {
-        ui.with_layout(Layout::top_down(Align::Center), |ui| {
-            ui.set_max_width(ui.available_width() - 20.0);
+    View::show(ui, |ui| {
+        Heading::new("Generate keychain").render(ui);
 
-            Heading::new("Generate keychain").render(ui);
+        ui.add_space(15.0);
 
-            ui.add_space(15.0);
-
-            if let Some(keechain) = app.layouts.new_keychain.keechain.clone() {
-                show_mnemonic_layout(app, keechain, ui);
-            } else {
-                generate_layout(app, ui);
-            }
-        });
-
-        ui.add_space(20.0);
-
-        ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
-            Version::new().render(ui);
-        });
+        if let Some(keechain) = app.layouts.new_keychain.keechain.clone() {
+            show_mnemonic_layout(app, keechain, ui);
+        } else {
+            generate_layout(app, ui);
+        }
     });
 }
 
