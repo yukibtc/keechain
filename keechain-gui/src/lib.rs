@@ -17,7 +17,10 @@ mod theme;
 use self::layout::sign::SignState;
 #[cfg(feature = "nostr")]
 use self::layout::NostrState;
-use self::layout::{NewKeychainState, PassphraseState, RestoreState, StartState};
+use self::layout::{
+    ChangePasswordState, NewKeychainState, PassphraseState, RenameKeychainState, RestoreState,
+    StartState,
+};
 
 const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 530.0);
 const GENERIC_FONT_HEIGHT: f32 = 18.0;
@@ -61,6 +64,8 @@ pub enum Command {
     Export(ExportTypes),
     #[cfg(feature = "nostr")]
     Nostr,
+    RenameKeychain,
+    ChangePassword,
 }
 
 #[derive(Clone)]
@@ -97,6 +102,8 @@ pub struct AppLayoutStates {
     passphrase: PassphraseState,
     #[cfg(feature = "nostr")]
     nostr: NostrState,
+    rename_keychain: RenameKeychainState,
+    change_password: ChangePasswordState,
 }
 
 #[derive(Clone)]
@@ -152,6 +159,10 @@ impl App for AppState {
                 }
                 #[cfg(feature = "nostr")]
                 Command::Nostr => layout::nostr::update_layout(self, ui),
+                Command::RenameKeychain => layout::setting::rename::update_layout(self, ui),
+                Command::ChangePassword => {
+                    layout::setting::change_password::update_layout(self, ui)
+                }
             },
         });
     }

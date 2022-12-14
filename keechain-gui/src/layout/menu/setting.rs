@@ -4,7 +4,7 @@
 use eframe::egui::{Align, Layout, Ui};
 
 use crate::component::{Button, Heading, Identity, Version};
-use crate::{AppState, Menu, Stage};
+use crate::{AppState, Command, Menu, Stage};
 
 pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
     if app.keechain.is_none() {
@@ -23,6 +23,14 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
             ui.add_space(15.0);
         }
 
+        if Button::new("Rename keychain").render(ui).clicked() {
+            app.stage = Stage::Command(Command::RenameKeychain);
+        }
+        ui.add_space(5.0);
+        if Button::new("Change password").render(ui).clicked() {
+            app.stage = Stage::Command(Command::ChangePassword);
+        }
+        ui.add_space(5.0);
         if Button::new("Back").render(ui).clicked() {
             app.stage = Stage::Menu(Menu::Main);
         }

@@ -8,6 +8,7 @@ pub mod new_keychain;
 pub mod nostr;
 pub mod passphrase;
 pub mod restore;
+pub mod setting;
 pub mod sign;
 pub mod start;
 
@@ -16,4 +17,6 @@ pub use self::new_keychain::NewKeychainState;
 pub use self::nostr::NostrState;
 pub use self::passphrase::PassphraseState;
 pub use self::restore::RestoreState;
+pub use self::setting::change_password::ChangePasswordState;
+pub use self::setting::rename::RenameKeychainState;
 pub use self::start::StartState;
