@@ -24,6 +24,8 @@ jobs:
           [
             "-p keechain-core --no-default-features",
             "-p keechain-core --features nostr",
+            "-p keechain-gui --no-default-features",
+            "-p keechain-gui --features nostr",
             "--no-default-features",
             "--features nostr",
             "--features gui",
@@ -41,7 +43,7 @@ jobs:
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
     - name: Install GUI dependencies
-      if: ${{ matrix.build-args == '--features gui' || matrix.build-args == '--features gui,nostr' }}
+      if: ${{ contains(matrix.build-args, 'gui') }}
       run: sudo apt install build-essential libclang-dev libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev
     - name: Set default toolchain
       run: rustup default ${{ matrix.rust.version }}
