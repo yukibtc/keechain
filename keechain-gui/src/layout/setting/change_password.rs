@@ -9,6 +9,7 @@ use crate::{AppState, Menu, Stage};
 
 #[derive(Default)]
 pub struct ChangePasswordState {
+    current_password: String,
     new_password: String,
     confirm_new_password: String,
     error: Option<String>,
@@ -16,6 +17,7 @@ pub struct ChangePasswordState {
 
 impl ChangePasswordState {
     pub fn clear(&mut self) {
+        self.current_password = String::new();
         self.new_password = String::new();
         self.confirm_new_password = String::new();
         self.error = None;
@@ -33,6 +35,13 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
         Heading::new("Change password").render(ui);
 
         ui.add_space(15.0);
+
+        InputField::new("Current password")
+            .placeholder("Current password")
+            .is_password()
+            .render(ui, &mut app.layouts.change_password.current_password);
+
+        ui.add_space(7.0);
 
         InputField::new("New password")
             .placeholder("New password")
@@ -70,14 +79,21 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
             } else {
                 match app.keechain.as_mut() {
                     Some(keechain) => {
-                        match keechain.change_password(|| {
-                            Ok(app.layouts.change_password.new_password.clone())
-                        }) {
-                            Ok(_) => {
-                                app.layouts.change_password.clear();
-                                app.stage = Stage::Menu(Menu::Setting);
+                        if keechain
+                            .check_password(app.layouts.change_password.current_password.clone())
+                        {
+                            match keechain.change_password(|| {
+                                Ok(app.layouts.change_password.new_password.clone())
+                            }) {
+                                Ok(_) => {
+                                    app.layouts.change_password.clear();
+                                    app.stage = Stage::Menu(Menu::Setting);
+                                }
+                                Err(e) => app.layouts.change_password.error = Some(e.to_string()),
                             }
-                            Err(e) => app.layouts.change_password.error = Some(e.to_string()),
+                        } else {
+                            app.layouts.change_password.error =
+                                Some("Current password is wrong".to_string())
                         }
                     }
                     None => {
