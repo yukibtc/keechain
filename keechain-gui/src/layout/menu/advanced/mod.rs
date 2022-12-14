@@ -7,7 +7,7 @@ pub mod danger;
 
 use crate::component::{Button, Heading, Identity, View};
 use crate::theme::color::DARK_RED;
-use crate::{AppState, Menu, Stage};
+use crate::{AppState, Command, Menu, Stage};
 
 pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
     if app.keechain.is_none() {
@@ -24,6 +24,10 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
             ui.add_space(15.0);
         }
 
+        if Button::new("Deterministic entropy").render(ui).clicked() {
+            app.stage = Stage::Command(Command::DeterministicEntropy);
+        }
+        ui.add_space(5.0);
         if Button::new("Danger")
             .background_color(DARK_RED)
             .render(ui)

@@ -2,3 +2,4 @@
 // Distributed under the MIT software license
 
 pub mod danger;
+pub mod deterministic_entropy;
