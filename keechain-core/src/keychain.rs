@@ -165,9 +165,16 @@ impl KeeChain {
         S: Into<String>,
     {
         let new = dir::get_keychain_file(new_name)?;
-        fs::rename(self.file.as_path(), new.as_path())?;
-        self.file = new;
-        Ok(())
+        if new.exists() {
+            Err(Error::Generic(
+                "There is already a file with the same name! Please, choose another name."
+                    .to_string(),
+            ))
+        } else {
+            fs::rename(self.file.as_path(), new.as_path())?;
+            self.file = new;
+            Ok(())
+        }
     }
 
     pub fn change_password<NPSW>(&mut self, get_new_password: NPSW) -> Result<()>
