@@ -12,6 +12,7 @@ pub struct InputField {
     placeholder: Option<WidgetText>,
     password: bool,
     rows: u8,
+    enabled: bool,
 }
 
 impl InputField {
@@ -24,6 +25,7 @@ impl InputField {
             placeholder: None,
             password: false,
             rows: 1,
+            enabled: true,
         }
     }
 
@@ -49,6 +51,10 @@ impl InputField {
         Self { rows, ..self }
     }
 
+    pub fn enabled(self, enabled: bool) -> Self {
+        Self { enabled, ..self }
+    }
+
     pub fn render(self, ui: &mut Ui, text: &mut dyn TextBuffer) {
         ui.with_layout(Layout::top_down(Align::Min), |ui| {
             let mut widget: TextEdit = if self.rows > 1 {
@@ -68,7 +74,9 @@ impl InputField {
 
             ui.label(self.label);
             ui.add_space(0.7);
-            ui.add_sized([ui.available_width(), INPUT_FIELD_HEIGHT], widget);
+            ui.add_enabled_ui(self.enabled, |ui| {
+                ui.add_sized([ui.available_width(), INPUT_FIELD_HEIGHT], widget);
+            });
         });
     }
 }
