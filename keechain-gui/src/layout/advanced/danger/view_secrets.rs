@@ -65,7 +65,7 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
                 match app.keechain.as_mut() {
                     Some(keechain) => {
                         if keechain.check_password(app.layouts.view_secrets.password.clone()) {
-                            match Secrets::new(keechain.keychain.seed(), app.network) {
+                            match keechain.keychain.secrets(app.network) {
                                 Ok(secrets) => app.layouts.view_secrets.secrets = Some(secrets),
                                 Err(e) => app.layouts.view_secrets.error = Some(e.to_string()),
                             }

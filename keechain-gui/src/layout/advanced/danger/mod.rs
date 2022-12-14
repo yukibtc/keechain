@@ -1,4 +1,5 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-pub mod danger;
+pub mod view_secrets;
+pub mod wipe;

@@ -164,8 +164,10 @@ impl App for AppState {
                 Command::ChangePassword => {
                     layout::setting::change_password::update_layout(self, ui)
                 }
-                Command::ViewSecrets => layout::advanced::view_secrets::update_layout(self, ui),
-                Command::WipeKeychain => layout::advanced::wipe::update_layout(self, ui),
+                Command::ViewSecrets => {
+                    layout::advanced::danger::view_secrets::update_layout(self, ui)
+                }
+                Command::WipeKeychain => layout::advanced::danger::wipe::update_layout(self, ui),
             },
         });
     }

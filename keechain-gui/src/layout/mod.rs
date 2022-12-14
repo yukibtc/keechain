@@ -13,8 +13,8 @@ pub mod setting;
 pub mod sign;
 pub mod start;
 
-pub use self::advanced::view_secrets::ViewSecretsState;
-pub use self::advanced::wipe::WipeKeychainState;
+pub use self::advanced::danger::view_secrets::ViewSecretsState;
+pub use self::advanced::danger::wipe::WipeKeychainState;
 pub use self::new_keychain::NewKeychainState;
 #[cfg(feature = "nostr")]
 pub use self::nostr::NostrState;
