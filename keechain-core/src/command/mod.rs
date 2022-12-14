@@ -9,7 +9,6 @@ use rand_chacha::ChaCha20Rng;
 use rand_hc::Hc128Rng;
 use sysinfo::{System, SystemExt};
 
-pub mod advanced;
 pub mod export;
 pub mod psbt;
 

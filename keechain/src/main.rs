@@ -117,21 +117,16 @@ fn main() -> Result<()> {
                 index,
             } => {
                 let keechain = KeeChain::open(name, io::get_password)?;
-                let mnemonic = command::advanced::derive(
-                    keechain.keychain.seed(),
-                    network,
-                    word_count,
-                    index,
-                )?;
+                let mnemonic: Mnemonic = keechain
+                    .keychain
+                    .deterministic_entropy(network, word_count, index)?;
                 println!("Mnemonic: {}", mnemonic);
                 Ok(())
             }
             AdvancedCommand::Danger { command } => match command {
                 DangerCommand::ViewSecrets { name } => {
                     let keechain = KeeChain::open(name, io::get_password)?;
-                    let secrets =
-                        command::advanced::danger::view_secrets(keechain.keychain.seed(), network)?;
-                    secrets.print();
+                    keechain.keychain.secrets(network)?.print();
                     Ok(())
                 }
                 DangerCommand::Wipe { name } => {

@@ -6,13 +6,18 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 
 use bdk::keys::bip39::Mnemonic;
+use bitcoin::secp256k1::Secp256k1;
+use bitcoin::util::bip32::ExtendedPrivKey;
+use bitcoin::Network;
 use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
 
 use crate::command::entropy;
 use crate::crypto::aes::{self, Aes256Encryption};
 use crate::error::{Error, Result};
-use crate::types::{Seed, WordCount};
+use crate::types::{Index, Secrets, Seed, WordCount};
+use crate::util::bip::bip32::Bip32RootKey;
+use crate::util::bip::bip85::FromBip85;
 use crate::util::{self, dir};
 
 const KEECHAIN_FILE_VERSION: u8 = 1;
@@ -248,6 +253,21 @@ impl Keychain {
 
     pub fn seed(&self) -> Seed {
         self.seed.clone()
+    }
+
+    pub fn deterministic_entropy(
+        &self,
+        network: Network,
+        word_count: WordCount,
+        index: Index,
+    ) -> Result<Mnemonic> {
+        let root: ExtendedPrivKey = self.seed.to_bip32_root_key(network)?;
+        let secp = Secp256k1::new();
+        Mnemonic::from_bip85(&secp, &root, word_count, index)
+    }
+
+    pub fn secrets(&self, network: Network) -> Result<Secrets> {
+        Secrets::new(self.seed(), network)
     }
 
     pub fn add_passphrase<S>(&mut self, passphrase: S)
