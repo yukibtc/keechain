@@ -4,7 +4,8 @@
 use eframe::egui::{Align, Layout, Ui};
 
 use crate::component::{Button, Heading, Identity, Version};
-use crate::{AppState, Menu, Stage};
+use crate::theme::color::DARK_RED;
+use crate::{AppState, Command, Menu, Stage};
 
 pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
     if app.keechain.is_none() {
@@ -23,6 +24,22 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
             ui.add_space(15.0);
         }
 
+        if Button::new("View secrets")
+            .background_color(DARK_RED)
+            .render(ui)
+            .clicked()
+        {
+            app.stage = Stage::Command(Command::ViewSecrets);
+        }
+        ui.add_space(5.0);
+        if Button::new("Delete keychain")
+            .background_color(DARK_RED)
+            .render(ui)
+            .clicked()
+        {
+            app.stage = Stage::Command(Command::WipeKeychain);
+        }
+        ui.add_space(5.0);
         if Button::new("Back").render(ui).clicked() {
             app.stage = Stage::Menu(Menu::Advanced);
         }

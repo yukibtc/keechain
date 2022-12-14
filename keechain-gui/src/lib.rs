@@ -19,7 +19,7 @@ use self::layout::sign::SignState;
 use self::layout::NostrState;
 use self::layout::{
     ChangePasswordState, NewKeychainState, PassphraseState, RenameKeychainState, RestoreState,
-    StartState,
+    StartState, ViewSecretsState, WipeKeychainState,
 };
 
 const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 530.0);
@@ -65,6 +65,8 @@ pub enum Command {
     Nostr,
     RenameKeychain,
     ChangePassword,
+    ViewSecrets,
+    WipeKeychain,
 }
 
 #[derive(Clone)]
@@ -102,6 +104,8 @@ pub struct AppLayoutStates {
     nostr: NostrState,
     rename_keychain: RenameKeychainState,
     change_password: ChangePasswordState,
+    view_secrets: ViewSecretsState,
+    wipe_keychain: WipeKeychainState,
 }
 
 pub struct AppState {
@@ -160,6 +164,8 @@ impl App for AppState {
                 Command::ChangePassword => {
                     layout::setting::change_password::update_layout(self, ui)
                 }
+                Command::ViewSecrets => layout::advanced::view_secrets::update_layout(self, ui),
+                Command::WipeKeychain => layout::advanced::wipe::update_layout(self, ui),
             },
         });
     }
