@@ -35,8 +35,6 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
     View::show(ui, |ui| {
         Heading::new("Restore keychain").render(ui);
 
-        ui.add_space(15.0);
-
         InputField::new("Name")
             .placeholder("Name of keychain")
             .render(ui, &mut app.layouts.restore.name);

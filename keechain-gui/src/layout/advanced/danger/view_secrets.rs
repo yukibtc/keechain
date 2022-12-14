@@ -31,8 +31,6 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
     View::show(ui, |ui| {
         Heading::new("View secrets").render(ui);
 
-        ui.add_space(15.0);
-
         if let Some(secrets) = &app.layouts.view_secrets.secrets {
             ui.label(format!("Entropy: {}", secrets.entropy));
             ui.add_space(5.0);

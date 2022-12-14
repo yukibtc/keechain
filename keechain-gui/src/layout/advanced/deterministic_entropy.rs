@@ -7,7 +7,7 @@ use eframe::egui::{Align, ComboBox, Key, Layout, RichText, Ui};
 use keechain_core::bdk::keys::bip39::Mnemonic;
 use keechain_core::types::{Index, WordCount};
 
-use crate::component::{Button, Heading, InputField, View};
+use crate::component::{Button, Heading, InputField, ReadOnlyField, View};
 use crate::theme::color::{ORANGE, RED};
 use crate::{AppState, Menu, Stage};
 
@@ -37,8 +37,6 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
 
     View::show(ui, |ui| {
         Heading::new("Deterministic entropy (BIP85)").render(ui);
-
-        ui.add_space(15.0);
 
         ui.with_layout(Layout::top_down(Align::Min), |ui| {
             ui.add_space(1.0);
@@ -74,10 +72,9 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
         ui.add_space(7.0);
 
         if let Some(mnemonic) = app.layouts.deterministic_entropy.mnemonic.as_ref() {
-            InputField::new("Mnemonic (BIP39)")
+            ReadOnlyField::new("Mnemonic (BIP39)", mnemonic.to_string())
                 .rows(5)
-                .enabled(false)
-                .render(ui, &mut mnemonic.to_string());
+                .render(ui);
             ui.add_space(7.0);
         }
 

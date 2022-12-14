@@ -1,7 +1,7 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use eframe::egui::Ui;
+use eframe::egui::{RichText, Ui};
 use keechain_core::bitcoin::Network;
 use keechain_core::types::Seed;
 use keechain_core::util::bip::bip32::Bip32RootKey;
@@ -19,12 +19,15 @@ impl Identity {
     pub fn render(self, ui: &mut Ui) {
         ui.group(|ui| {
             if let Ok(fingerprint) = self.seed.fingerprint(self.network) {
-                ui.label(format!("Fingerprint: {}", fingerprint));
+                ui.label(RichText::new(format!("Fingerprint: {}", fingerprint)).small());
             }
-            ui.label(format!(
-                "Using a passphrase: {}",
-                self.seed.passphrase().is_some()
-            ));
+            ui.label(
+                RichText::new(format!(
+                    "Using a passphrase: {}",
+                    self.seed.passphrase().is_some()
+                ))
+                .small(),
+            );
         });
     }
 }

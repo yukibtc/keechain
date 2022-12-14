@@ -39,8 +39,6 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
     View::show(ui, |ui| {
         Heading::new("Generate keychain").render(ui);
 
-        ui.add_space(15.0);
-
         if let Some(keechain) = app.layouts.new_keychain.keechain.clone() {
             show_mnemonic_layout(app, keechain, ui);
         } else {

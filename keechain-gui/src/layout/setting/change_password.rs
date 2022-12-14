@@ -32,8 +32,6 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
     View::show(ui, |ui| {
         Heading::new("Change password").render(ui);
 
-        ui.add_space(15.0);
-
         InputField::new("Current password")
             .placeholder("Current password")
             .is_password()

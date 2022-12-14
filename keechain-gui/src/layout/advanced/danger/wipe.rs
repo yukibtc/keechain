@@ -28,8 +28,6 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
     View::show(ui, |ui| {
         Heading::new("Delete keychain").render(ui);
 
-        ui.add_space(15.0);
-
         InputField::new("Password")
             .placeholder("Password")
             .is_password()

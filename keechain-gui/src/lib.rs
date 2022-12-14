@@ -22,7 +22,7 @@ use self::layout::{
     RenameKeychainState, RestoreState, StartState, ViewSecretsState, WipeKeychainState,
 };
 
-const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 530.0);
+const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 550.0);
 const GENERIC_FONT_HEIGHT: f32 = 18.0;
 
 pub fn launch(network: Network) -> Result<()> {
@@ -144,7 +144,7 @@ impl App for AppState {
             (Body, FontId::new(GENERIC_FONT_HEIGHT, Proportional)),
             (Monospace, FontId::new(GENERIC_FONT_HEIGHT, Proportional)),
             (Button, FontId::new(GENERIC_FONT_HEIGHT, Proportional)),
-            (Small, FontId::new(14.0, Proportional)),
+            (Small, FontId::new(16.0, Proportional)),
         ]
         .into();
         ctx.set_style(style);

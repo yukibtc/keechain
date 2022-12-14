@@ -28,8 +28,6 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
     View::show(ui, |ui| {
         Heading::new("Rename keychain").render(ui);
 
-        ui.add_space(15.0);
-
         InputField::new("Name")
             .placeholder("New name of keychain")
             .render(ui, &mut app.layouts.rename_keychain.new_name);

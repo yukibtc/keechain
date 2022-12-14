@@ -51,6 +51,7 @@ impl InputField {
         Self { rows, ..self }
     }
 
+    #[allow(dead_code)]
     pub fn enabled(self, enabled: bool) -> Self {
         Self { enabled, ..self }
     }
@@ -73,7 +74,7 @@ impl InputField {
             }
 
             ui.label(self.label);
-            ui.add_space(0.7);
+            ui.add_space(0.5);
             ui.add_enabled_ui(self.enabled, |ui| {
                 ui.add_sized([ui.available_width(), INPUT_FIELD_HEIGHT], widget);
             });
