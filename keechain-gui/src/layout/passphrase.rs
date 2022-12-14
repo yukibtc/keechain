@@ -4,7 +4,7 @@
 use eframe::egui::{Align, Key, Layout, RichText, ScrollArea, Ui};
 use eframe::epaint::Color32;
 
-use crate::component::{Button, Heading, InputField, Version};
+use crate::component::{Button, Heading, Identity, InputField, Version};
 use crate::theme::color::{DARK_RED, ORANGE};
 use crate::{AppState, Menu, Stage};
 
@@ -33,6 +33,11 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
             Heading::new("Passphrase").render(ui);
 
             ui.add_space(15.0);
+
+            if let Some(keechain) = &app.keechain {
+                Identity::new(keechain.keychain.seed(), app.network).render(ui);
+                ui.add_space(15.0);
+            }
 
             if app.layouts.passphrase.show_saved {
                 show_saved_layout(app, ui);

@@ -10,9 +10,8 @@ use keechain_core::bitcoin::secp256k1::{Secp256k1, SecretKey};
 use keechain_core::bitcoin::XOnlyPublicKey;
 use keechain_core::nostr::{nip06, nip26};
 use keechain_core::types::Seed;
-use keechain_core::util::bip::bip32::Bip32RootKey;
 
-use crate::component::{Button, Heading, InputField, Version};
+use crate::component::{Button, Heading, Identity, InputField, Version};
 use crate::theme::color::{DARK_RED, ORANGE, RED};
 use crate::{AppState, Menu, Stage};
 
@@ -50,12 +49,7 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
 
             if let Some(keechain) = &app.keechain {
                 let seed: Seed = keechain.keychain.seed();
-                ui.group(|ui| {
-                    if let Ok(fingerprint) = seed.fingerprint(app.network) {
-                        ui.label(format!("Fingerprint: {}", fingerprint));
-                    }
-                    ui.label(format!("Using passphrase: {}", seed.passphrase().is_some()));
-                });
+                Identity::new(keechain.keychain.seed(), app.network).render(ui);
                 if let Ok(secret_key) = nip06::derive_secret_key_from_seed(seed) {
                     app.layouts.nostr.secret_key = Some(secret_key);
                 }

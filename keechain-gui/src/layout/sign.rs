@@ -8,7 +8,7 @@ use keechain_core::command;
 use keechain_core::types::Psbt;
 use rfd::FileDialog;
 
-use crate::component::{Button, Heading, Version};
+use crate::component::{Button, Heading, Identity, Version};
 use crate::theme::color::{DARK_GREEN, DARK_RED, ORANGE, RED};
 use crate::{AppState, Menu, Stage};
 
@@ -45,6 +45,11 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
         Heading::new("Sign").render(ui);
 
         ui.add_space(15.0);
+
+        if let Some(keechain) = &app.keechain {
+            Identity::new(keechain.keychain.seed(), app.network).render(ui);
+            ui.add_space(15.0);
+        }
 
         if let Some(error) = &app.layouts.sign.error {
             ui.label(RichText::new(error).color(RED));

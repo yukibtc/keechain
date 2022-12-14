@@ -3,10 +3,12 @@
 
 mod button;
 mod heading;
+mod identity;
 mod input_field;
 mod version;
 
 pub use self::button::Button;
 pub use self::heading::Heading;
+pub use self::identity::Identity;
 pub use self::input_field::InputField;
 pub use self::version::Version;
