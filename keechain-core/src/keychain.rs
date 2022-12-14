@@ -160,6 +160,13 @@ impl KeeChain {
         Ok(())
     }
 
+    pub fn check_password<S>(&self, password: S) -> bool
+    where
+        S: Into<String>,
+    {
+        self.password == password.into()
+    }
+
     pub fn rename<S>(&mut self, new_name: S) -> Result<()>
     where
         S: Into<String>,
