@@ -15,7 +15,6 @@ use crate::{AppState, Menu, Stage};
 
 const LOGO: &[u8] = include_bytes!("../../assets/logo.png");
 
-#[derive(Clone)]
 pub struct StartState {
     name: String,
     password: String,
@@ -63,7 +62,7 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
                 ui.label("Keychain");
                 ui.horizontal_wrapped(|ui| {
                     ComboBox::from_id_source("name")
-                        .width(ui.available_width() - 10.0)
+                        .width(ui.available_width())
                         .selected_text(if app.layouts.start.name.is_empty() {
                             "Select keychain"
                         } else {

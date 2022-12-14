@@ -12,7 +12,7 @@ use crate::{AppState, Menu, Stage};
 
 const WORD_COUNT_OPTIONS: [WordCount; 3] = [WordCount::W12, WordCount::W18, WordCount::W24];
 
-#[derive(Clone, Default)]
+#[derive(Default)]
 pub struct NewKeychainState {
     name: String,
     password: String,
@@ -85,7 +85,7 @@ fn generate_layout(app: &mut AppState, ui: &mut Ui) {
         ui.label("Word count");
         ui.horizontal_wrapped(|ui| {
             ComboBox::from_id_source("word_count")
-                .width(ui.available_width() - 10.0)
+                .width(ui.available_width())
                 .selected_text(app.layouts.new_keychain.word_count.as_u32().to_string())
                 .show_ui(ui, |ui| {
                     for value in WORD_COUNT_OPTIONS.into_iter() {

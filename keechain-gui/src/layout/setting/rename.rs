@@ -7,7 +7,7 @@ use crate::component::{Button, Heading, InputField, Version};
 use crate::theme::color::{ORANGE, RED};
 use crate::{AppState, Menu, Stage};
 
-#[derive(Clone, Default)]
+#[derive(Default)]
 pub struct RenameKeychainState {
     new_name: String,
     error: Option<String>,

@@ -8,7 +8,7 @@ use crate::component::{Button, Heading, Identity, InputField, Version};
 use crate::theme::color::{DARK_RED, ORANGE};
 use crate::{AppState, Menu, Stage};
 
-#[derive(Clone, Default)]
+#[derive(Default)]
 pub struct PassphraseState {
     passphrase: String,
     save: bool,

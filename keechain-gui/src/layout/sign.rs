@@ -13,13 +13,12 @@ use crate::theme::color::{DARK_GREEN, DARK_RED, ORANGE, RED};
 use crate::{AppState, Menu, Stage};
 
 #[allow(dead_code)]
-#[derive(Clone)]
 pub struct PsbtFile {
     psbt: Psbt,
     path: PathBuf,
 }
 
-#[derive(Clone, Default)]
+#[derive(Default)]
 pub struct SignState {
     psbt_file: Option<PsbtFile>,
     error: Option<String>,

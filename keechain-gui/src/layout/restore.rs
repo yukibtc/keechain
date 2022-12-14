@@ -12,7 +12,7 @@ use crate::component::{Button, Heading, InputField, Version};
 use crate::theme::color::ORANGE;
 use crate::{AppState, Menu, Stage};
 
-#[derive(Clone, Default)]
+#[derive(Default)]
 pub struct RestoreState {
     name: String,
     mnemonic: String,

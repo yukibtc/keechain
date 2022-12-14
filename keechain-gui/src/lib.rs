@@ -57,7 +57,6 @@ pub enum ExportTypes {
     Electrum,
 }
 
-#[derive(Clone)]
 pub enum Command {
     Passphrase,
     Sign,
@@ -78,7 +77,6 @@ pub enum Menu {
     Danger,
 }
 
-#[derive(Clone)]
 pub enum Stage {
     Start,
     NewKeychain,
@@ -93,7 +91,7 @@ impl Default for Stage {
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Default)]
 pub struct AppLayoutStates {
     start: StartState,
     new_keychain: NewKeychainState,
@@ -106,7 +104,6 @@ pub struct AppLayoutStates {
     change_password: ChangePasswordState,
 }
 
-#[derive(Clone)]
 pub struct AppState {
     network: Network,
     stage: Stage,
