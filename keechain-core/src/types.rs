@@ -9,8 +9,7 @@ use std::str::FromStr;
 
 use bdk::database::MemoryDatabase;
 use bdk::keys::bip39::Mnemonic;
-use bdk::keys::DescriptorSecretKey;
-use bdk::miniscript::Descriptor;
+use bdk::miniscript::descriptor::{Descriptor, DescriptorSecretKey};
 use bdk::wallet::AddressIndex;
 use bdk::{SignOptions, Wallet};
 use bitcoin::psbt::PartiallySignedTransaction;
@@ -203,6 +202,17 @@ impl Psbt {
         Self { psbt, network }
     }
 
+    pub fn decode<S>(psbt: S, network: Network) -> Result<Self>
+    where
+        S: Into<String>,
+    {
+        Ok(Psbt::new(
+            PartiallySignedTransaction::from_str(&psbt.into())
+                .map_err(|e| Error::Parse(format!("Impossible to parse PSBT: {}", e)))?,
+            network,
+        ))
+    }
+
     pub fn sign(&mut self, seed: &Seed) -> Result<bool> {
         let root: ExtendedPrivKey = seed.to_bip32_root_key(self.network)?;
         let secp = Secp256k1::new();
@@ -321,6 +331,58 @@ impl Psbt {
         table.printstd();
 
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, ValueEnum)]
+#[repr(u8)]
+pub enum ElectrumExportSupportedScripts {
+    /// P2PKH (BIP44)
+    Legacy = 44,
+    /// P2SHWPKH (BIP49)
+    Segwit = 49,
+    /// P2WPKH (BIP84)
+    NativeSegwit = 84,
+}
+
+impl Default for ElectrumExportSupportedScripts {
+    fn default() -> Self {
+        Self::NativeSegwit
+    }
+}
+
+impl ElectrumExportSupportedScripts {
+    pub fn as_u32(&self) -> u32 {
+        *self as u32
+    }
+}
+
+impl fmt::Display for ElectrumExportSupportedScripts {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Legacy => write!(f, "legacy"),
+            Self::Segwit => write!(f, "segwit"),
+            Self::NativeSegwit => write!(f, "native-segwit"),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct BitcoinCoreDescriptor {
+    timestamp: String,
+    active: bool,
+    desc: Descriptor<String>,
+    internal: bool,
+}
+
+impl BitcoinCoreDescriptor {
+    pub fn new(desc: Descriptor<String>, internal: bool) -> Self {
+        Self {
+            timestamp: String::from("now"),
+            active: true,
+            desc,
+            internal,
+        }
     }
 }
 

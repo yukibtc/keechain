@@ -12,11 +12,11 @@ use bitcoin::Network;
 use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
 
-use crate::command::entropy;
 use crate::crypto::aes::{self, Aes256Encryption};
 use crate::error::{Error, Result};
 use crate::types::{Index, Secrets, Seed, WordCount};
 use crate::util::bip::bip32::Bip32RootKey;
+use crate::util::bip::bip39;
 use crate::util::bip::bip85::FromBip85;
 use crate::util::{self, dir};
 
@@ -98,7 +98,7 @@ impl KeeChain {
         }
 
         let custom_entropy: Option<Vec<u8>> = get_custom_entropy()?;
-        let entropy: Vec<u8> = entropy(word_count, custom_entropy);
+        let entropy: Vec<u8> = bip39::entropy(word_count, custom_entropy);
         let mnemonic = Mnemonic::from_entropy(&entropy)?;
 
         let keechain = Self {
@@ -194,8 +194,10 @@ impl KeeChain {
         NPSW: FnOnce() -> Result<String>,
     {
         let new_password: String = get_new_password()?;
-        self.password = new_password;
-        self.save()?;
+        if self.password != new_password {
+            self.password = new_password;
+            self.save()?;
+        }
         Ok(())
     }
 

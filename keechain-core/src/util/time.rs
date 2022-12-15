@@ -3,6 +3,13 @@
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
+pub fn timestamp() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Invalid system time")
+        .as_secs()
+}
+
 pub fn timestamp_nanos() -> u128 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)

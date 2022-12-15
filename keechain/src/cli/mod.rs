@@ -5,11 +5,9 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 use keechain_core::bitcoin::Network;
-use keechain_core::types::{Index, WordCount};
+use keechain_core::types::{ElectrumExportSupportedScripts, Index, WordCount};
 
 pub mod io;
-
-use crate::command::export::ElectrumExportSupportedScripts;
 
 #[derive(Debug, Parser)]
 #[command(name = "keechain")]

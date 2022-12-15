@@ -10,7 +10,6 @@ use keechain_core::bitcoin::Network;
 use keechain_core::command;
 use keechain_core::error::Result;
 use keechain_core::keychain::KeeChain;
-use keechain_core::util::bip::bip32;
 use keechain_core::util::dir;
 
 mod cli;
@@ -94,7 +93,8 @@ fn main() -> Result<()> {
                 let path = command::export::electrum(
                     keechain.keychain.seed(),
                     network,
-                    bip32::account_extended_path(script.as_u32(), network, Some(account))?,
+                    script,
+                    Some(account),
                 )?;
                 println!("Electrum file exported: {}", path.display());
                 Ok(())
