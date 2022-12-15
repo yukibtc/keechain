@@ -40,10 +40,6 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui, frame: &mut Frame) {
             app.stage = Stage::Menu(Menu::Setting);
         }
         ui.add_space(5.0);
-        if Button::new("Other").render(ui).clicked() {
-            app.stage = Stage::Menu(Menu::Other);
-        }
-        ui.add_space(5.0);
         if Button::new("Lock").render(ui).clicked() {
             app.stage = Stage::Start;
         }

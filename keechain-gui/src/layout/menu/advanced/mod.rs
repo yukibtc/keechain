@@ -26,6 +26,13 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
             app.stage = Stage::Command(Command::DeterministicEntropy);
         }
         ui.add_space(5.0);
+        #[cfg(feature = "nostr")]
+        {
+            if Button::new("Nostr").render(ui).clicked() {
+                app.set_stage(Stage::Menu(Menu::Nostr));
+            }
+            ui.add_space(5.0);
+        }
         if Button::new("Danger")
             .background_color(DARK_RED)
             .render(ui)

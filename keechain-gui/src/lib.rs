@@ -15,15 +15,15 @@ mod layout;
 mod theme;
 
 use self::layout::sign::SignState;
-#[cfg(feature = "nostr")]
-use self::layout::NostrState;
 use self::layout::{
     ChangePasswordState, DeterministicEntropyState, ExportElectrumState, NewKeychainState,
     PassphraseState, RenameKeychainState, RestoreState, StartState, ViewSecretsState,
     WipeKeychainState,
 };
+#[cfg(feature = "nostr")]
+use self::layout::{NostrKeysState, NostrSignDelegationState};
 
-const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 550.0);
+const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 530.0);
 const GENERIC_FONT_HEIGHT: f32 = 18.0;
 
 pub fn launch(network: Network) -> Result<()> {
@@ -63,7 +63,9 @@ pub enum Command {
     Sign,
     Export(ExportTypes),
     #[cfg(feature = "nostr")]
-    Nostr,
+    NostrKeys,
+    #[cfg(feature = "nostr")]
+    NostrSignDelegation,
     RenameKeychain,
     ChangePassword,
     ViewSecrets,
@@ -77,8 +79,9 @@ pub enum Menu {
     Export,
     Advanced,
     Setting,
-    Other,
     Danger,
+    #[cfg(feature = "nostr")]
+    Nostr,
 }
 
 pub enum Stage {
@@ -103,7 +106,9 @@ pub struct AppLayoutStates {
     sign: SignState,
     passphrase: PassphraseState,
     #[cfg(feature = "nostr")]
-    nostr: NostrState,
+    nostr_keys: NostrKeysState,
+    #[cfg(feature = "nostr")]
+    nostr_sign_delegation: NostrSignDelegationState,
     rename_keychain: RenameKeychainState,
     change_password: ChangePasswordState,
     view_secrets: ViewSecretsState,
@@ -163,7 +168,11 @@ impl App for AppState {
                     layout::export::update_layout(self, export_type.clone(), ui)
                 }
                 #[cfg(feature = "nostr")]
-                Command::Nostr => layout::nostr::update_layout(self, ui),
+                Command::NostrKeys => layout::nostr::keys::update_layout(self, ui),
+                #[cfg(feature = "nostr")]
+                Command::NostrSignDelegation => {
+                    layout::nostr::sign_delegation::update_layout(self, ui)
+                }
                 Command::RenameKeychain => layout::setting::rename::update_layout(self, ui),
                 Command::ChangePassword => {
                     layout::setting::change_password::update_layout(self, ui)
