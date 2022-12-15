@@ -3,9 +3,9 @@
 
 use eframe::egui::Ui;
 
-mod bitcoin_core;
-mod descriptors;
-mod electrum;
+pub mod bitcoin_core;
+pub mod descriptors;
+pub mod electrum;
 
 use crate::{AppState, ExportTypes};
 

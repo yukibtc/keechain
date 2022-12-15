@@ -18,8 +18,9 @@ use self::layout::sign::SignState;
 #[cfg(feature = "nostr")]
 use self::layout::NostrState;
 use self::layout::{
-    ChangePasswordState, DeterministicEntropyState, NewKeychainState, PassphraseState,
-    RenameKeychainState, RestoreState, StartState, ViewSecretsState, WipeKeychainState,
+    ChangePasswordState, DeterministicEntropyState, ExportElectrumState, NewKeychainState,
+    PassphraseState, RenameKeychainState, RestoreState, StartState, ViewSecretsState,
+    WipeKeychainState,
 };
 
 const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 550.0);
@@ -108,6 +109,7 @@ pub struct AppLayoutStates {
     view_secrets: ViewSecretsState,
     wipe_keychain: WipeKeychainState,
     deterministic_entropy: DeterministicEntropyState,
+    export_electrum: ExportElectrumState,
 }
 
 pub struct AppState {
