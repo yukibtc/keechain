@@ -153,7 +153,7 @@ pub fn electrum(
         },
         "wallet_type": "standard",
         "use_encryption": false,
-        "seed_version": 48
+        "seed_version": 20
     });
 
     // TODO: let the user choose the path (by default use home dir if user not provide a path)
