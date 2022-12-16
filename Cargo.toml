@@ -1,10 +1,19 @@
 [workspace]
 members = [
     "keechain",
+    "keechain-cli",
     "keechain-core",
-    "keechain-gui",
 ]
-default-members = ["keechain"]
+default-members = ["keechain", "keechain-cli"]
+
+[workspace.package]
+version = "0.1.0"
+description = "Bitcoin PSBT signer, descriptor exporter and more for offline devices."
+homepage = "https://github.com/yukibtc/keechain"
+repository = "https://github.com/yukibtc/keechain.git"
+license = "MIT"
+keywords = ["bitcoin", "signer", "psbt", "offline", "keechain"]
+rust-version = "1.65.0"
 
 [profile.release]
 lto = true

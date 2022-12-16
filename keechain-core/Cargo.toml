@@ -1,16 +1,14 @@
 [package]
 name = "keechain-core"
-version = "0.1.0"
+version.workspace = true
 edition = "2021"
-description = "KeeChain Core"
 authors = ["Yuki Kishimoto <yukikishimoto@proton.me>"]
-homepage = "https://github.com/yukibtc/keechain"
-repository = "https://github.com/yukibtc/keechain.git"
-license = "MIT"
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
 readme = "README.md"
-keywords = ["keechain", "bitcoin", "signer", "psbt", "offline"]
-categories = ["command-line-utilities"]
-rust-version = "1.65.0"
+keywords.workspace = true
+rust-version.workspace = true
 
 [features]
 default = []

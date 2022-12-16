@@ -3,152 +3,201 @@
 
 use std::str::FromStr;
 
-use clap::Parser;
-use console::Term;
-use keechain_core::bdk::keys::bip39::Mnemonic;
+use eframe::egui::{self, CentralPanel, Context};
+use eframe::epaint::FontFamily::Proportional;
+use eframe::epaint::{FontId, Vec2};
+use eframe::{App, Frame, NativeOptions, Theme};
+use egui::TextStyle::{Body, Button, Heading, Monospace, Small};
 use keechain_core::bitcoin::Network;
-use keechain_core::command;
 use keechain_core::error::Result;
 use keechain_core::keychain::KeeChain;
-use keechain_core::util::dir;
 
-mod cli;
+mod component;
+mod layout;
+mod theme;
 
-use self::cli::io;
-use self::cli::{AdvancedCommand, Cli, Command, DangerCommand, ExportTypes, SettingCommand};
+use self::layout::sign::SignState;
+use self::layout::{
+    ChangePasswordState, DeterministicEntropyState, ExportElectrumState, NewKeychainState,
+    PassphraseState, RenameKeychainState, RestoreState, StartState, ViewSecretsState,
+    WipeKeychainState,
+};
+#[cfg(feature = "nostr")]
+use self::layout::{NostrKeysState, NostrSignDelegationState};
 
-fn main() -> Result<()> {
-    env_logger::init();
+const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 530.0);
+const GENERIC_FONT_HEIGHT: f32 = 18.0;
 
-    let args = Cli::parse();
-    let network: Network = args.network;
-
-    match args.command {
-        #[cfg(feature = "gui")]
-        Command::Launch => keechain_gui::launch(network),
-        Command::Generate {
-            name,
-            word_count,
-            dice_roll,
-        } => {
-            let keechain =
-                KeeChain::generate(name, io::get_password_with_confirmation, word_count, || {
-                    if dice_roll {
-                        let term = Term::stdout();
-                        let mut rolls: Vec<u8> = Vec::new();
-                        io::select_dice_roll(term, &mut rolls)?;
-                        Ok(Some(rolls))
-                    } else {
-                        Ok(None)
-                    }
-                })?;
-
-            println!("\n!!! WRITE DOWN YOUT SEED PHRASE !!!");
-            println!("\n################################################################\n");
-            println!("{}", keechain.keychain.seed.mnemonic());
-            println!("\n################################################################\n");
-
-            Ok(())
+fn parse_network(args: Vec<String>) -> Result<Network> {
+    for (i, arg) in args.iter().enumerate() {
+        if arg.contains("--") {
+            let network = Network::from_str(args[i].trim_start_matches("--"))?;
+            return Ok(network);
         }
-        Command::Restore { name } => {
-            KeeChain::restore(name, io::get_password_with_confirmation, || {
-                Ok(Mnemonic::from_str(&io::get_input("Seed")?)?)
-            })?;
-            Ok(())
+    }
+    Ok(Network::Bitcoin)
+}
+
+pub fn main() -> Result<()> {
+    let network: Network = parse_network(std::env::args().collect())?;
+    let options = NativeOptions {
+        fullscreen: false,
+        resizable: true,
+        always_on_top: true,
+        default_theme: Theme::Dark,
+        follow_system_theme: false,
+        initial_window_size: Some(MIN_WINDOWS_SIZE),
+        min_window_size: Some(MIN_WINDOWS_SIZE),
+        drag_and_drop_support: false,
+        ..Default::default()
+    };
+    let app = AppState::new(&network);
+    let app_name = format!(
+        "KeeChain{}",
+        if network.ne(&Network::Bitcoin) {
+            format!(" [{}]", network)
+        } else {
+            String::new()
         }
-        Command::List => {
-            let names = dir::get_keychains_list()?;
-            for (index, name) in names.iter().enumerate() {
-                println!("{}. {}", index + 1, name);
-            }
-            Ok(())
+    );
+    eframe::run_native(&app_name, options, Box::new(|_cc| Box::new(app)));
+    Ok(())
+}
+
+#[derive(Clone)]
+pub enum ExportTypes {
+    Descriptors,
+    BitcoinCore,
+    Electrum,
+}
+
+pub enum Command {
+    Passphrase,
+    Sign,
+    Export(ExportTypes),
+    #[cfg(feature = "nostr")]
+    NostrKeys,
+    #[cfg(feature = "nostr")]
+    NostrSignDelegation,
+    RenameKeychain,
+    ChangePassword,
+    ViewSecrets,
+    WipeKeychain,
+    DeterministicEntropy,
+}
+
+#[derive(Clone)]
+pub enum Menu {
+    Main,
+    Export,
+    Advanced,
+    Setting,
+    Danger,
+    #[cfg(feature = "nostr")]
+    Nostr,
+}
+
+pub enum Stage {
+    Start,
+    NewKeychain,
+    RestoreKeychain,
+    Menu(Menu),
+    Command(Command),
+}
+
+impl Default for Stage {
+    fn default() -> Self {
+        Self::Start
+    }
+}
+
+#[derive(Default)]
+pub struct AppLayoutStates {
+    start: StartState,
+    new_keychain: NewKeychainState,
+    restore: RestoreState,
+    sign: SignState,
+    passphrase: PassphraseState,
+    #[cfg(feature = "nostr")]
+    nostr_keys: NostrKeysState,
+    #[cfg(feature = "nostr")]
+    nostr_sign_delegation: NostrSignDelegationState,
+    rename_keychain: RenameKeychainState,
+    change_password: ChangePasswordState,
+    view_secrets: ViewSecretsState,
+    wipe_keychain: WipeKeychainState,
+    deterministic_entropy: DeterministicEntropyState,
+    export_electrum: ExportElectrumState,
+}
+
+pub struct AppState {
+    network: Network,
+    stage: Stage,
+    keechain: Option<KeeChain>,
+    layouts: AppLayoutStates,
+}
+
+impl AppState {
+    pub fn new(network: &Network) -> Self {
+        Self {
+            network: *network,
+            stage: Stage::default(),
+            keechain: None,
+            layouts: AppLayoutStates::default(),
         }
-        Command::Identity { name: _ } => {
-            todo!();
-        }
-        Command::Export { export_type } => match export_type {
-            ExportTypes::Descriptors { name, account } => {
-                let keechain = KeeChain::open(name, io::get_password)?;
-                let descriptors =
-                    command::export::descriptors(keechain.keychain.seed(), network, Some(account))?;
-                println!("{:#?}", descriptors);
-                Ok(())
-            }
-            ExportTypes::BitcoinCore { name, account } => {
-                let keechain = KeeChain::open(name, io::get_password)?;
-                let descriptors = command::export::bitcoin_core(
-                    keechain.keychain.seed(),
-                    network,
-                    Some(account),
-                )?;
-                println!("{}", descriptors);
-                Ok(())
-            }
-            ExportTypes::Electrum {
-                name,
-                script,
-                account,
-            } => {
-                let keechain = KeeChain::open(name, io::get_password)?;
-                let path = command::export::electrum(
-                    keechain.keychain.seed(),
-                    network,
-                    script,
-                    Some(account),
-                )?;
-                println!("Electrum file exported: {}", path.display());
-                Ok(())
-            }
-        },
-        Command::Decode { file } => command::psbt::decode_file(file, network)?.print(),
-        Command::Sign { name, file } => {
-            let keechain = KeeChain::open(name, io::get_password)?;
-            if command::psbt::sign_file_from_seed(&keechain.keychain.seed(), network, file)? {
-                println!("Signed.")
-            } else {
-                println!("PSBT signing not finalized");
-            }
-            Ok(())
-        }
-        Command::Advanced { command } => match command {
-            AdvancedCommand::Derive {
-                name,
-                word_count,
-                index,
-            } => {
-                let keechain = KeeChain::open(name, io::get_password)?;
-                let mnemonic: Mnemonic = keechain
-                    .keychain
-                    .deterministic_entropy(network, word_count, index)?;
-                println!("Mnemonic: {}", mnemonic);
-                Ok(())
-            }
-            AdvancedCommand::Danger { command } => match command {
-                DangerCommand::ViewSecrets { name } => {
-                    let keechain = KeeChain::open(name, io::get_password)?;
-                    keechain.keychain.secrets(network)?.print();
-                    Ok(())
+    }
+
+    fn set_stage(&mut self, stage: Stage) {
+        self.stage = stage;
+    }
+
+    fn set_keechain(&mut self, keechain: Option<KeeChain>) {
+        self.keechain = keechain;
+    }
+}
+
+impl App for AppState {
+    fn update(&mut self, ctx: &Context, frame: &mut Frame) {
+        let mut style = (*ctx.style()).clone();
+        style.text_styles = [
+            (Heading, FontId::new(28.0, Proportional)),
+            (Body, FontId::new(GENERIC_FONT_HEIGHT, Proportional)),
+            (Monospace, FontId::new(GENERIC_FONT_HEIGHT, Proportional)),
+            (Button, FontId::new(GENERIC_FONT_HEIGHT, Proportional)),
+            (Small, FontId::new(16.0, Proportional)),
+        ]
+        .into();
+        ctx.set_style(style);
+
+        CentralPanel::default().show(ctx, |ui| match &self.stage {
+            Stage::Start => layout::start::update_layout(self, ui),
+            Stage::NewKeychain => layout::new_keychain::update_layout(self, ui),
+            Stage::RestoreKeychain => layout::restore::update_layout(self, ui),
+            Stage::Menu(menu) => layout::menu::update_layout(self, menu.clone(), ui, frame),
+            Stage::Command(cmd) => match cmd {
+                Command::Passphrase => layout::passphrase::update_layout(self, ui),
+                Command::Sign => layout::sign::update_layout(self, ui),
+                Command::Export(export_type) => {
+                    layout::export::update_layout(self, export_type.clone(), ui)
                 }
-                DangerCommand::Wipe { name } => {
-                    if io::ask("Are you really sure? This action is permanent!")? && io::ask("Again, are you really sure? THIS ACTION IS PERMANENT AND YOU MAY LOSE ALL YOUR FUNDS!")? {
-                        let keechain = KeeChain::open(name, io::get_password)?;
-                        keechain.wipe()?;
-                    } else {
-                        println!("Aborted.");
-                    }
-                    Ok(())
+                #[cfg(feature = "nostr")]
+                Command::NostrKeys => layout::nostr::keys::update_layout(self, ui),
+                #[cfg(feature = "nostr")]
+                Command::NostrSignDelegation => {
+                    layout::nostr::sign_delegation::update_layout(self, ui)
+                }
+                Command::RenameKeychain => layout::setting::rename::update_layout(self, ui),
+                Command::ChangePassword => {
+                    layout::setting::change_password::update_layout(self, ui)
+                }
+                Command::ViewSecrets => {
+                    layout::advanced::danger::view_secrets::update_layout(self, ui)
+                }
+                Command::WipeKeychain => layout::advanced::danger::wipe::update_layout(self, ui),
+                Command::DeterministicEntropy => {
+                    layout::advanced::deterministic_entropy::update_layout(self, ui)
                 }
             },
-        },
-        Command::Setting { command } => match command {
-            SettingCommand::Rename { name, new_name } => {
-                let mut keechain = KeeChain::open(name, io::get_password)?;
-                keechain.rename(new_name)
-            }
-            SettingCommand::ChangePassword { name } => {
-                let mut keechain = KeeChain::open(name, io::get_password)?;
-                keechain.change_password(io::get_password_with_confirmation)
-            }
-        },
+        });
     }
 }

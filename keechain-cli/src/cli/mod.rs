@@ -22,9 +22,6 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
-    /// Launch GUI
-    #[cfg(feature = "gui")]
-    Launch,
     /// Generate mnemonic (BIP39)
     #[command(arg_required_else_help = true)]
     Generate {
