@@ -6,25 +6,29 @@ Before build, see [build requirements](#build-requirements) for your specific pl
 
 ## Build
 
+### Both CLI and GUI
+
+```
+make
+```
+
+### GUI only
+
+```
+make gui
+```
+
 ### CLI only
 
 ```
-cargo build --release
+make cli
 ```
 
-### Both CLI and GUI
-
-To build GUI you need to install additional dependencies (see [build requirements](#build-requirements)).
-
-```
-cargo build --release --features gui
-```
-
-When build is completed, you can find `keechain` binary in `target/release` folder.
+When build is completed, you can find `keechain` and/or `keechain-cli` binaries in `target/release` folder.
 
 ## Usage
 
-Before using `keechain`, take a look at [usage](./usage.md) guide.
+Before using `keechain` or `keechain-cli`, take a look at [usage](./usage.md) guide.
 
 ## Build requirements
 

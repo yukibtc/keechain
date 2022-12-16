@@ -2,4 +2,12 @@
 
 ⚠️ For better security, use only on **OFFLINE** devices! ⚠️
 
-Run `keechain --help` to view all commands.
+# GUI
+
+Run `keechain` to open the GUI.
+
+To start `keechain` in testnet mode, run `keechain --testnet`.
+
+# CLI
+
+Run `keechain-cli --help` to view all commands.
