@@ -6,7 +6,7 @@ KeeChain is a Bitcoin application to transform your **offline** computer in an A
 
 ## Getting started
 
-* [Download from releases](https://github.com/yukibtc/keechain/releases)
+* [Download from releases](https://github.com/yukibtc/keechain/releases) (remember to run `chmod a+x keechain*`)
 * [Build from source](doc/build.md) 
 * [Usage](doc/usage.md) 
 
