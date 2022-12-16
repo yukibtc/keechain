@@ -282,7 +282,17 @@ impl Keychain {
         }
     }
 
-    pub fn remove_passphrase(&mut self, index: usize) {
+    pub fn remove_passphrase<S>(&mut self, passphrase: S)
+    where
+        S: Into<String>,
+    {
+        let passphrase = passphrase.into();
+        if let Some(index) = self.passphrases.iter().position(|p| p == &passphrase) {
+            self.remove_passphrase_by_index(index);
+        }
+    }
+
+    pub fn remove_passphrase_by_index(&mut self, index: usize) {
         self.passphrases.remove(index);
     }
 
