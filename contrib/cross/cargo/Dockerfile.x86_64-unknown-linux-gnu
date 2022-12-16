@@ -1,0 +1,19 @@
+FROM ubuntu:20.04
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt update && apt upgrade -y
+RUN apt install -y g++-x86-64-linux-gnu libc6-dev-amd64-cross
+
+# GUI deps
+RUN apt install -y build-essential libclang-dev libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev
+
+ENV CROSS_TOOLCHAIN_PREFIX=x86_64-linux-gnu-
+ENV CROSS_SYSROOT=/usr/x86_64-linux-gnu
+ENV CROSS_TARGET_RUNNER="/linux-runner x86_64"
+ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER="$CROSS_TOOLCHAIN_PREFIX"gcc \
+    CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUNNER="$CROSS_TARGET_RUNNER" \
+    AR_x86_64_unknown_linux_gnu="$CROSS_TOOLCHAIN_PREFIX"ar \
+    CC_x86_64_unknown_linux_gnu="$CROSS_TOOLCHAIN_PREFIX"gcc \
+    CXX_x86_64_unknown_linux_gnu="$CROSS_TOOLCHAIN_PREFIX"g++ \
+    BINDGEN_EXTRA_CLANG_ARGS_x86_64_unknown_linux_gnu="--sysroot=$CROSS_SYSROOT" \
+    PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig/:${PKG_CONFIG_PATH}" \

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>keechain.desktop</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>keechain</name>
+  <summary>Keep safe your private keys</summary>
+  <description>
+    KeeChain is a Bitcoin application to transform your <strong>offline</strong> computer in an AirGap Signing Device (aka Hardware Wallet).
+  </description>
+  <url type="homepage">https://github.com/yukibtc/keechain</url>
+  <project_group>KeeChain</project_group>
+  <provides>
+    <binary>keechain</binary>
+  </provides>
+</component>

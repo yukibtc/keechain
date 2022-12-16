@@ -1,0 +1,16 @@
+[Desktop Entry]
+Name=KeeChain
+Comment=Keep safe your private keys
+Exec=keechain %u
+Icon=keechain
+Categories=Finance;
+StartupNotify=true
+StartupWMClass=keechain
+Terminal=false
+Type=Application
+MimeType=x-scheme-handler/bitcoin;
+Actions=Testnet;
+
+[Desktop Action Testnet]
+Exec=keechain --testnet %u
+Name=KeeChain Testnet
