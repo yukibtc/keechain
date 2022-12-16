@@ -4,8 +4,8 @@
 use eframe::egui::{Align, Key, Layout, RichText, Ui};
 use eframe::epaint::Color32;
 
-use crate::component::{Button, Heading, Identity, InputField, View};
-use crate::theme::color::{DARK_RED, ORANGE, RED};
+use crate::component::{Button, Error, Heading, Identity, InputField, View};
+use crate::theme::color::{DARK_RED, ORANGE};
 use crate::{AppState, Menu, Stage};
 
 #[derive(Default)]
@@ -131,48 +131,66 @@ pub fn apply_new_layout(app: &mut AppState, ui: &mut Ui) {
 pub fn show_saved_layout(app: &mut AppState, ui: &mut Ui) {
     match app.keechain.as_mut() {
         Some(keechain) => {
-            for passphrase in keechain.keychain.passphrases().iter() {
-                ui.radio_value(
-                    &mut app.layouts.passphrase.passphrase,
-                    passphrase.clone(),
-                    passphrase,
-                );
+            let passphrases: Vec<String> = keechain.keychain.passphrases();
+            if passphrases.is_empty() {
+                ui.label("No saved passphrases.");
+
+                ui.add_space(15.0);
+
+                if Button::new("Back").render(ui).clicked() {
+                    app.layouts.passphrase.clear();
+                }
+            } else {
+                for passphrase in passphrases.iter() {
+                    ui.radio_value(
+                        &mut app.layouts.passphrase.passphrase,
+                        passphrase.clone(),
+                        passphrase,
+                    );
+                    ui.add_space(5.0);
+                }
+
+                if let Some(error) = &app.layouts.passphrase.error {
+                    ui.add_space(7.0);
+                    Error::new(error).render(ui);
+                }
+
+                ui.add_space(15.0);
+
+                let is_ready: bool = !app.layouts.passphrase.passphrase.is_empty();
+
+                let button = Button::new("Apply")
+                    .background_color(ORANGE)
+                    .enabled(is_ready)
+                    .render(ui);
+
                 ui.add_space(5.0);
+
+                let delete_button = Button::new("Delete")
+                    .background_color(DARK_RED)
+                    .enabled(is_ready)
+                    .render(ui);
+
+                ui.add_space(5.0);
+
+                if Button::new("Back").render(ui).clicked() {
+                    app.layouts.passphrase.clear();
+                }
+
+                if is_ready && (ui.input().key_pressed(Key::Enter) || button.clicked()) {
+                    keechain
+                        .keychain
+                        .apply_passphrase(Some(app.layouts.passphrase.passphrase.clone()));
+                    app.layouts.passphrase.clear();
+                    app.set_stage(Stage::Menu(Menu::Main));
+                } else if is_ready && delete_button.clicked() {
+                    keechain
+                        .keychain
+                        .remove_passphrase(app.layouts.passphrase.passphrase.clone());
+                    app.layouts.passphrase.passphrase.clear();
+                }
             }
         }
         None => app.layouts.passphrase.error = Some("Impossible to get keechain".to_string()),
-    }
-
-    if let Some(error) = &app.layouts.passphrase.error {
-        ui.add_space(7.0);
-        ui.label(RichText::new(error).color(RED));
-    }
-
-    ui.add_space(15.0);
-
-    let is_ready: bool = !app.layouts.passphrase.passphrase.is_empty();
-
-    let button = Button::new("Apply")
-        .background_color(ORANGE)
-        .enabled(is_ready)
-        .render(ui);
-
-    ui.add_space(5.0);
-
-    if Button::new("Back").render(ui).clicked() {
-        app.layouts.passphrase.clear();
-    }
-
-    if is_ready && (ui.input().key_pressed(Key::Enter) || button.clicked()) {
-        match app.keechain.as_mut() {
-            Some(keechain) => {
-                keechain
-                    .keychain
-                    .apply_passphrase(Some(app.layouts.passphrase.passphrase.clone()));
-                app.layouts.passphrase.clear();
-                app.set_stage(Stage::Menu(Menu::Main));
-            }
-            None => app.layouts.passphrase.error = Some("Impossible to get keechain".to_string()),
-        }
     }
 }

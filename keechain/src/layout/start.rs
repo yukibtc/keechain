@@ -3,13 +3,12 @@
 
 use std::sync::Arc;
 
-use eframe::egui::{self, Align, ComboBox, Key, Layout, RichText, Ui};
-use eframe::epaint::{Color32, FontId};
+use eframe::egui::{self, Align, ComboBox, Key, Layout, Ui};
 use egui_extras::RetainedImage;
 use keechain_core::keychain::KeeChain;
 use keechain_core::util::dir;
 
-use crate::component::{Button, InputField, View};
+use crate::component::{Button, Error, InputField, View};
 use crate::theme::color::ORANGE;
 use crate::{AppState, Menu, Stage};
 
@@ -89,11 +88,7 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
         ui.add_space(7.0);
 
         if let Some(error) = &app.layouts.start.error {
-            ui.label(
-                RichText::new(error)
-                    .font(FontId::proportional(15.0))
-                    .color(Color32::RED),
-            );
+            Error::new(error).render(ui);
         }
 
         ui.add_space(15.0);

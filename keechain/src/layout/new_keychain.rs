@@ -1,12 +1,11 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use eframe::egui::{Align, ComboBox, Key, Layout, RichText, Ui};
-use eframe::epaint::Color32;
+use eframe::egui::{Align, ComboBox, Key, Layout, Ui};
 use keechain_core::keychain::KeeChain;
 use keechain_core::types::WordCount;
 
-use crate::component::{Button, Heading, InputField, View};
+use crate::component::{Button, Error, Heading, InputField, MnemonicViewer, View};
 use crate::theme::color::ORANGE;
 use crate::{AppState, Menu, Stage};
 
@@ -90,7 +89,7 @@ fn generate_layout(app: &mut AppState, ui: &mut Ui) {
     ui.add_space(7.0);
 
     if let Some(error) = &app.layouts.new_keychain.error {
-        ui.label(RichText::new(error).color(Color32::RED));
+        Error::new(error).render(ui);
     }
 
     ui.add_space(15.0);
@@ -132,11 +131,9 @@ fn generate_layout(app: &mut AppState, ui: &mut Ui) {
 }
 
 fn show_mnemonic_layout(app: &mut AppState, keechain: KeeChain, ui: &mut Ui) {
-    ui.add_space(25.0);
+    MnemonicViewer::new(keechain.keychain.seed.mnemonic()).render(ui);
 
-    ui.label(RichText::new(keechain.keychain.seed.mnemonic().to_string()).monospace());
-
-    ui.add_space(25.0);
+    ui.add_space(7.0);
 
     ui.with_layout(Layout::top_down(Align::Min), |ui| {
         ui.checkbox(

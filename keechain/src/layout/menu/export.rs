@@ -19,11 +19,19 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
             ui.add_space(15.0);
         }
 
-        if Button::new("Descriptors").render(ui).clicked() {
+        if Button::new("Descriptors")
+            .enabled(false)
+            .render(ui)
+            .clicked()
+        {
             app.set_stage(Stage::Command(Command::Export(ExportTypes::Descriptors)));
         }
         ui.add_space(5.0);
-        if Button::new("Bitcoin Core").render(ui).clicked() {
+        if Button::new("Bitcoin Core")
+            .enabled(false)
+            .render(ui)
+            .clicked()
+        {
             app.set_stage(Stage::Command(Command::Export(ExportTypes::BitcoinCore)));
         }
         ui.add_space(5.0);

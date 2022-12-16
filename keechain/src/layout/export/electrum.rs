@@ -7,8 +7,8 @@ use eframe::egui::{Align, ComboBox, Layout, RichText, Ui};
 use keechain_core::command::export;
 use keechain_core::types::{ElectrumExportSupportedScripts, Index};
 
-use crate::component::{Button, Heading, Identity, InputField, View};
-use crate::theme::color::{DARK_GREEN, ORANGE, RED};
+use crate::component::{Button, Error, Heading, Identity, InputField, View};
+use crate::theme::color::{DARK_GREEN, ORANGE};
 use crate::{AppState, Menu, Stage};
 
 const WALLET_TYPES: [(ElectrumExportSupportedScripts, &str); 3] = [
@@ -88,7 +88,7 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
 
         if let Some(error) = &app.layouts.export_electrum.error {
             ui.add_space(7.0);
-            ui.label(RichText::new(error).color(RED));
+            Error::new(error).render(ui);
         }
 
         ui.add_space(15.0);

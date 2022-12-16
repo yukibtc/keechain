@@ -3,14 +3,14 @@
 
 use std::str::FromStr;
 
-use eframe::egui::{RichText, Ui};
+use eframe::egui::Ui;
 use keechain_core::bitcoin::secp256k1::schnorr::Signature;
 use keechain_core::bitcoin::XOnlyPublicKey;
 use keechain_core::nostr::{nip06, nip26};
 use keechain_core::types::Seed;
 
-use crate::component::{Button, Heading, Identity, InputField, ReadOnlyField, View};
-use crate::theme::color::{DARK_RED, ORANGE, RED};
+use crate::component::{Button, Error, Heading, Identity, InputField, ReadOnlyField, View};
+use crate::theme::color::{DARK_RED, ORANGE};
 use crate::{AppState, Menu, Stage};
 
 #[derive(Default)]
@@ -38,7 +38,7 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
             let seed: Seed = keechain.keychain.seed();
             Identity::new(keechain.keychain.seed(), app.network).render(ui);
 
-            ui.add_space(7.0);
+            ui.add_space(15.0);
 
             InputField::new("Delegatee public key")
                 .placeholder("Delegatee public key")
@@ -59,7 +59,7 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
 
             if let Some(error) = &app.layouts.nostr_sign_delegation.error {
                 ui.add_space(7.0);
-                ui.label(RichText::new(error).color(RED));
+                Error::new(error).render(ui);
             }
 
             ui.add_space(15.0);

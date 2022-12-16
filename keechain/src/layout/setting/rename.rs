@@ -1,10 +1,10 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use eframe::egui::{Key, RichText, Ui};
+use eframe::egui::{Key, Ui};
 
-use crate::component::{Button, Heading, InputField, View};
-use crate::theme::color::{ORANGE, RED};
+use crate::component::{Button, Error, Heading, InputField, View};
+use crate::theme::color::ORANGE;
 use crate::{AppState, Menu, Stage};
 
 #[derive(Default)]
@@ -35,7 +35,7 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
         ui.add_space(7.0);
 
         if let Some(error) = &app.layouts.rename_keychain.error {
-            ui.label(RichText::new(error).color(RED));
+            Error::new(error).render(ui);
         }
 
         ui.add_space(15.0);

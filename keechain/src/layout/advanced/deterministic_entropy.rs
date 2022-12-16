@@ -3,12 +3,12 @@
 
 use std::str::FromStr;
 
-use eframe::egui::{Align, ComboBox, Key, Layout, RichText, Ui};
+use eframe::egui::{Align, ComboBox, Key, Layout, Ui};
 use keechain_core::bdk::keys::bip39::Mnemonic;
 use keechain_core::types::{Index, WordCount};
 
-use crate::component::{Button, Heading, InputField, ReadOnlyField, View};
-use crate::theme::color::{ORANGE, RED};
+use crate::component::{Button, Error, Heading, InputField, MnemonicViewer, View};
+use crate::theme::color::ORANGE;
 use crate::{AppState, Menu, Stage};
 
 const WORD_COUNT_OPTIONS: [WordCount; 3] = [WordCount::W12, WordCount::W18, WordCount::W24];
@@ -72,14 +72,12 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
         ui.add_space(7.0);
 
         if let Some(mnemonic) = app.layouts.deterministic_entropy.mnemonic.as_ref() {
-            ReadOnlyField::new("Mnemonic (BIP39)", mnemonic.to_string())
-                .rows(5)
-                .render(ui);
+            MnemonicViewer::new(mnemonic.clone()).render(ui);
             ui.add_space(7.0);
         }
 
         if let Some(error) = &app.layouts.deterministic_entropy.error {
-            ui.label(RichText::new(error).color(RED));
+            Error::new(error).render(ui);
         }
 
         ui.add_space(15.0);

@@ -47,7 +47,7 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
             let seed: Seed = keechain.keychain.seed();
             Identity::new(keechain.keychain.seed(), app.network).render(ui);
 
-            ui.add_space(7.0);
+            ui.add_space(15.0);
 
             if let Some(keys) = &app.layouts.nostr_keys.keys {
                 if app.layouts.nostr_keys.bech32 {
@@ -78,7 +78,7 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
                 app.layouts.nostr_keys.keys = Some(Keys::new(secret_key));
             }
 
-            ui.add_space(5.0);
+            ui.add_space(15.0);
 
             if Button::new("Back").render(ui).clicked() {
                 app.layouts.nostr_keys.clear();

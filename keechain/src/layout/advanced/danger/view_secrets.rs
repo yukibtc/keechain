@@ -1,11 +1,11 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use eframe::egui::{Key, RichText, Ui};
+use eframe::egui::{Key, Ui};
 use keechain_core::types::Secrets;
 
-use crate::component::{Button, Heading, InputField, View};
-use crate::theme::color::{ORANGE, RED};
+use crate::component::{Button, Error, Heading, InputField, MnemonicViewer, ReadOnlyField, View};
+use crate::theme::color::ORANGE;
 use crate::{AppState, Menu, Stage};
 
 #[derive(Default)]
@@ -32,12 +32,18 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
         Heading::new("View secrets").render(ui);
 
         if let Some(secrets) = &app.layouts.view_secrets.secrets {
-            ui.label(format!("Entropy: {}", secrets.entropy));
+            ReadOnlyField::new("Entropy", &secrets.entropy)
+                .rows(2)
+                .render(ui);
             ui.add_space(5.0);
-            ui.label(format!("Mnemonic: {}", secrets.mnemonic));
+            MnemonicViewer::new(secrets.mnemonic.clone()).render(ui);
             if let Some(passphrase) = secrets.passphrase.as_ref() {
-                ui.label(format!("Passphrase: {}", passphrase));
+                ui.add_space(5.0);
+                ReadOnlyField::new("Passphrase", passphrase)
+                    .rows(1)
+                    .render(ui);
             }
+            ui.add_space(10.0);
         } else {
             InputField::new("Password")
                 .placeholder("Password")
@@ -47,7 +53,7 @@ pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
             ui.add_space(7.0);
 
             if let Some(error) = &app.layouts.view_secrets.error {
-                ui.label(RichText::new(error).color(RED));
+                Error::new(error).render(ui);
             }
 
             ui.add_space(15.0);
