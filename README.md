@@ -4,15 +4,9 @@
 
 KeeChain is a Bitcoin application to transform your **offline** computer in an AirGap Signing Device (aka Hardware Wallet).
 
-<table>
-    <tr>
-        <td> <img src="./doc/screenshots/gui.png" alt="GUI" style="max-height: 300px;"/> </td>
-        <td> <img src="./doc/screenshots/terminal.png" alt="CLI" style="max-height: 300px;"/> </td>
-    </tr>
-</table>
-
 ## Getting started
 
+* [Download from releases](https://github.com/yukibtc/keechain/releases)
 * [Build from source](doc/build.md) 
 * [Usage](doc/usage.md) 
 
