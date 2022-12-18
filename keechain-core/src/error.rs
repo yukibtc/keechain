@@ -31,7 +31,7 @@ pub enum Error {
     Generic(String),
     /// Bech32 error
     #[cfg(feature = "nostr")]
-    Bech32(bech32::Error),
+    Bech32(bitcoin::bech32::Error),
 }
 
 impl fmt::Display for Error {
@@ -104,8 +104,8 @@ impl From<bdk::Error> for Error {
 }
 
 #[cfg(feature = "nostr")]
-impl From<bech32::Error> for Error {
-    fn from(err: bech32::Error) -> Self {
+impl From<bitcoin::bech32::Error> for Error {
+    fn from(err: bitcoin::bech32::Error) -> Self {
         Self::Bech32(err)
     }
 }

@@ -1,7 +1,7 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use bech32::{self, ToBase32, Variant};
+use bitcoin::bech32::{self, ToBase32, Variant};
 use bitcoin::secp256k1::{PublicKey, SecretKey};
 
 pub mod nip06;
