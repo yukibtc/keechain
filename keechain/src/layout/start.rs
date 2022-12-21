@@ -42,7 +42,7 @@ impl StartState {
     }
 }
 
-pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
+pub fn update(app: &mut AppState, ui: &mut Ui) {
     View::show(ui, |ui| {
         ui.add_space(25.0);
 

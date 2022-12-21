@@ -33,7 +33,7 @@ impl SignState {
     }
 }
 
-pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
+pub fn update(app: &mut AppState, ui: &mut Ui) {
     if let Some(keechain) = &app.keechain {
         View::show(ui, |ui| {
             Heading::new("Sign").render(ui);

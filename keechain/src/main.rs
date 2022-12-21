@@ -16,10 +16,9 @@ mod component;
 mod layout;
 mod theme;
 
-use self::layout::sign::SignState;
 use self::layout::{
     ChangePasswordState, DeterministicEntropyState, ExportElectrumState, NewKeychainState,
-    PassphraseState, RenameKeychainState, RestoreState, StartState, ViewSecretsState,
+    PassphraseState, RenameKeychainState, RestoreState, SignState, StartState, ViewSecretsState,
     WipeKeychainState,
 };
 #[cfg(feature = "nostr")]
@@ -170,32 +169,26 @@ impl App for AppState {
         ctx.set_style(style);
 
         CentralPanel::default().show(ctx, |ui| match &self.stage {
-            Stage::Start => layout::start::update_layout(self, ui),
-            Stage::NewKeychain => layout::new_keychain::update_layout(self, ui),
-            Stage::RestoreKeychain => layout::restore::update_layout(self, ui),
-            Stage::Menu(menu) => layout::menu::update_layout(self, menu.clone(), ui, frame),
+            Stage::Start => layout::start::update(self, ui),
+            Stage::NewKeychain => layout::new_keychain::update(self, ui),
+            Stage::RestoreKeychain => layout::restore::update(self, ui),
+            Stage::Menu(menu) => layout::menu::update(self, menu.clone(), ui, frame),
             Stage::Command(cmd) => match cmd {
-                Command::Passphrase => layout::passphrase::update_layout(self, ui),
-                Command::Sign => layout::sign::update_layout(self, ui),
+                Command::Passphrase => layout::passphrase::update(self, ui),
+                Command::Sign => layout::sign::update(self, ui),
                 Command::Export(export_type) => {
-                    layout::export::update_layout(self, export_type.clone(), ui)
+                    layout::export::update(self, export_type.clone(), ui)
                 }
                 #[cfg(feature = "nostr")]
-                Command::NostrKeys => layout::nostr::keys::update_layout(self, ui),
+                Command::NostrKeys => layout::nostr::keys::update(self, ui),
                 #[cfg(feature = "nostr")]
-                Command::NostrSignDelegation => {
-                    layout::nostr::sign_delegation::update_layout(self, ui)
-                }
-                Command::RenameKeychain => layout::setting::rename::update_layout(self, ui),
-                Command::ChangePassword => {
-                    layout::setting::change_password::update_layout(self, ui)
-                }
-                Command::ViewSecrets => {
-                    layout::advanced::danger::view_secrets::update_layout(self, ui)
-                }
-                Command::WipeKeychain => layout::advanced::danger::wipe::update_layout(self, ui),
+                Command::NostrSignDelegation => layout::nostr::sign_delegation::update(self, ui),
+                Command::RenameKeychain => layout::setting::rename::update(self, ui),
+                Command::ChangePassword => layout::setting::change_password::update(self, ui),
+                Command::ViewSecrets => layout::advanced::danger::view_secrets::update(self, ui),
+                Command::WipeKeychain => layout::advanced::danger::wipe::update(self, ui),
                 Command::DeterministicEntropy => {
-                    layout::advanced::deterministic_entropy::update_layout(self, ui)
+                    layout::advanced::deterministic_entropy::update(self, ui)
                 }
             },
         });

@@ -13,14 +13,14 @@ mod setting;
 
 use crate::{AppState, Menu};
 
-pub fn update_layout(app: &mut AppState, menu: Menu, ui: &mut Ui, frame: &mut Frame) {
+pub fn update(app: &mut AppState, menu: Menu, ui: &mut Ui, frame: &mut Frame) {
     match menu {
-        Menu::Main => self::main::update_layout(app, ui, frame),
-        Menu::Export => self::export::update_layout(app, ui),
-        Menu::Advanced => self::advanced::update_layout(app, ui),
-        Menu::Setting => self::setting::update_layout(app, ui),
-        Menu::Danger => self::advanced::danger::update_layout(app, ui),
+        Menu::Main => self::main::update(app, ui, frame),
+        Menu::Export => self::export::update(app, ui),
+        Menu::Advanced => self::advanced::update(app, ui),
+        Menu::Setting => self::setting::update(app, ui),
+        Menu::Danger => self::advanced::danger::update(app, ui),
         #[cfg(feature = "nostr")]
-        Menu::Nostr => self::nostr::update_layout(app, ui),
+        Menu::Nostr => self::nostr::update(app, ui),
     }
 }

@@ -24,4 +24,5 @@ pub use self::passphrase::PassphraseState;
 pub use self::restore::RestoreState;
 pub use self::setting::change_password::ChangePasswordState;
 pub use self::setting::rename::RenameKeychainState;
+pub use self::sign::SignState;
 pub use self::start::StartState;

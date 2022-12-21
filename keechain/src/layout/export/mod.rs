@@ -9,10 +9,10 @@ pub mod electrum;
 
 use crate::{AppState, ExportTypes};
 
-pub fn update_layout(app: &mut AppState, export_type: ExportTypes, ui: &mut Ui) {
+pub fn update(app: &mut AppState, export_type: ExportTypes, ui: &mut Ui) {
     match export_type {
-        ExportTypes::Descriptors => self::descriptors::update_layout(app, ui),
-        ExportTypes::BitcoinCore => self::bitcoin_core::update_layout(app, ui),
-        ExportTypes::Electrum => self::electrum::update_layout(app, ui),
+        ExportTypes::Descriptors => self::descriptors::update(app, ui),
+        ExportTypes::BitcoinCore => self::bitcoin_core::update(app, ui),
+        ExportTypes::Electrum => self::electrum::update(app, ui),
     }
 }

@@ -20,7 +20,7 @@ impl RenameKeychainState {
     }
 }
 
-pub fn update_layout(app: &mut AppState, ui: &mut Ui) {
+pub fn update(app: &mut AppState, ui: &mut Ui) {
     if app.keechain.is_none() {
         app.set_stage(Stage::Start);
     }

@@ -7,7 +7,7 @@ use eframe::Frame;
 use crate::component::{Button, Heading, Identity, View};
 use crate::{AppState, Command, Menu, Stage};
 
-pub fn update_layout(app: &mut AppState, ui: &mut Ui, frame: &mut Frame) {
+pub fn update(app: &mut AppState, ui: &mut Ui, frame: &mut Frame) {
     if app.keechain.is_none() {
         app.set_stage(Stage::Start);
     }
