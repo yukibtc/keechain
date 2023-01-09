@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Yuki Kishimoto
+// Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
 use std::fmt;
@@ -23,6 +23,8 @@ pub enum Error {
     Base58(bitcoin::util::base58::Error),
     /// Base64 decode error
     Base64(base64::DecodeError),
+    /// JSON error
+    JSON(String),
     /// BDK error
     BDK(String),
     /// Parse error
@@ -44,6 +46,7 @@ impl fmt::Display for Error {
             Self::BIP39(err) => write!(f, "{}", err),
             Self::Base58(err) => write!(f, "{}", err),
             Self::Base64(err) => write!(f, "{}", err),
+            Self::JSON(err) => write!(f, "{}", err),
             Self::BDK(err) => write!(f, "{}", err),
             Self::Parse(err) => write!(f, "{}", err),
             Self::Generic(err) => write!(f, "{}", err),
@@ -94,6 +97,12 @@ impl From<bitcoin::util::base58::Error> for Error {
 impl From<base64::DecodeError> for Error {
     fn from(err: base64::DecodeError) -> Self {
         Self::Base64(err)
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(err: serde_json::Error) -> Self {
+        Self::JSON(err.to_string())
     }
 }
 

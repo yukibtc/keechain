@@ -1,8 +1,6 @@
-// Copyright (c) 2022 Yuki Kishimoto
+// Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use std::fs::File;
-use std::io::Write;
 use std::path::PathBuf;
 use std::str::FromStr;
 
@@ -15,10 +13,11 @@ use bitcoin::Network;
 use serde_json::json;
 
 use crate::error::{Error, Result};
-use crate::types::{BitcoinCoreDescriptor, Descriptors, ElectrumExportSupportedScripts, Seed};
+use crate::types::{
+    BitcoinCoreDescriptor, Descriptors, ElectrumExportSupportedScripts, ElectrumJsonWallet, Seed,
+};
 use crate::util::bip::bip32::{self, Bip32RootKey};
 use crate::util::dir;
-use crate::util::slip::slip132::ToSlip132;
 
 pub fn descriptor(
     root_fingerprint: Fingerprint,
@@ -138,29 +137,7 @@ pub fn electrum(
     script: ElectrumExportSupportedScripts,
     account: Option<u32>,
 ) -> Result<PathBuf> {
-    let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
-    let secp = Secp256k1::new();
-    let fingerprint: Fingerprint = root.fingerprint(&secp);
-    let path: DerivationPath = bip32::account_extended_path(script.as_u32(), network, account)?;
-    let pubkey: ExtendedPubKey = ExtendedPubKey::from_priv(&secp, &root.derive_priv(&secp, &path)?);
-
-    let electrum_json = json!({
-        "keystore": {
-            "xpub": pubkey.to_slip132(&path)?,
-            "root_fingerprint": fingerprint.to_string(),
-            "type": "bip32",
-            "derivation": path.to_string()
-        },
-        "wallet_type": "standard",
-        "use_encryption": false,
-        "seed_version": 20
-    });
-
-    // TODO: let the user choose the path (by default use home dir if user not provide a path)
+    let electrum_json_wallet = ElectrumJsonWallet::new(seed, network, script, account)?;
     let home_dir: PathBuf = dir::home();
-    let file_name: String = format!("keechain-{}.json", pubkey.fingerprint());
-    let path: PathBuf = home_dir.join(file_name);
-    let mut file: File = File::options().create(true).write(true).open(&path)?;
-    file.write_all(electrum_json.to_string().as_bytes())?;
-    Ok(path)
+    electrum_json_wallet.save_to_file(home_dir)
 }

@@ -1,10 +1,10 @@
-// Copyright (c) 2022 Yuki Kishimoto
+// Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
 use std::fmt;
 use std::fs::File;
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use bdk::database::MemoryDatabase;
@@ -14,7 +14,9 @@ use bdk::wallet::AddressIndex;
 use bdk::{SignOptions, Wallet};
 use bitcoin::psbt::PartiallySignedTransaction;
 use bitcoin::secp256k1::Secp256k1;
-use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
+use bitcoin::util::bip32::{
+    ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
+};
 use bitcoin::{Address, Network, TxOut};
 use clap::ValueEnum;
 use prettytable::format::FormatBuilder;
@@ -22,7 +24,8 @@ use prettytable::{row, Table};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
-use crate::util::bip::bip32::Bip32RootKey;
+use crate::util::bip::bip32::{self, Bip32RootKey};
+use crate::util::slip::slip132::ToSlip132;
 use crate::util::{convert, format};
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -393,6 +396,64 @@ impl BitcoinCoreDescriptor {
             desc,
             internal,
         }
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ElectrumJsonKeystore {
+    xpub: String,
+    #[serde(skip)]
+    fingerprint: Fingerprint,
+    root_fingerprint: Fingerprint,
+    #[serde(rename = "type")]
+    keystore_type: String,
+    derivation: DerivationPath,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ElectrumJsonWallet {
+    keystore: ElectrumJsonKeystore,
+    wallet_type: String,
+    use_encryption: bool,
+    seed_version: u32,
+}
+
+impl ElectrumJsonWallet {
+    pub fn new(
+        seed: Seed,
+        network: Network,
+        script: ElectrumExportSupportedScripts,
+        account: Option<u32>,
+    ) -> Result<Self> {
+        let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
+        let secp = Secp256k1::new();
+        let path: DerivationPath = bip32::account_extended_path(script.as_u32(), network, account)?;
+        let pubkey: ExtendedPubKey =
+            ExtendedPubKey::from_priv(&secp, &root.derive_priv(&secp, &path)?);
+
+        Ok(Self {
+            keystore: ElectrumJsonKeystore {
+                xpub: pubkey.to_slip132(&path)?,
+                fingerprint: pubkey.fingerprint(),
+                root_fingerprint: root.fingerprint(&secp),
+                keystore_type: String::from("bip32"),
+                derivation: path,
+            },
+            wallet_type: String::from("standard"),
+            use_encryption: false,
+            seed_version: 20,
+        })
+    }
+
+    pub fn save_to_file<P>(&self, path: P) -> Result<PathBuf>
+    where
+        P: AsRef<Path>,
+    {
+        let file_name: String = format!("keechain-{}.json", self.keystore.fingerprint);
+        let path: PathBuf = path.as_ref().join(file_name);
+        let mut file: File = File::options().create(true).write(true).open(&path)?;
+        file.write_all(&serde_json::to_vec(self)?)?;
+        Ok(path)
     }
 }
 
