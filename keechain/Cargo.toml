@@ -7,6 +7,7 @@ authors = ["Yuki Kishimoto <yukikishimoto@proton.me>"]
 homepage.workspace = true
 repository.workspace = true
 license.workspace = true
+readme = "../README.md"
 keywords.workspace = true
 categories = ["GUI"]
 rust-version.workspace = true
@@ -19,5 +20,5 @@ nostr = ["keechain-core/nostr"]
 eframe = "0.20.1"
 egui_extras = { version = "0.20.0", features = ["image"] }
 image = { version = "0.24.5", default-features = false, features = ["png"] }
-keechain-core = { path = "../keechain-core" }
+keechain-core = { version = "0.1", path = "../keechain-core" }
 rfd = "0.10.0"

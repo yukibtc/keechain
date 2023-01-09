@@ -2,6 +2,7 @@
 name = "keechain-core"
 version.workspace = true
 edition = "2021"
+description = "KeeChain's Core library."
 authors = ["Yuki Kishimoto <yukikishimoto@proton.me>"]
 homepage.workspace = true
 repository.workspace = true

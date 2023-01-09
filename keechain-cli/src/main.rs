@@ -1,8 +1,6 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-#![doc = include_str!("../../README.md")]
-
 use std::str::FromStr;
 
 use clap::Parser;
