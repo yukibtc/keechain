@@ -40,3 +40,9 @@ KeeChain is a Bitcoin application to transform your **offline** computer in an A
 ## License
 
 This project is distributed under the MIT software license - see the [LICENSE](LICENSE) file for details
+
+## Donations
+
+🔗 Bitcoin Address: bc1qmxcg6v75jzet2nxrz35pwq4vkg847exf04gwrh
+
+⚡ Lightning Address: yuki@stacker.news
