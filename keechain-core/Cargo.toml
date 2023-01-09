@@ -15,22 +15,22 @@ default = []
 nostr = []
 
 [dependencies]
-aes = "0.8.2"
-base64 = "0.13.1"
+aes = "0.8"
+base64 = "0.13"
 bdk = { version = "0.26", default-features = false, features = ["keys-bip39"] }
 bitcoin = "0.29"
-cbc = { version = "0.1.2", features = ["alloc"] }
-dirs = "4.0.0"
-log = "0.4.17"
-rand = "0.8.5"
-rand_chacha = "0.3.1"
-rand_hc = "0.3.1"
-serde = { version = "1.0.147", features = ["derive"] }
-serde_json = "1.0.74"
-sysinfo = "0.26.8"
+cbc = { version = "0.1", features = ["alloc"] }
+dirs = "4.0"
+log = "0.4"
+rand = "0.8"
+rand_chacha = "0.3"
+rand_hc = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sysinfo = "0.26"
 
 # to remove
 clap = { version = "4.0", features = ["derive"] }
 
 # move to keechain-cli
-prettytable-rs = "0.10.0"
+prettytable-rs = "0.10"
