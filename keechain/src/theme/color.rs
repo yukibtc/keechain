@@ -1,11 +1,10 @@
-// Copyright (c) 2022 Yuki Kishimoto
+// Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use eframe::epaint::Color32;
+use iced::Color;
 
-pub const DARK_GRAY: Color32 = Color32::DARK_GRAY;
-pub const DARK_GREEN: Color32 = Color32::DARK_GREEN;
-pub const DARK_RED: Color32 = Color32::DARK_RED;
-pub const ORANGE: Color32 = Color32::from_rgb(222, 113, 0);
-pub const RED: Color32 = Color32::RED;
-pub const WHITE: Color32 = Color32::WHITE;
+pub const TRANSPARENT: Color = Color::TRANSPARENT;
+pub const BLACK: Color = Color::BLACK;
+pub const WHITE: Color = Color::WHITE;
+pub const ORANGE: Color = Color::from_rgba(222.0 / 255.0, 113.0 / 255.0, 0.0, 1.0);
+pub const DARK_RED: Color = Color::from_rgba(195.0 / 255.0, 0.0, 0.0, 1.0);
