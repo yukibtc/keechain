@@ -33,4 +33,4 @@ sysinfo = "0.26.8"
 clap = { version = "4.0", features = ["derive"] }
 
 # move to keechain-cli
-prettytable-rs = "0.9.0"
+prettytable-rs = "0.10.0"
