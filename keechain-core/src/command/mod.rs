@@ -3,3 +3,4 @@
 
 pub mod export;
 pub mod psbt;
+pub mod vanity;

@@ -25,3 +25,19 @@ pub fn account_extended_path(
     ];
     Ok(DerivationPath::from(path))
 }
+
+pub fn get_path(
+    purpose: u32,
+    network: Network,
+    account: Option<u32>,
+    index: Option<u32>,
+    change: bool,
+) -> Result<DerivationPath> {
+    // Path: m/<purpose>'/<coin>'/<account>'/<index>/<change>
+    let base_path = account_extended_path(purpose, network, account)?;
+    let path: Vec<ChildNumber> = vec![
+        ChildNumber::from_normal_idx(index.unwrap_or(0))?,
+        ChildNumber::from_normal_idx(u32::from(change))?,
+    ];
+    Ok(base_path.extend(path))
+}

@@ -103,15 +103,25 @@ impl WordCount {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct Index(u32);
+
+pub const MAX_INDEX: u32 = 0x80000000;
 
 impl Index {
     pub fn new(index: u32) -> Result<Self> {
-        if index & (1 << 31) == 0 {
+        if index < MAX_INDEX {
             Ok(Self(index))
         } else {
             Err(Error::Generic("Invalid index".to_string()))
+        }
+    }
+
+    pub fn increment(&mut self) {
+        if self.0 >= MAX_INDEX {
+            self.0 = 0;
+        } else {
+            self.0 += 1;
         }
     }
 
