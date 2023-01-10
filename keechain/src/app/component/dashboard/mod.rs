@@ -6,10 +6,8 @@ use iced::{Element, Length};
 
 use crate::app::{Context, Message};
 
-mod navbar;
 mod sidebar;
 
-use self::navbar::Navbar;
 use self::sidebar::Sidebar;
 
 #[derive(Clone, Default)]
@@ -35,15 +33,12 @@ impl Dashboard {
                     )
                     .push(Rule::vertical(1))
                     .push(
-                        Column::new()
-                            .push(Navbar::view())
-                            .push(Rule::horizontal(1))
-                            .push(
-                                Container::new(Scrollable::new(content))
-                                    .width(Length::Fill)
-                                    .height(Length::Fill)
-                                    .center_x(),
-                            ),
+                        Column::new().push(
+                            Container::new(Scrollable::new(content))
+                                .width(Length::Fill)
+                                .height(Length::Fill)
+                                .center_x(),
+                        ),
                     ),
             )
             .width(iced::Length::Fill)

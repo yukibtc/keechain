@@ -6,6 +6,8 @@ use keechain_core::{bitcoin::Network, keychain::KeeChain};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Stage {
     Home,
+    Passphrase,
+    AddressExplorer,
     Setting,
 }
 

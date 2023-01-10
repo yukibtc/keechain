@@ -7,8 +7,6 @@ use iced::{Alignment, Length};
 use crate::app::{Context, Message};
 use crate::component::button::{BorderButtonStyle, PrimaryButtonStyle};
 
-pub const BUTTON_SIZE: u16 = 180;
-
 #[derive(Clone)]
 pub struct SidebarButton<'a> {
     text: &'a str,
@@ -44,8 +42,9 @@ impl<'a> SidebarButton<'a> {
         Container::new(
             Button::new(content)
                 .on_press(msg)
-                .width(Length::Units(BUTTON_SIZE))
+                .width(Length::Fill)
                 .style(style),
         )
+        .width(Length::Fill)
     }
 }

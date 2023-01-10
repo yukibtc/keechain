@@ -13,7 +13,8 @@ const ICONS: Font = Font::External {
 pub struct Icon;
 
 impl Icon {
-    pub fn view(unicode: &'static char) -> Text<'static> {
+    #[allow(clippy::new_ret_no_self)]
+    pub fn new(unicode: &'static char) -> Text<'static> {
         Text::new(unicode.to_string())
             .font(ICONS)
             .width(Length::Units(20))

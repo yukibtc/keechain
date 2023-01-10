@@ -10,8 +10,7 @@ use super::view;
 use crate::component::{button, Text};
 use crate::start::{Context, Message, Stage, State};
 use crate::theme::color::{DARK_RED, GREY};
-
-const BITCOIN_LOGO: &[u8] = include_bytes!("../../../static/img/bitcoin.svg");
+use crate::BITCOIN_LOGO;
 
 #[derive(Debug, Clone)]
 pub enum OpenMessage {

@@ -8,6 +8,8 @@ mod component;
 mod start;
 mod theme;
 
+const BITCOIN_LOGO: &[u8] = include_bytes!("../static/img/bitcoin.svg");
+
 pub fn main() -> iced::Result {
     let mut settings = Settings::default();
     settings.window.min_size = Some((600, 600));
@@ -66,7 +68,14 @@ impl Application for KeeChainApp {
                 }
                 command.map(|m| m.into())
             }
-            (State::App(app), Message::App(msg)) => app.update(*msg).map(|m| m.into()),
+            (State::App(app), Message::App(msg)) => match *msg {
+                app::Message::Lock => {
+                    let new = Self::new(());
+                    *self = new.0;
+                    new.1
+                }
+                _ => app.update(*msg).map(|m| m.into()),
+            },
             _ => Command::none(),
         }
     }
