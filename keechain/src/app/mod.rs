@@ -5,12 +5,14 @@ use iced::{Command, Element, Subscription};
 use keechain_core::bitcoin::Network;
 use keechain_core::keychain::KeeChain;
 
+mod component;
 mod context;
 mod message;
 pub mod screen;
 
 pub use self::context::{Context, Stage};
 pub use self::message::Message;
+use self::screen::HomeState;
 
 pub trait State {
     fn title(&self) -> String;
@@ -26,7 +28,8 @@ pub trait State {
 
 pub fn new_state(context: &Context) -> Box<dyn State> {
     match &context.stage {
-        Stage::Home => todo!(),
+        Stage::Home => HomeState::new().into(),
+        Stage::Setting => todo!(),
     }
 }
 
