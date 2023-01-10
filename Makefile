@@ -32,6 +32,10 @@ appimage: x86_64-unknown-linux-gnu
 x86_64-unknown-linux-gnu: cross
 	$(Q)cross build --release --all-features --target x86_64-unknown-linux-gnu
 
+x86_64-unknown-linux-musl:
+	$(Q)rustup target add x86_64-unknown-linux-musl
+	$(Q)TARGET_CC=x86_64-linux-musl-gcc cargo build --release --target x86_64-unknown-linux-musl
+
 cross:
 	$(Q)cargo install cross --version 0.2.4
 
