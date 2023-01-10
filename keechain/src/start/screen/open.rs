@@ -1,13 +1,12 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use iced::widget::{
-    column, row, svg, text_input, Column, Container, PickList, Row, Rule, Scrollable, Space,
-};
+use iced::widget::{column, row, svg, text_input, PickList, Rule, Space};
 use iced::{Alignment, Command, Element, Length};
 use keechain_core::keychain::KeeChain;
 use keechain_core::util::dir;
 
+use super::view;
 use crate::component::{button, Text};
 use crate::start::{Context, Message, Stage, State};
 use crate::theme::color::{DARK_RED, GREY};
@@ -111,56 +110,35 @@ impl State for OpenState {
             .on_press(Message::View(Stage::Restore))
             .width(Length::Fill);
 
-        let content = Container::new(
-            column![
-                row![column![
-                    row![svg],
-                    row![Space::with_height(Length::Units(5))],
-                    row![Text::new("KeeChain").size(50).bold().view()],
-                    row![
-                        Text::new("A secure bitcoin keychain for long-term savings.")
-                            .size(22)
-                            .color(GREY)
-                            .view()
-                    ]
+        let content = column![
+            row![column![
+                row![svg],
+                row![Space::with_height(Length::Units(5))],
+                row![Text::new("KeeChain").size(50).bold().view()],
+                row![
+                    Text::new("A secure bitcoin keychain for long-term savings.")
+                        .size(22)
+                        .color(GREY)
+                        .view()
                 ]
-                .align_items(Alignment::Center)
-                .spacing(10)],
-                row![Space::with_height(Length::Units(15))],
-                row![keychain_pick_list],
-                row![password].spacing(10),
-                if let Some(error) = &self.error {
-                    row![Text::new(error).color(DARK_RED).view()]
-                } else {
-                    row![]
-                },
-                row![open_btn],
-                row![Rule::horizontal(1)],
-                row![new_keychain_btn],
-                row![restore_keychain_btn],
             ]
             .align_items(Alignment::Center)
-            .spacing(20)
-            .padding(20)
-            .max_width(400),
-        )
-        .width(Length::Fill)
-        .center_x()
-        .center_y();
+            .spacing(10)],
+            row![Space::with_height(Length::Units(15))],
+            row![keychain_pick_list],
+            row![password].spacing(10),
+            if let Some(error) = &self.error {
+                row![Text::new(error).color(DARK_RED).view()]
+            } else {
+                row![]
+            },
+            row![open_btn],
+            row![Rule::horizontal(1)],
+            row![new_keychain_btn],
+            row![restore_keychain_btn],
+        ];
 
-        Column::new()
-            .push(
-                Row::new().push(
-                    Container::new(Scrollable::new(content))
-                        .width(Length::Fill)
-                        .height(Length::Fill)
-                        .center_x()
-                        .center_y(),
-                ),
-            )
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .into()
+        view(content)
     }
 }
 
