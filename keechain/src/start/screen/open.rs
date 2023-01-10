@@ -1,13 +1,18 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use iced::widget::{button, column, container, pick_list, row, text_input, Text};
-use iced::{Command, Element, Length};
+use iced::widget::{
+    column, row, svg, text_input, Column, Container, PickList, Row, Rule, Scrollable, Space,
+};
+use iced::{Alignment, Command, Element, Length};
 use keechain_core::keychain::KeeChain;
 use keechain_core::util::dir;
 
-use crate::start::{Context, Message, State};
-use crate::theme::color::DARK_RED;
+use crate::component::{button, Text};
+use crate::start::{Context, Message, Stage, State};
+use crate::theme::color::{DARK_RED, GREY};
+
+const BITCOIN_LOGO: &[u8] = include_bytes!("../../../static/img/bitcoin.svg");
 
 #[derive(Debug, Clone)]
 pub enum OpenMessage {
@@ -70,9 +75,17 @@ impl State for OpenState {
     }
 
     fn view(&self, _ctx: &Context) -> Element<Message> {
-        let keychain_pick_list = pick_list(self.keychains.clone(), self.name.clone(), |name| {
+        let handle = svg::Handle::from_memory(BITCOIN_LOGO);
+        let svg = svg(handle)
+            .width(Length::Units(100))
+            .height(Length::Units(100));
+
+        let keychain_pick_list = PickList::new(self.keychains.clone(), self.name.clone(), |name| {
             Message::Open(OpenMessage::KeychainSelect(name))
         })
+        .width(Length::Fill)
+        .text_size(20)
+        .padding(10)
         .placeholder(if self.keychains.is_empty() {
             "No keychain availabe"
         } else {
@@ -87,28 +100,66 @@ impl State for OpenState {
         .password()
         .size(20);
 
-        let button = button("Open")
-            .padding(10)
+        let open_btn = button::primary("Open")
+            .width(Length::Fill)
             .on_press(Message::Open(OpenMessage::OpenButtonPressed));
 
-        let content = column![
-            row![keychain_pick_list],
-            row![password, button].spacing(10),
-            if let Some(error) = &self.error {
-                row![Text::new(error).style(DARK_RED)]
-            } else {
-                row![]
-            }
-        ]
-        .spacing(20)
-        .padding(20)
-        .max_width(600);
+        let new_keychain_btn = button::border("Create keychain")
+            .on_press(Message::View(Stage::New))
+            .width(Length::Fill);
+        let restore_keychain_btn = button::border("Restore keychain")
+            .on_press(Message::View(Stage::Restore))
+            .width(Length::Fill);
 
-        container(content)
+        let content = Container::new(
+            column![
+                row![column![
+                    row![svg],
+                    row![Space::with_height(Length::Units(5))],
+                    row![Text::new("KeeChain").size(50).bold().view()],
+                    row![
+                        Text::new("A secure bitcoin keychain for long-term savings.")
+                            .size(22)
+                            .color(GREY)
+                            .view()
+                    ]
+                ]
+                .align_items(Alignment::Center)
+                .spacing(10)],
+                row![Space::with_height(Length::Units(15))],
+                row![keychain_pick_list],
+                row![password].spacing(10),
+                if let Some(error) = &self.error {
+                    row![Text::new(error).color(DARK_RED).view()]
+                } else {
+                    row![]
+                },
+                row![open_btn],
+                row![Rule::horizontal(1)],
+                row![new_keychain_btn],
+                row![restore_keychain_btn],
+            ]
+            .align_items(Alignment::Center)
+            .spacing(20)
+            .padding(20)
+            .max_width(400),
+        )
+        .width(Length::Fill)
+        .center_x()
+        .center_y();
+
+        Column::new()
+            .push(
+                Row::new().push(
+                    Container::new(Scrollable::new(content))
+                        .width(Length::Fill)
+                        .height(Length::Fill)
+                        .center_x()
+                        .center_y(),
+                ),
+            )
             .width(Length::Fill)
             .height(Length::Fill)
-            .center_x()
-            .center_y()
             .into()
     }
 }
