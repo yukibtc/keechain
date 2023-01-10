@@ -14,3 +14,5 @@ pub const FINGERPRINT: char = '\u{F671}';
 pub const KEY: char = '\u{F44F}';
 pub const QRCODE: char = '\u{F6AD}';
 pub const TOOLS: char = '\u{F5DB}';
+pub const SIGN: char = '\u{F604}';
+pub const CHECK_CIRCLE: char = '\u{F26B}';

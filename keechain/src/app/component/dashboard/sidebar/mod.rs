@@ -11,7 +11,7 @@ use self::button::SidebarButton;
 use crate::app::{Context, Message, Stage};
 use crate::component::{Icon, Text};
 use crate::theme::color::DARK_RED;
-use crate::theme::icon::{HOME, KEY, LOCK, SEARCH, SETTING};
+use crate::theme::icon::{HOME, KEY, LOCK, SEARCH, SETTING, SIGN};
 use crate::BITCOIN_LOGO;
 
 const MAX_WIDTH: u32 = 240;
@@ -34,6 +34,8 @@ impl Sidebar {
         // Buttons
         let home_button =
             SidebarButton::new("Home", Icon::new(&HOME)).view(ctx, Message::View(Stage::Home));
+        let sign_button =
+            SidebarButton::new("Sign", Icon::new(&SIGN)).view(ctx, Message::View(Stage::Sign));
         let passphrase_button = SidebarButton::new("Passphrase", Icon::new(&KEY))
             .view(ctx, Message::View(Stage::Passphrase));
         let address_explorer_button = SidebarButton::new("Address explorer", Icon::new(&SEARCH))
@@ -75,6 +77,7 @@ impl Sidebar {
             Container::new(identity).width(Length::Fill).center_x(),
             sidebar_menu(vec![
                 home_button,
+                sign_button,
                 passphrase_button,
                 address_explorer_button,
                 settings_button,

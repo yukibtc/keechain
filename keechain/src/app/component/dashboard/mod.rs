@@ -37,7 +37,8 @@ impl Dashboard {
                             Container::new(Scrollable::new(content))
                                 .width(Length::Fill)
                                 .height(Length::Fill)
-                                .center_x(),
+                                .center_x()
+                                .center_y(),
                         ),
                     ),
             )

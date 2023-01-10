@@ -3,6 +3,8 @@
 
 mod home;
 mod setting;
+mod sign;
 
 pub use self::home::{HomeMessage, HomeState};
 pub use self::setting::{SettingMessage, SettingState};
+pub use self::sign::{SignMessage, SignState};

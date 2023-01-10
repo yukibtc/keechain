@@ -12,7 +12,7 @@ pub mod screen;
 
 pub use self::context::{Context, Stage};
 pub use self::message::Message;
-use self::screen::{HomeState, SettingState};
+use self::screen::{HomeState, SettingState, SignState};
 
 pub trait State {
     fn title(&self) -> String;
@@ -29,6 +29,7 @@ pub trait State {
 pub fn new_state(context: &Context) -> Box<dyn State> {
     match &context.stage {
         Stage::Home => HomeState::new().into(),
+        Stage::Sign => SignState::new().into(),
         Stage::Passphrase => todo!(),
         Stage::AddressExplorer => todo!(),
         Stage::Setting => SettingState::new().into(),
