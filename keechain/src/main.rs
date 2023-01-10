@@ -4,12 +4,14 @@
 use iced::{executor, Application, Command, Element, Settings, Theme};
 
 mod app;
+mod component;
 mod start;
 mod theme;
 
 pub fn main() -> iced::Result {
     let mut settings = Settings::default();
     settings.window.min_size = Some((600, 600));
+    settings.default_font = Some(theme::font::REGULAR_BYTES);
     KeeChainApp::run(settings)
 }
 
