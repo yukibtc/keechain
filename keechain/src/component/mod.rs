@@ -2,6 +2,8 @@
 // Distributed under the MIT software license
 
 pub mod button;
+mod icon;
 mod text;
 
+pub use self::icon::Icon;
 pub use self::text::Text;
