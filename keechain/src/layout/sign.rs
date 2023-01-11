@@ -57,7 +57,7 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                 if button.clicked() {
                     if let Some(path) = FileDialog::new().add_filter("psbt", &["psbt"]).pick_file()
                     {
-                        match command::psbt::decode_file(path.clone(), app.network) {
+                        match Psbt::from_file(path.clone(), app.network) {
                             Ok(psbt) => {
                                 app.layouts.sign.error = None;
                                 app.layouts.sign.psbt_file = Some(PsbtFile { psbt, path });

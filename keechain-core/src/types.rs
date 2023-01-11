@@ -3,7 +3,7 @@
 
 use std::fmt;
 use std::fs::File;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
@@ -193,15 +193,7 @@ impl Psbt {
         Self { psbt, network }
     }
 
-    pub fn psbt(&self) -> PartiallySignedTransaction {
-        self.psbt.clone()
-    }
-
-    pub fn network(&self) -> Network {
-        self.network
-    }
-
-    pub fn decode<S>(psbt: S, network: Network) -> Result<Self>
+    pub fn from_base64<S>(psbt: S, network: Network) -> Result<Self>
     where
         S: Into<String>,
     {
@@ -210,6 +202,28 @@ impl Psbt {
                 .map_err(|e| Error::Parse(format!("Impossible to parse PSBT: {}", e)))?,
             network,
         ))
+    }
+
+    pub fn from_file<P>(path: P, network: Network) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
+        let psbt_file = path.as_ref();
+        if !psbt_file.exists() && !psbt_file.is_file() {
+            return Err(Error::Generic("PSBT file not found.".to_string()));
+        }
+        let mut file: File = File::open(psbt_file)?;
+        let mut content: Vec<u8> = Vec::new();
+        file.read_to_end(&mut content)?;
+        Self::from_base64(base64::encode(content), network)
+    }
+
+    pub fn psbt(&self) -> PartiallySignedTransaction {
+        self.psbt.clone()
+    }
+
+    pub fn network(&self) -> Network {
+        self.network
     }
 
     pub fn sign(&mut self, seed: &Seed) -> Result<bool> {

@@ -10,6 +10,7 @@ use keechain_core::bitcoin::Network;
 use keechain_core::command;
 use keechain_core::error::Result;
 use keechain_core::keychain::KeeChain;
+use keechain_core::types::Psbt;
 use keechain_core::util::dir;
 
 mod cli;
@@ -101,7 +102,7 @@ fn main() -> Result<()> {
             }
         },
         Command::Decode { file } => {
-            command::psbt::decode_file(file, network)?.print();
+            Psbt::from_file(file, network)?.print();
             Ok(())
         }
         Command::Sign { name, file } => {
