@@ -32,6 +32,3 @@ sysinfo = "0.26"
 
 # to remove
 clap = { version = "4.0", features = ["derive"] }
-
-# move to keechain-cli
-prettytable-rs = "0.10"

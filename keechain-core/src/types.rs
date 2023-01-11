@@ -17,16 +17,15 @@ use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{
     ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
 };
-use bitcoin::{Address, Network, TxOut};
+use bitcoin::Network;
 use clap::ValueEnum;
-use prettytable::format::FormatBuilder;
-use prettytable::{row, Table};
+
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
 use crate::util::bip::bip32::{self, Bip32RootKey};
+use crate::util::convert;
 use crate::util::slip::slip132::ToSlip132;
-use crate::util::{convert, format};
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Seed {
@@ -181,27 +180,6 @@ impl Secrets {
             fingerprint: root_key.fingerprint(&secp),
         })
     }
-
-    pub fn print(&self) {
-        let mut table = Table::new();
-
-        table.add_row(row![
-            format!("Entropy ({} bits)", self.entropy.len() / 2 * 8),
-            self.entropy
-        ]);
-        table.add_row(row!["Mnemonic (BIP39)", self.mnemonic]);
-
-        if let Some(passphrase) = &self.passphrase {
-            table.add_row(row!["Passphrase (BIP39)", passphrase]);
-        }
-
-        table.add_row(row!["Seed HEX (BIP39)", self.seed_hex]);
-        table.add_row(row!["Network", self.network]);
-        table.add_row(row!["Root Key (BIP32)", self.root_key]);
-        table.add_row(row!["Fingerprint (BIP32)", self.fingerprint]);
-
-        table.printstd();
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -213,6 +191,14 @@ pub struct Psbt {
 impl Psbt {
     pub fn new(psbt: PartiallySignedTransaction, network: Network) -> Self {
         Self { psbt, network }
+    }
+
+    pub fn psbt(&self) -> PartiallySignedTransaction {
+        self.psbt.clone()
+    }
+
+    pub fn network(&self) -> Network {
+        self.network
     }
 
     pub fn decode<S>(psbt: S, network: Network) -> Result<Self>
@@ -289,61 +275,6 @@ impl Psbt {
 
     pub fn as_bytes(&self) -> Result<Vec<u8>> {
         Ok(base64::decode(self.as_base64())?)
-    }
-
-    fn output_table_row(&self, output: &TxOut) -> Result<String> {
-        let mut table = Table::new();
-        let format = FormatBuilder::new()
-            .column_separator('|')
-            .padding(0, 0)
-            .build();
-        table.set_format(format);
-        table.add_row(row![
-            format!(
-                "{} ",
-                Address::from_script(&output.script_pubkey, self.network)
-                    .map_err(|e| Error::Generic(e.to_string()))?
-            ),
-            format!(" {} sat", format::number(output.value as usize))
-        ]);
-        Ok(table.to_string())
-    }
-
-    pub fn print(&self) -> Result<()> {
-        let tx = self.psbt.clone().extract_tx();
-        let inputs_len: usize = tx.input.len();
-        let outputs_len: usize = tx.output.len();
-
-        let mut table = Table::new();
-
-        table.set_titles(row![
-            format!("Inputs ({})", inputs_len),
-            format!("Outputs ({})", outputs_len)
-        ]);
-
-        if inputs_len >= outputs_len {
-            for (index, input) in tx.input.iter().enumerate() {
-                let input = format!("{}", input.previous_output);
-                if let Some(output) = tx.output.get(index) {
-                    table.add_row(row![input, self.output_table_row(output)?]);
-                } else {
-                    table.add_row(row![input, ""]);
-                }
-            }
-        } else {
-            for (index, output) in tx.output.iter().enumerate() {
-                let output = self.output_table_row(output)?;
-                if let Some(input) = tx.input.get(index) {
-                    table.add_row(row![format!("{}", input.previous_output), output]);
-                } else {
-                    table.add_row(row!["", output]);
-                }
-            }
-        }
-
-        table.printstd();
-
-        Ok(())
     }
 }
 

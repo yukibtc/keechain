@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Yuki Kishimoto
+// Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
 use std::str::FromStr;
@@ -13,9 +13,11 @@ use keechain_core::keychain::KeeChain;
 use keechain_core::util::dir;
 
 mod cli;
+mod util;
 
 use self::cli::io;
 use self::cli::{AdvancedCommand, Cli, Command, DangerCommand, ExportTypes, SettingCommand};
+use self::util::Print;
 
 fn main() -> Result<()> {
     env_logger::init();
@@ -94,11 +96,14 @@ fn main() -> Result<()> {
                     script,
                     Some(account),
                 )?;
-                println!("Electrum file exported: {}", path.display());
+                println!("Electrum file exported to {}", path.display());
                 Ok(())
             }
         },
-        Command::Decode { file } => command::psbt::decode_file(file, network)?.print(),
+        Command::Decode { file } => {
+            command::psbt::decode_file(file, network)?.print();
+            Ok(())
+        }
         Command::Sign { name, file } => {
             let keechain = KeeChain::open(name, io::get_password)?;
             if command::psbt::sign_file_from_seed(&keechain.keychain.seed(), network, file)? {
