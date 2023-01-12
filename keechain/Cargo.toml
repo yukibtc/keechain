@@ -17,6 +17,6 @@ default = []
 nostr = ["keechain-core/nostr"]
 
 [dependencies]
-iced = { version = "0.6", default-features = false, features = ["image", "glow", "svg"] }
+iced = { version = "0.6", default-features = false, features = ["image", "glow", "qr_code", "svg"] }
 keechain-core = { version = "0.1", path = "../keechain-core" }
 rfd = "0.10.0"
