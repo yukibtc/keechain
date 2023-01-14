@@ -4,6 +4,13 @@
 
 KeeChain is a Bitcoin application to transform your **offline** computer in an AirGap Signing Device (aka Hardware Wallet).
 
+Note: Currently the GUI is usable but it's not very user-friendly. In the next release (`0.2.0`) the UI/UX will be better.
+
+## Who is this software for?
+
+I'm developing this Bitcoin application thinking to people that live in countries where hardware wallet companies not ship and to people that not want to share own personal data (like home address) with those companies.
+Obviously, anyone else can use and test `keechain`!
+
 ## Getting started
 
 * [Download from releases](https://github.com/yukibtc/keechain/releases) (remember to run `chmod a+x keechain*`)
@@ -31,7 +38,7 @@ KeeChain is a Bitcoin application to transform your **offline** computer in an A
     - View secrets: entropy, mnemonic, passphrase, HEX seed, BIP32 root key and fingerprint.
     - Wipe: permanently delete keychain
 * Optional:
-    - [Nostr](https://github.com/nostr-protocol/nostr) sign event delegation (NIP26)
+    - [Nostr](https://github.com/nostr-protocol/nostr) sign event delegation (NIP26) 
 
 ## State
 
