@@ -13,7 +13,7 @@ rust-version.workspace = true
 
 [features]
 default = []
-nostr = []
+nostr = ["dep:nostr"]
 
 [dependencies]
 aes = "0.8"
@@ -23,6 +23,7 @@ bitcoin = "0.29"
 cbc = { version = "0.1", features = ["alloc"] }
 dirs = "4.0"
 log = "0.4"
+nostr = { version = "0.14", default-features = false, features = ["nip06", "nip19", "nip26"], optional = true }
 rand = "0.8"
 rand_chacha = "0.3"
 rand_hc = "0.3"

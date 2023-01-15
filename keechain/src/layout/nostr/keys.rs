@@ -2,31 +2,19 @@
 // Distributed under the MIT software license
 
 use eframe::egui::{Align, Layout, Ui};
-use keechain_core::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
-use keechain_core::nostr::{nip06, ToBech32};
+use keechain_core::bitcoin::secp256k1::SecretKey;
+use keechain_core::bitcoin::XOnlyPublicKey;
+use keechain_core::nostr::util::nips::nip06::FromMnemonic;
+use keechain_core::nostr::util::nips::nip19::ToBech32;
+use keechain_core::nostr::Keys;
 use keechain_core::types::Seed;
 
 use crate::component::{Button, Heading, Identity, ReadOnlyField, View};
 use crate::{AppState, Menu, Stage};
 
-pub struct Keys {
-    secret_key: SecretKey,
-    public_key: PublicKey,
-}
-
-impl Keys {
-    pub fn new(secret_key: SecretKey) -> Self {
-        let secp = Secp256k1::new();
-        Self {
-            public_key: secret_key.public_key(&secp),
-            secret_key,
-        }
-    }
-}
-
 #[derive(Default)]
 pub struct NostrKeysState {
-    keys: Option<Keys>,
+    keys: Option<(SecretKey, XOnlyPublicKey)>,
     bech32: bool,
     error: Option<String>,
 }
@@ -53,29 +41,36 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                 if app.layouts.nostr_keys.bech32 {
                     ReadOnlyField::new(
                         "Secret key",
-                        keys.secret_key.to_bech32().expect("Impossible to convert"),
+                        keys.0.to_bech32().expect("Impossible to convert"),
                     )
                     .rows(3)
                     .render(ui);
                     ReadOnlyField::new(
                         "Public key",
-                        keys.public_key.to_bech32().expect("Impossible to convert"),
+                        keys.1.to_bech32().expect("Impossible to convert"),
                     )
                     .rows(3)
                     .render(ui);
                 } else {
-                    ReadOnlyField::new("Secret key", keys.secret_key.display_secret().to_string())
+                    ReadOnlyField::new("Secret key", keys.0.display_secret().to_string())
                         .rows(3)
                         .render(ui);
-                    ReadOnlyField::new("Public key", keys.public_key.to_string())
+                    ReadOnlyField::new("Public key", keys.1.to_string())
                         .rows(3)
                         .render(ui);
                 }
                 ui.with_layout(Layout::top_down(Align::Min), |ui| {
                     ui.checkbox(&mut app.layouts.nostr_keys.bech32, "Bech32 format");
                 });
-            } else if let Ok(secret_key) = nip06::derive_secret_key_from_seed(seed) {
-                app.layouts.nostr_keys.keys = Some(Keys::new(secret_key));
+            } else if let Ok(keys) =
+                Keys::from_mnemonic(seed.mnemonic().to_string(), seed.passphrase())
+            {
+                match keys.secret_key() {
+                    Ok(secret_key) => {
+                        app.layouts.nostr_keys.keys = Some((secret_key, keys.public_key()))
+                    }
+                    Err(e) => app.layouts.nostr_keys.error = Some(e.to_string()),
+                }
             }
 
             ui.add_space(15.0);

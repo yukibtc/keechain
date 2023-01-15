@@ -6,7 +6,9 @@ use std::str::FromStr;
 use eframe::egui::Ui;
 use keechain_core::bitcoin::secp256k1::schnorr::Signature;
 use keechain_core::bitcoin::XOnlyPublicKey;
-use keechain_core::nostr::{nip06, nip26};
+use keechain_core::nostr::util::nips::nip06::FromMnemonic;
+use keechain_core::nostr::util::nips::nip26;
+use keechain_core::nostr::Keys;
 use keechain_core::types::Seed;
 
 use crate::component::{Button, Error, Heading, Identity, InputField, ReadOnlyField, View};
@@ -84,13 +86,13 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
             }
 
             if is_ready && button.clicked() {
-                match nip06::derive_secret_key_from_seed(seed) {
-                    Ok(secret_key) => match XOnlyPublicKey::from_str(
+                match Keys::from_mnemonic(seed.mnemonic().to_string(), seed.passphrase()) {
+                    Ok(keys) => match XOnlyPublicKey::from_str(
                         &app.layouts.nostr_sign_delegation.delegatee_pk,
                     ) {
                         Ok(delegatee_pk) => {
                             match nip26::sign_delegation(
-                                &secret_key,
+                                &keys,
                                 delegatee_pk,
                                 app.layouts.nostr_sign_delegation.conditions.clone(),
                             ) {
