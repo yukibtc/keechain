@@ -32,6 +32,7 @@ Obviously, anyone else can use and test `keechain`!
     - Descriptors
     - Bitcoin Core descriptors (same as above but already formatted to be inserted into the console using the `importdescriptors` command)
     - Electrum JSON file (BIP44, BIP49 and BIP84)
+    - Wasabi JSON file (BIP84)
 * Sign and decode PSBT file
 * Deterministic Entropy (BIP85)
 * Danger:

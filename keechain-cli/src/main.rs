@@ -100,6 +100,12 @@ fn main() -> Result<()> {
                 println!("Electrum file exported to {}", path.display());
                 Ok(())
             }
+            ExportTypes::Wasabi { name } => {
+                let keechain = KeeChain::open(name, io::get_password)?;
+                let path = command::export::wasabi(keechain.keychain.seed(), network)?;
+                println!("Wasabi file exported to {}", path.display());
+                Ok(())
+            }
         },
         Command::Decode { file } => {
             Psbt::from_file(file, network)?.print();

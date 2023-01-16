@@ -15,6 +15,7 @@ use serde_json::json;
 use crate::error::{Error, Result};
 use crate::types::{
     BitcoinCoreDescriptor, Descriptors, ElectrumExportSupportedScripts, ElectrumJsonWallet, Seed,
+    WasabiJsonWallet,
 };
 use crate::util::bip::bip32::{self, Bip32RootKey};
 use crate::util::dir;
@@ -140,4 +141,10 @@ pub fn electrum(
     let electrum_json_wallet = ElectrumJsonWallet::new(seed, network, script, account)?;
     let home_dir: PathBuf = dir::home();
     electrum_json_wallet.save_to_file(home_dir)
+}
+
+pub fn wasabi(seed: Seed, network: Network) -> Result<PathBuf> {
+    let wasabi_json_wallet = WasabiJsonWallet::new(seed, network)?;
+    let home_dir: PathBuf = dir::home();
+    wasabi_json_wallet.save_to_file(home_dir)
 }

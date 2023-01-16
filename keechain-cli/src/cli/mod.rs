@@ -191,4 +191,11 @@ pub enum ExportTypes {
         #[arg(default_value_t = 0)]
         account: u32,
     },
+    /// Export Wasabi file
+    #[command(arg_required_else_help = true)]
+    Wasabi {
+        /// Keychain name
+        #[arg(required = true)]
+        name: String,
+    },
 }
