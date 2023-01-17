@@ -59,7 +59,7 @@ pub fn search_address(
                 if prefixes.iter().any(|prefix| addr_str.contains(prefix)) {
                     println!("{} ms", now.elapsed().as_millis());
                     let path =
-                        bip32::get_path(84, network, Some(account), Some(index), change == 1)?;
+                        bip32::get_path(84, network, Some(account), change == 1, Some(index))?;
                     return Ok((path, address));
                 }
             }
