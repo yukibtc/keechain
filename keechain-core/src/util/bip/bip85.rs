@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Yuki Kishimoto
+// Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
 // https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki
@@ -9,8 +9,15 @@ use bitcoin::hashes::{sha512, Hash, HashEngine};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey};
 
-use crate::error::Error;
 use crate::types::{Index, WordCount};
+
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+pub enum Error {
+    #[error(transparent)]
+    BIP32(#[from] bitcoin::util::bip32::Error),
+    #[error(transparent)]
+    BIP39(#[from] bdk::keys::bip39::Error),
+}
 
 pub trait FromBip85: Sized {
     type Err;

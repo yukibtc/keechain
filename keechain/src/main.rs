@@ -9,8 +9,8 @@ use eframe::epaint::{FontId, Vec2};
 use eframe::{App, Frame, NativeOptions, Theme};
 use egui::TextStyle::{Body, Button, Heading, Monospace, Small};
 use keechain_core::bitcoin::Network;
-use keechain_core::error::Result;
-use keechain_core::keychain::KeeChain;
+use keechain_core::types::KeeChain;
+use keechain_core::Result;
 
 mod component;
 mod layout;

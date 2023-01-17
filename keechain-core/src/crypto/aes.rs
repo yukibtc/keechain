@@ -1,7 +1,5 @@
-// Copyright (c) 2022 Yuki Kishimoto
+// Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
-
-use std::fmt;
 
 use aes::cipher::block_padding::Pkcs7;
 use aes::cipher::{BlockDecryptMut, BlockEncryptMut, KeyIvInit};
@@ -13,27 +11,15 @@ use super::hash;
 type Aes256CbcEnc = Encryptor<Aes256>;
 type Aes256CbcDec = Decryptor<Aes256>;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, thiserror::Error)]
 pub enum Error {
+    #[error("Invalid content format")]
     InvalidContentFormat,
+    #[error("Error while decoding from base64")]
     Base64Decode,
+    #[error("Wrong encryption block mode. The content must be encrypted using CBC mode!")]
     WrongBlockMode,
 }
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidContentFormat => write!(f, "Invalid content format"),
-            Self::Base64Decode => write!(f, "Error while decoding from base64"),
-            Self::WrongBlockMode => write!(
-                f,
-                "Wrong encryption block mode. The content must be encrypted using CBC mode!"
-            ),
-        }
-    }
-}
-
-impl std::error::Error for Error {}
 
 pub fn encrypt<T>(key: T, content: &[u8]) -> Vec<u8>
 where

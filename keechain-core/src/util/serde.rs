@@ -3,25 +3,19 @@
 
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde_json::Error;
 
-use crate::error::{Error, Result};
-
-pub fn serialize<T>(data: T) -> Result<Vec<u8>>
+pub fn serialize<T>(data: T) -> Result<Vec<u8>, Error>
 where
     T: Serialize,
 {
-    match serde_json::to_string(&data) {
-        Ok(data) => Ok(data.into_bytes()),
-        Err(_) => Err(Error::Generic("Failed to serialize data".to_string())),
-    }
+    let data = serde_json::to_string(&data)?;
+    Ok(data.into_bytes())
 }
 
-pub fn deserialize<T>(data: Vec<u8>) -> Result<T>
+pub fn deserialize<T>(data: Vec<u8>) -> Result<T, Error>
 where
     T: DeserializeOwned,
 {
-    match serde_json::from_slice::<T>(&data) {
-        Ok(data) => Ok(data),
-        Err(_) => Err(Error::Generic("Failed to deserialize data".to_string())),
-    }
+    serde_json::from_slice::<T>(&data)
 }

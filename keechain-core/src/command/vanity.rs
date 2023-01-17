@@ -7,17 +7,26 @@ use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey};
 use bitcoin::{Address, Network, PublicKey};
 
-use crate::error::{Error, Result};
 use crate::types::{Seed, MAX_INDEX};
 use crate::util::bip::bip32::{self, Bip32RootKey};
 
 const BECH32_CHARS: &str = "023456789acdefghjklmnpqrstuvwxyz";
 
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error(transparent)]
+    BIP32(#[from] bitcoin::util::bip32::Error),
+    #[error("Unsupported char: {0}")]
+    InvalidChar(char),
+    #[error("Prefixes not found")]
+    NotFound,
+}
+
 pub fn search_address(
     seed: Seed,
     prefixes: impl Into<Vec<String>>,
     network: Network,
-) -> Result<(DerivationPath, Address)> {
+) -> Result<(DerivationPath, Address), Error> {
     let now = Instant::now();
     let secp = Secp256k1::new();
     let root = seed.to_bip32_root_key(network)?;
@@ -26,7 +35,7 @@ pub fn search_address(
     for prefix in prefixes.iter() {
         for c in prefix.chars() {
             if !BECH32_CHARS.contains(c) {
-                return Err(Error::Generic(format!("Unsupported char: {}", c)));
+                return Err(Error::InvalidChar(c));
             }
         }
     }
@@ -57,7 +66,5 @@ pub fn search_address(
         }
     }
 
-    Err(Error::Generic(
-        "Failed to derive xpub at found path".to_string(),
-    ))
+    Err(Error::NotFound)
 }

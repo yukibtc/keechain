@@ -2,8 +2,7 @@
 // Distributed under the MIT software license
 
 use eframe::egui::{Align, ComboBox, Key, Layout, Ui};
-use keechain_core::keychain::KeeChain;
-use keechain_core::types::WordCount;
+use keechain_core::types::{KeeChain, WordCount};
 
 use crate::component::{Button, Error, Heading, InputField, MnemonicViewer, View};
 use crate::theme::color::ORANGE;

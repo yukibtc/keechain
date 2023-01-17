@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use eframe::egui::{self, Align, ComboBox, Key, Layout, Ui};
 use egui_extras::RetainedImage;
-use keechain_core::keychain::KeeChain;
+use keechain_core::types::KeeChain;
 use keechain_core::util::dir;
 
 use crate::component::{Button, Error, InputField, View};

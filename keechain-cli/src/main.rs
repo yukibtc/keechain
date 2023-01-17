@@ -8,10 +8,11 @@ use console::Term;
 use keechain_core::bdk::keys::bip39::Mnemonic;
 use keechain_core::bitcoin::Network;
 use keechain_core::command;
-use keechain_core::error::Result;
-use keechain_core::keychain::KeeChain;
-use keechain_core::types::Psbt;
+use keechain_core::types::{
+    BitcoinCore, Descriptors, ElectrumJsonWallet, KeeChain, Psbt, WasabiJsonWallet,
+};
 use keechain_core::util::dir;
+use keechain_core::Result;
 
 mod cli;
 mod util;
@@ -71,18 +72,15 @@ fn main() -> Result<()> {
             ExportTypes::Descriptors { name, account } => {
                 let keechain = KeeChain::open(name, io::get_password)?;
                 let descriptors =
-                    command::export::descriptors(keechain.keychain.seed(), network, Some(account))?;
+                    Descriptors::new(keechain.keychain.seed(), network, Some(account))?;
                 println!("{:#?}", descriptors);
                 Ok(())
             }
             ExportTypes::BitcoinCore { name, account } => {
                 let keechain = KeeChain::open(name, io::get_password)?;
-                let descriptors = command::export::bitcoin_core(
-                    keechain.keychain.seed(),
-                    network,
-                    Some(account),
-                )?;
-                println!("{}", descriptors);
+                let descriptors =
+                    BitcoinCore::new(keechain.keychain.seed(), network, Some(account))?;
+                println!("{}", descriptors.to_string());
                 Ok(())
             }
             ExportTypes::Electrum {
@@ -91,18 +89,20 @@ fn main() -> Result<()> {
                 account,
             } => {
                 let keechain = KeeChain::open(name, io::get_password)?;
-                let path = command::export::electrum(
+                let electrum_json_wallet = ElectrumJsonWallet::new(
                     keechain.keychain.seed(),
                     network,
                     script,
                     Some(account),
                 )?;
+                let path = electrum_json_wallet.save_to_file(dir::home())?;
                 println!("Electrum file exported to {}", path.display());
                 Ok(())
             }
             ExportTypes::Wasabi { name } => {
                 let keechain = KeeChain::open(name, io::get_password)?;
-                let path = command::export::wasabi(keechain.keychain.seed(), network)?;
+                let wasabi_json_wallet = WasabiJsonWallet::new(keechain.keychain.seed(), network)?;
+                let path = wasabi_json_wallet.save_to_file(dir::home())?;
                 println!("Wasabi file exported to {}", path.display());
                 Ok(())
             }
@@ -164,11 +164,11 @@ fn main() -> Result<()> {
         Command::Setting { command } => match command {
             SettingCommand::Rename { name, new_name } => {
                 let mut keechain = KeeChain::open(name, io::get_password)?;
-                keechain.rename(new_name)
+                Ok(keechain.rename(new_name)?)
             }
             SettingCommand::ChangePassword { name } => {
                 let mut keechain = KeeChain::open(name, io::get_password)?;
-                keechain.change_password(io::get_password_with_confirmation)
+                Ok(keechain.change_password(io::get_password_with_confirmation)?)
             }
         },
     }

@@ -1,15 +1,29 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use std::path::PathBuf;
 use std::str::FromStr;
 
 use eframe::egui::{Align, ComboBox, Layout, RichText, Ui};
-use keechain_core::command::export;
-use keechain_core::types::{ElectrumExportSupportedScripts, Index};
+use keechain_core::bitcoin::Network;
+use keechain_core::types::{ElectrumExportSupportedScripts, ElectrumJsonWallet, Index, Seed};
+use keechain_core::util::dir;
+use keechain_core::Result;
 
 use crate::component::{Button, Error, Heading, Identity, InputField, View};
 use crate::theme::color::{DARK_GREEN, ORANGE};
 use crate::{AppState, Menu, Stage};
+
+fn export_electrum(
+    seed: Seed,
+    network: Network,
+    script: ElectrumExportSupportedScripts,
+    account: Option<u32>,
+) -> Result<PathBuf> {
+    let electrum_json_wallet = ElectrumJsonWallet::new(seed, network, script, account)?;
+    let home_dir: PathBuf = dir::home();
+    Ok(electrum_json_wallet.save_to_file(home_dir)?)
+}
 
 const WALLET_TYPES: [(ElectrumExportSupportedScripts, &str); 3] = [
     (ElectrumExportSupportedScripts::Legacy, "Legacy (BIP44)"),
@@ -105,7 +119,7 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                 Some(keechain) => {
                     match Index::from_str(app.layouts.export_electrum.account.as_str()) {
                         Ok(index) => {
-                            match export::electrum(
+                            match export_electrum(
                                 keechain.keychain.seed(),
                                 app.network,
                                 app.layouts.export_electrum.script,

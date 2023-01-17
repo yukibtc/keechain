@@ -1,10 +1,8 @@
-// Copyright (c) 2022 Yuki Kishimoto
+// Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
+use bitcoin::util::bip32::{ChildNumber, DerivationPath, Error, ExtendedPrivKey, Fingerprint};
 use bitcoin::Network;
-
-use crate::error::Result;
 
 pub trait Bip32RootKey {
     type Err;
@@ -16,7 +14,7 @@ pub fn account_extended_path(
     purpose: u32,
     network: Network,
     account: Option<u32>,
-) -> Result<DerivationPath> {
+) -> Result<DerivationPath, Error> {
     // Path: m/<purpose>'/<coin>'/<account>'
     let path: Vec<ChildNumber> = vec![
         ChildNumber::from_hardened_idx(purpose)?,
@@ -32,7 +30,7 @@ pub fn get_path(
     account: Option<u32>,
     index: Option<u32>,
     change: bool,
-) -> Result<DerivationPath> {
+) -> Result<DerivationPath, Error> {
     // Path: m/<purpose>'/<coin>'/<account>'/<index>/<change>
     let base_path = account_extended_path(purpose, network, account)?;
     let path: Vec<ChildNumber> = vec![

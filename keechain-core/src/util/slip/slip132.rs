@@ -1,11 +1,18 @@
-// Copyright (c) 2022 Yuki Kishimoto
+// Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
 use bitcoin::util::base58;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPubKey};
 
-use crate::error::{Error, Result};
 use crate::util::convert;
+
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+pub enum Error {
+    #[error(transparent)]
+    Base58(#[from] bitcoin::util::base58::Error),
+    #[error("Unsupported derivation path")]
+    UnsupportedDerivationPath,
+}
 
 pub trait ToSlip132 {
     type Err;
@@ -22,7 +29,7 @@ impl ToSlip132 for ExtendedPubKey {
         let is_mainnet: bool = match iter.next() {
             Some(ChildNumber::Hardened { index: 0 }) => true,
             Some(ChildNumber::Hardened { index: 1 }) => false,
-            _ => return Err(Error::Generic("Unsupported derivation path".to_string())),
+            _ => return Err(Error::UnsupportedDerivationPath),
         };
 
         let hex: &str = match purpose {
@@ -47,7 +54,7 @@ impl ToSlip132 for ExtendedPubKey {
                     "045f1cf6"
                 }
             }
-            _ => return Err(Error::Generic("Unsupported derivation path".to_string())),
+            _ => return Err(Error::UnsupportedDerivationPath),
         };
 
         let data: Vec<u8> = [convert::hex_to_bytes(hex), data[4..].to_vec()].concat();
@@ -91,8 +98,11 @@ mod tests {
             ExtendedPubKey::from_priv(&secp, &root.derive_priv(&secp, &path).unwrap());
         assert_eq!(pubkey.to_slip132(&path).unwrap(), "zpub6qR4RRKqYzgY9psfVvZFQchEZfH6upEMWJRJSLWAXeYk4KXNKoLuBzC7977uUKMFiVYNMqMrrjNgJ871YQeJEbgzQ6hZevYE8uB6NipiLLj".to_string());
 
-        assert!(pubkey
-            .to_slip132(&DerivationPath::from_str("m/1'/0'/0'").unwrap())
-            .is_err());
+        assert_eq!(
+            pubkey
+                .to_slip132(&DerivationPath::from_str("m/1'/0'/0'").unwrap())
+                .unwrap_err(),
+            Error::UnsupportedDerivationPath
+        );
     }
 }

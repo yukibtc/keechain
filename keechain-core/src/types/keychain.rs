@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Yuki Kishimoto
+// Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
 use std::fs::{self, File};
@@ -13,14 +13,44 @@ use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
 
 use crate::crypto::aes::{self, Aes256Encryption};
-use crate::error::{Error, Result};
 use crate::types::{Index, Secrets, Seed, WordCount};
 use crate::util::bip::bip32::Bip32RootKey;
 use crate::util::bip::bip39;
-use crate::util::bip::bip85::FromBip85;
+use crate::util::bip::bip85::{self, FromBip85};
 use crate::util::{self, dir};
+use crate::Result;
 
 const KEECHAIN_FILE_VERSION: u8 = 1;
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error(transparent)]
+    IO(#[from] std::io::Error),
+    #[error(transparent)]
+    Aes(#[from] aes::Error),
+    #[error(transparent)]
+    Dir(#[from] dir::Error),
+    #[error(transparent)]
+    Json(#[from] serde_json::Error),
+    #[error(transparent)]
+    Base64(#[from] base64::DecodeError),
+    #[error(transparent)]
+    BIP32(#[from] bitcoin::util::bip32::Error),
+    #[error(transparent)]
+    BIP39(#[from] bdk::keys::bip39::Error),
+    #[error(transparent)]
+    BIP85(#[from] bip85::Error),
+    #[error("File not found")]
+    FileNotFound,
+    #[error("There is already a file with the same name! Please, choose another name")]
+    FileAlreadyExists,
+    #[error("Invalid password")]
+    InvalidPassword,
+    #[error("Impossible to decrypt file: invalid password or content")]
+    DecryptionFailed,
+    #[error("{0}")]
+    Generic(String),
+}
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum EncryptionKeyType {
@@ -45,21 +75,21 @@ pub struct KeeChain {
 }
 
 impl KeeChain {
-    pub fn open<S, PSW>(name: S, get_password: PSW) -> Result<Self>
+    pub fn open<S, PSW>(name: S, get_password: PSW) -> Result<Self, Error>
     where
         S: Into<String>,
         PSW: FnOnce() -> Result<String>,
     {
         let keychain_file: PathBuf = dir::get_keychain_file(name)?;
         if !keychain_file.exists() {
-            return Err(Error::Generic("File not found.".to_string()));
+            return Err(Error::FileNotFound);
         }
 
         let mut file: File = File::open(keychain_file.as_path())?;
         let mut content: Vec<u8> = Vec::new();
         file.read_to_end(&mut content)?;
 
-        let password: String = get_password()?;
+        let password: String = get_password().map_err(|e| Error::Generic(e.to_string()))?;
 
         let keechain_raw_file: KeeChainRaw = util::serde::deserialize(content)?;
         let content: Vec<u8> = base64::decode(keechain_raw_file.keychain)?;
@@ -78,7 +108,7 @@ impl KeeChain {
         get_password: PSW,
         word_count: WordCount,
         get_custom_entropy: E,
-    ) -> Result<Self>
+    ) -> Result<Self, Error>
     where
         S: Into<String>,
         PSW: FnOnce() -> Result<String>,
@@ -86,18 +116,16 @@ impl KeeChain {
     {
         let keychain_file: PathBuf = dir::get_keychain_file(name)?;
         if keychain_file.exists() {
-            return Err(Error::Generic(
-                "There is already a file with the same name! Please, choose another name."
-                    .to_string(),
-            ));
+            return Err(Error::FileAlreadyExists);
         }
 
-        let password: String = get_password()?;
+        let password: String = get_password().map_err(|e| Error::Generic(e.to_string()))?;
         if password.is_empty() {
-            return Err(Error::Generic("Invalid password".to_string()));
+            return Err(Error::InvalidPassword);
         }
 
-        let custom_entropy: Option<Vec<u8>> = get_custom_entropy()?;
+        let custom_entropy: Option<Vec<u8>> =
+            get_custom_entropy().map_err(|e| Error::Generic(e.to_string()))?;
         let entropy: Vec<u8> = bip39::entropy(word_count, custom_entropy);
         let mnemonic = Mnemonic::from_entropy(&entropy)?;
 
@@ -114,7 +142,7 @@ impl KeeChain {
         Ok(keechain)
     }
 
-    pub fn restore<S, PSW, M>(name: S, get_password: PSW, get_mnemonic: M) -> Result<Self>
+    pub fn restore<S, PSW, M>(name: S, get_password: PSW, get_mnemonic: M) -> Result<Self, Error>
     where
         S: Into<String>,
         PSW: FnOnce() -> Result<String>,
@@ -122,18 +150,15 @@ impl KeeChain {
     {
         let keychain_file: PathBuf = dir::get_keychain_file(name)?;
         if keychain_file.exists() {
-            return Err(Error::Generic(
-                "There is already a file with the same name! Please, choose another name."
-                    .to_string(),
-            ));
+            return Err(Error::FileAlreadyExists);
         }
 
-        let password: String = get_password()?;
+        let password: String = get_password().map_err(|e| Error::Generic(e.to_string()))?;
         if password.is_empty() {
-            return Err(Error::Generic("Invalid password".to_string()));
+            return Err(Error::InvalidPassword);
         }
 
-        let mnemonic: Mnemonic = get_mnemonic()?;
+        let mnemonic: Mnemonic = get_mnemonic().map_err(|e| Error::Generic(e.to_string()))?;
 
         let keechain = Self {
             file: keychain_file,
@@ -148,7 +173,7 @@ impl KeeChain {
         Ok(keechain)
     }
 
-    pub fn save(&self) -> Result<()> {
+    pub fn save(&self) -> Result<(), Error> {
         let keychain: Vec<u8> = self.keychain.encrypt(self.password.clone())?;
         let raw = KeeChainRaw {
             version: self.version,
@@ -172,16 +197,13 @@ impl KeeChain {
         self.password == password.into()
     }
 
-    pub fn rename<S>(&mut self, new_name: S) -> Result<()>
+    pub fn rename<S>(&mut self, new_name: S) -> Result<(), Error>
     where
         S: Into<String>,
     {
         let new = dir::get_keychain_file(new_name)?;
         if new.exists() {
-            Err(Error::Generic(
-                "There is already a file with the same name! Please, choose another name."
-                    .to_string(),
-            ))
+            Err(Error::FileAlreadyExists)
         } else {
             fs::rename(self.file.as_path(), new.as_path())?;
             self.file = new;
@@ -189,11 +211,11 @@ impl KeeChain {
         }
     }
 
-    pub fn change_password<NPSW>(&mut self, get_new_password: NPSW) -> Result<()>
+    pub fn change_password<NPSW>(&mut self, get_new_password: NPSW) -> Result<(), Error>
     where
         NPSW: FnOnce() -> Result<String>,
     {
-        let new_password: String = get_new_password()?;
+        let new_password: String = get_new_password().map_err(|e| Error::Generic(e.to_string()))?;
         if self.password != new_password {
             self.password = new_password;
             self.save()?;
@@ -201,7 +223,7 @@ impl KeeChain {
         Ok(())
     }
 
-    pub fn wipe(&self) -> Result<()> {
+    pub fn wipe(&self) -> Result<(), Error> {
         let mut file: File = File::options()
             .write(true)
             .truncate(true)
@@ -262,14 +284,14 @@ impl Keychain {
         network: Network,
         word_count: WordCount,
         index: Index,
-    ) -> Result<Mnemonic> {
+    ) -> Result<Mnemonic, Error> {
         let root: ExtendedPrivKey = self.seed.to_bip32_root_key(network)?;
         let secp = Secp256k1::new();
-        Mnemonic::from_bip85(&secp, &root, word_count, index)
+        Ok(Mnemonic::from_bip85(&secp, &root, word_count, index)?)
     }
 
-    pub fn secrets(&self, network: Network) -> Result<Secrets> {
-        Secrets::new(self.seed(), network)
+    pub fn secrets(&self, network: Network) -> Result<Secrets, Error> {
+        Ok(Secrets::new(self.seed(), network)?)
     }
 
     pub fn add_passphrase<S>(&mut self, passphrase: S)
@@ -323,10 +345,8 @@ impl Aes256Encryption for Keychain {
         K: AsRef<[u8]>,
     {
         match aes::decrypt(key, content) {
-            Ok(data) => util::serde::deserialize(data),
-            Err(aes::Error::WrongBlockMode) => Err(Error::Generic(
-                "Impossible to decrypt file: invalid password or content".to_string(),
-            )),
+            Ok(data) => Ok(util::serde::deserialize(data)?),
+            Err(aes::Error::WrongBlockMode) => Err(Error::DecryptionFailed),
             Err(e) => Err(Error::Aes(e)),
         }
     }

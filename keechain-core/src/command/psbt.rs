@@ -5,11 +5,10 @@ use std::path::{Path, PathBuf};
 
 use bitcoin::Network;
 
-use crate::error::Result;
 use crate::types::{Psbt, Seed};
 use crate::util::dir;
 
-pub fn sign_file_from_seed<P>(seed: &Seed, network: Network, path: P) -> Result<bool>
+pub fn sign_file_from_seed<P>(seed: &Seed, network: Network, path: P) -> crate::Result<bool>
 where
     P: AsRef<Path>,
 {

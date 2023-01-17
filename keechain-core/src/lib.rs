@@ -10,7 +10,7 @@ pub extern crate nostr;
 
 pub mod command;
 pub mod crypto;
-pub mod error;
-pub mod keychain;
 pub mod types;
 pub mod util;
+
+pub type Result<T, E = Box<dyn std::error::Error>> = std::result::Result<T, E>;

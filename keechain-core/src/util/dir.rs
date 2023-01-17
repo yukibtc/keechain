@@ -1,14 +1,20 @@
-// Copyright (c) 2022 Yuki Kishimoto
+// Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::error::{Error, Result};
-
 const KEYCHAIN_EXTENSION: &str = "keechain";
 const KEYCHAIN_DOT_EXTENSION: &str = ".keechain";
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error(transparent)]
+    IO(#[from] std::io::Error),
+    #[error("Impossible to get file name")]
+    FailedToGetFileName,
+}
 
 pub fn home() -> PathBuf {
     match dirs::home_dir() {
@@ -17,7 +23,7 @@ pub fn home() -> PathBuf {
     }
 }
 
-pub fn keechain() -> Result<PathBuf> {
+pub fn keechain() -> Result<PathBuf, Error> {
     Ok(match dirs::home_dir() {
         Some(path) => {
             let path: PathBuf = path.join(".keechain");
@@ -30,7 +36,7 @@ pub fn keechain() -> Result<PathBuf> {
     })
 }
 
-pub fn keychains() -> Result<PathBuf> {
+pub fn keychains() -> Result<PathBuf, Error> {
     let path: PathBuf = keechain()?.join("keychains");
     if !path.exists() {
         std::fs::create_dir_all(path.as_path())?;
@@ -38,7 +44,7 @@ pub fn keychains() -> Result<PathBuf> {
     Ok(path)
 }
 
-pub fn get_keychains_list() -> Result<Vec<String>> {
+pub fn get_keychains_list() -> Result<Vec<String>, Error> {
     let paths = fs::read_dir(keychains()?)?;
     let mut names: Vec<String> = Vec::new();
     for path in paths {
@@ -55,7 +61,7 @@ pub fn get_keychains_list() -> Result<Vec<String>> {
     Ok(names)
 }
 
-pub fn get_keychain_file<S>(name: S) -> Result<PathBuf>
+pub fn get_keychain_file<S>(name: S) -> Result<PathBuf, Error>
 where
     S: Into<String>,
 {
@@ -64,18 +70,18 @@ where
     Ok(keychain_file)
 }
 
-pub fn rename_psbt_to_signed(psbt_file: &mut PathBuf) -> Result<()> {
+pub fn rename_psbt_to_signed(psbt_file: &mut PathBuf) -> Result<(), Error> {
     if let Some(mut file_name) = psbt_file.file_name().and_then(OsStr::to_str) {
         if let Some(ext) = psbt_file.extension().and_then(OsStr::to_str) {
             let splitted: Vec<&str> = file_name.split(&format!(".{}", ext)).collect();
             file_name = match splitted.first() {
                 Some(name) => *name,
-                None => return Err(Error::Generic("Impossible to get file name".to_string())),
+                None => return Err(Error::FailedToGetFileName),
             }
         }
         psbt_file.set_file_name(&format!("{}-signed.psbt", file_name));
         Ok(())
     } else {
-        Err(Error::Generic("Impossible to get file name".to_string()))
+        Err(Error::FailedToGetFileName)
     }
 }
