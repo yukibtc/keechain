@@ -17,7 +17,7 @@ nostr = ["dep:nostr"]
 
 [dependencies]
 aes = "0.8"
-base64 = "0.13"
+base64 = "0.21"
 bdk = { version = "0.26", default-features = false, features = ["keys-bip39"] }
 bitcoin = "0.29"
 cbc = { version = "0.1", features = ["alloc"] }
