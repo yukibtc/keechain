@@ -63,8 +63,11 @@ fn main() -> Result<()> {
             }
             Ok(())
         }
-        Command::Identity { name: _ } => {
-            todo!();
+        Command::Identity { name } => {
+            let keechain = KeeChain::open(name, io::get_password)?;
+            let fingerprint = keechain.keychain.identity(network)?;
+            println!("Fingerprint: {}", fingerprint);
+            Ok(())
         }
         Command::Export { export_type } => match export_type {
             ExportTypes::Descriptors { name, account } => {
