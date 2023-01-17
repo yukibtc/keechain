@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 use bdk::keys::bip39::Mnemonic;
 use bitcoin::secp256k1::Secp256k1;
-use bitcoin::util::bip32::ExtendedPrivKey;
+use bitcoin::util::bip32::{ExtendedPrivKey, Fingerprint};
 use bitcoin::Network;
 use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
@@ -277,6 +277,10 @@ impl Keychain {
 
     pub fn seed(&self) -> Seed {
         self.seed.clone()
+    }
+
+    pub fn identity(&self, network: Network) -> Result<Fingerprint, Error> {
+        Ok(self.seed.fingerprint(network)?)
     }
 
     pub fn deterministic_entropy(
