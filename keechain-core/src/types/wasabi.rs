@@ -24,14 +24,14 @@ pub enum Error {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub struct WasabiJsonWallet {
+pub struct Wasabi {
     #[serde(rename = "ExtPubKey")]
     xpub: ExtendedPubKey,
     #[serde(rename = "MasterFingerprint")]
     root_fingerprint: Fingerprint,
 }
 
-impl WasabiJsonWallet {
+impl Wasabi {
     pub fn new(seed: Seed, network: Network) -> Result<Self, Error> {
         let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
         let secp = Secp256k1::new();

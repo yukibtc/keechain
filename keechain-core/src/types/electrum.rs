@@ -31,7 +31,7 @@ pub enum Error {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, ValueEnum)]
 #[repr(u8)]
-pub enum ElectrumExportSupportedScripts {
+pub enum ElectrumSupportedScripts {
     /// P2PKH (BIP44)
     Legacy = 44,
     /// P2SHWPKH (BIP49)
@@ -40,19 +40,19 @@ pub enum ElectrumExportSupportedScripts {
     NativeSegwit = 84,
 }
 
-impl Default for ElectrumExportSupportedScripts {
+impl Default for ElectrumSupportedScripts {
     fn default() -> Self {
         Self::NativeSegwit
     }
 }
 
-impl ElectrumExportSupportedScripts {
+impl ElectrumSupportedScripts {
     pub fn as_u32(&self) -> u32 {
         *self as u32
     }
 }
 
-impl fmt::Display for ElectrumExportSupportedScripts {
+impl fmt::Display for ElectrumSupportedScripts {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Legacy => write!(f, "legacy"),
@@ -63,7 +63,7 @@ impl fmt::Display for ElectrumExportSupportedScripts {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub struct ElectrumJsonKeystore {
+pub struct ElectrumKeystore {
     xpub: String,
     #[serde(skip)]
     fingerprint: Fingerprint,
@@ -74,18 +74,18 @@ pub struct ElectrumJsonKeystore {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub struct ElectrumJsonWallet {
-    keystore: ElectrumJsonKeystore,
+pub struct Electrum {
+    keystore: ElectrumKeystore,
     wallet_type: String,
     use_encryption: bool,
     seed_version: u32,
 }
 
-impl ElectrumJsonWallet {
+impl Electrum {
     pub fn new(
         seed: Seed,
         network: Network,
-        script: ElectrumExportSupportedScripts,
+        script: ElectrumSupportedScripts,
         account: Option<u32>,
     ) -> Result<Self, Error> {
         let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
@@ -95,7 +95,7 @@ impl ElectrumJsonWallet {
             ExtendedPubKey::from_priv(&secp, &root.derive_priv(&secp, &path)?);
 
         Ok(Self {
-            keystore: ElectrumJsonKeystore {
+            keystore: ElectrumKeystore {
                 xpub: pubkey.to_slip132(&path)?,
                 fingerprint: pubkey.fingerprint(),
                 root_fingerprint: root.fingerprint(&secp),

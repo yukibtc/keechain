@@ -13,4 +13,6 @@ pub mod crypto;
 pub mod types;
 pub mod util;
 
+pub use self::types::{KeeChain, Keychain};
+
 pub type Result<T, E = Box<dyn std::error::Error>> = std::result::Result<T, E>;

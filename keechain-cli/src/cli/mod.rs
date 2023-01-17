@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 use keechain_core::bitcoin::Network;
-use keechain_core::types::{ElectrumExportSupportedScripts, Index, WordCount};
+use keechain_core::types::{ElectrumSupportedScripts, Index, WordCount};
 
 pub mod io;
 
@@ -185,8 +185,8 @@ pub enum ExportTypes {
         #[arg(required = true)]
         name: String,
         /// Script
-        #[arg(default_value_t = ElectrumExportSupportedScripts::NativeSegwit)]
-        script: ElectrumExportSupportedScripts,
+        #[arg(default_value_t = ElectrumSupportedScripts::NativeSegwit)]
+        script: ElectrumSupportedScripts,
         /// Account number
         #[arg(default_value_t = 0)]
         account: u32,

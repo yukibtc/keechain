@@ -6,7 +6,7 @@ use std::str::FromStr;
 
 use eframe::egui::{Align, ComboBox, Layout, RichText, Ui};
 use keechain_core::bitcoin::Network;
-use keechain_core::types::{ElectrumExportSupportedScripts, ElectrumJsonWallet, Index, Seed};
+use keechain_core::types::{Electrum, ElectrumSupportedScripts, Index, Seed};
 use keechain_core::util::dir;
 use keechain_core::Result;
 
@@ -17,26 +17,26 @@ use crate::{AppState, Menu, Stage};
 fn export_electrum(
     seed: Seed,
     network: Network,
-    script: ElectrumExportSupportedScripts,
+    script: ElectrumSupportedScripts,
     account: Option<u32>,
 ) -> Result<PathBuf> {
-    let electrum_json_wallet = ElectrumJsonWallet::new(seed, network, script, account)?;
+    let electrum_json_wallet = Electrum::new(seed, network, script, account)?;
     let home_dir: PathBuf = dir::home();
     Ok(electrum_json_wallet.save_to_file(home_dir)?)
 }
 
-const WALLET_TYPES: [(ElectrumExportSupportedScripts, &str); 3] = [
-    (ElectrumExportSupportedScripts::Legacy, "Legacy (BIP44)"),
-    (ElectrumExportSupportedScripts::Segwit, "Segwit (BIP49)"),
+const WALLET_TYPES: [(ElectrumSupportedScripts, &str); 3] = [
+    (ElectrumSupportedScripts::Legacy, "Legacy (BIP44)"),
+    (ElectrumSupportedScripts::Segwit, "Segwit (BIP49)"),
     (
-        ElectrumExportSupportedScripts::NativeSegwit,
+        ElectrumSupportedScripts::NativeSegwit,
         "Native Segwit (BIP84)",
     ),
 ];
 
 #[derive(Default)]
 pub struct ExportElectrumState {
-    script: ElectrumExportSupportedScripts,
+    script: ElectrumSupportedScripts,
     account: String,
     result: Option<String>,
     error: Option<String>,
@@ -44,7 +44,7 @@ pub struct ExportElectrumState {
 
 impl ExportElectrumState {
     pub fn clear(&mut self) {
-        self.script = ElectrumExportSupportedScripts::default();
+        self.script = ElectrumSupportedScripts::default();
         self.account = String::new();
         self.result = None;
         self.error = None;

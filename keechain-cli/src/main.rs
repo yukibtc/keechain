@@ -8,9 +8,7 @@ use console::Term;
 use keechain_core::bdk::keys::bip39::Mnemonic;
 use keechain_core::bitcoin::Network;
 use keechain_core::command;
-use keechain_core::types::{
-    BitcoinCore, Descriptors, ElectrumJsonWallet, KeeChain, Psbt, WasabiJsonWallet,
-};
+use keechain_core::types::{BitcoinCore, Descriptors, Electrum, KeeChain, Psbt, Wasabi};
 use keechain_core::util::dir;
 use keechain_core::Result;
 
@@ -89,19 +87,15 @@ fn main() -> Result<()> {
                 account,
             } => {
                 let keechain = KeeChain::open(name, io::get_password)?;
-                let electrum_json_wallet = ElectrumJsonWallet::new(
-                    keechain.keychain.seed(),
-                    network,
-                    script,
-                    Some(account),
-                )?;
+                let electrum_json_wallet =
+                    Electrum::new(keechain.keychain.seed(), network, script, Some(account))?;
                 let path = electrum_json_wallet.save_to_file(dir::home())?;
                 println!("Electrum file exported to {}", path.display());
                 Ok(())
             }
             ExportTypes::Wasabi { name } => {
                 let keechain = KeeChain::open(name, io::get_password)?;
-                let wasabi_json_wallet = WasabiJsonWallet::new(keechain.keychain.seed(), network)?;
+                let wasabi_json_wallet = Wasabi::new(keechain.keychain.seed(), network)?;
                 let path = wasabi_json_wallet.save_to_file(dir::home())?;
                 println!("Wasabi file exported to {}", path.display());
                 Ok(())

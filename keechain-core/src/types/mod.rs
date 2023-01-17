@@ -20,11 +20,11 @@ pub mod wasabi;
 
 pub use self::bitcoin_core::BitcoinCore;
 pub use self::descriptors::Descriptors;
-pub use self::electrum::{ElectrumExportSupportedScripts, ElectrumJsonWallet};
+pub use self::electrum::{Electrum, ElectrumSupportedScripts};
 pub use self::keychain::{KeeChain, Keychain};
 pub use self::psbt::Psbt;
 pub use self::seed::Seed;
-pub use self::wasabi::WasabiJsonWallet;
+pub use self::wasabi::Wasabi;
 use crate::util::bip::bip32::Bip32RootKey;
 use crate::util::convert;
 
