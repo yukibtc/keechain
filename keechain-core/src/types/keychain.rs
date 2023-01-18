@@ -17,7 +17,7 @@ use crate::types::{Index, Secrets, Seed, WordCount};
 use crate::util::bip::bip32::Bip32RootKey;
 use crate::util::bip::bip39;
 use crate::util::bip::bip85::{self, FromBip85};
-use crate::util::{self, dir};
+use crate::util::{self, base64, dir};
 use crate::Result;
 
 const KEECHAIN_FILE_VERSION: u8 = 1;

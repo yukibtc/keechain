@@ -16,6 +16,7 @@ use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, Fingerp
 use bitcoin::Network;
 
 use crate::types::Seed;
+use crate::util::base64;
 use crate::util::bip::bip32::Bip32RootKey;
 
 #[derive(Debug, thiserror::Error)]

@@ -7,6 +7,7 @@ use aes::Aes256;
 use cbc::{Decryptor, Encryptor};
 
 use super::hash;
+use crate::util::base64;
 
 type Aes256CbcEnc = Encryptor<Aes256>;
 type Aes256CbcDec = Decryptor<Aes256>;
