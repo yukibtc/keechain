@@ -1,21 +1,22 @@
-// Copyright (c) 2022 Yuki Kishimoto
+// Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
-use keechain_core::bitcoin::Network;
-use keechain_core::types::{ElectrumSupportedScripts, Index, WordCount};
+use keechain_core::types::Index;
 
 pub mod io;
+
+use crate::types::{CliElectrumSupportedScripts, CliNetwork, CliWordCount};
 
 #[derive(Debug, Parser)]
 #[command(name = "keechain")]
 #[clap(author, version, about, long_about = None)]
 pub struct Cli {
     /// Network
-    #[clap(short, long, default_value_t = Network::Bitcoin)]
-    pub network: Network,
+    #[clap(short, long, value_enum, default_value_t = CliNetwork::Bitcoin)]
+    pub network: CliNetwork,
     #[command(subcommand)]
     pub command: Command,
 }
@@ -29,8 +30,8 @@ pub enum Command {
         #[arg(required = true)]
         name: String,
         /// Word count
-        #[arg(value_enum, default_value_t = WordCount::W24)]
-        word_count: WordCount,
+        #[arg(value_enum, default_value_t = CliWordCount::W24)]
+        word_count: CliWordCount,
         /// Add entropy from dice roll
         #[arg(long, default_value_t = false)]
         dice_roll: bool,
@@ -97,7 +98,7 @@ pub enum AdvancedCommand {
         name: String,
         /// Word count
         #[arg(required = true, value_enum)]
-        word_count: WordCount,
+        word_count: CliWordCount,
         /// Index (must be between 0 and 2^31 - 1)
         #[arg(required = true)]
         index: Index,
@@ -185,8 +186,8 @@ pub enum ExportTypes {
         #[arg(required = true)]
         name: String,
         /// Script
-        #[arg(default_value_t = ElectrumSupportedScripts::NativeSegwit)]
-        script: ElectrumSupportedScripts,
+        #[arg(value_enum, default_value_t = CliElectrumSupportedScripts::NativeSegwit)]
+        script: CliElectrumSupportedScripts,
         /// Account number
         #[arg(default_value_t = 0)]
         account: u32,

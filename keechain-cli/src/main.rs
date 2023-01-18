@@ -13,6 +13,7 @@ use keechain_core::util::dir;
 use keechain_core::Result;
 
 mod cli;
+mod types;
 mod util;
 
 use self::cli::io;
@@ -23,7 +24,7 @@ fn main() -> Result<()> {
     env_logger::init();
 
     let args = Cli::parse();
-    let network: Network = args.network;
+    let network: Network = args.network.into();
 
     match args.command {
         Command::Generate {
@@ -31,8 +32,11 @@ fn main() -> Result<()> {
             word_count,
             dice_roll,
         } => {
-            let keechain =
-                KeeChain::generate(name, io::get_password_with_confirmation, word_count, || {
+            let keechain = KeeChain::generate(
+                name,
+                io::get_password_with_confirmation,
+                word_count.into(),
+                || {
                     if dice_roll {
                         let term = Term::stdout();
                         let mut rolls: Vec<u8> = Vec::new();
@@ -41,7 +45,8 @@ fn main() -> Result<()> {
                     } else {
                         Ok(None)
                     }
-                })?;
+                },
+            )?;
 
             println!("\n!!! WRITE DOWN YOUT SEED PHRASE !!!");
             println!("\n################################################################\n");
@@ -90,8 +95,12 @@ fn main() -> Result<()> {
                 account,
             } => {
                 let keechain = KeeChain::open(name, io::get_password)?;
-                let electrum_json_wallet =
-                    Electrum::new(keechain.keychain.seed(), network, script, Some(account))?;
+                let electrum_json_wallet = Electrum::new(
+                    keechain.keychain.seed(),
+                    network,
+                    script.into(),
+                    Some(account),
+                )?;
                 let path = electrum_json_wallet.save_to_file(dir::home())?;
                 println!("Electrum file exported to {}", path.display());
                 Ok(())
@@ -124,9 +133,10 @@ fn main() -> Result<()> {
                 index,
             } => {
                 let keechain = KeeChain::open(name, io::get_password)?;
-                let mnemonic: Mnemonic = keechain
-                    .keychain
-                    .deterministic_entropy(network, word_count, index)?;
+                let mnemonic: Mnemonic =
+                    keechain
+                        .keychain
+                        .deterministic_entropy(network, word_count.into(), index)?;
                 println!("Mnemonic: {}", mnemonic);
                 Ok(())
             }
