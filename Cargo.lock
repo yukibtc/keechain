@@ -1584,7 +1584,6 @@ dependencies = [
  "bdk",
  "bitcoin",
  "cbc",
- "clap",
  "dirs",
  "log",
  "nostr",

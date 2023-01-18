@@ -8,7 +8,6 @@ use bdk::keys::bip39::Mnemonic;
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ExtendedPrivKey, Fingerprint};
 use bitcoin::Network;
-use clap::ValueEnum;
 
 pub mod bitcoin_core;
 pub mod descriptors;
@@ -28,14 +27,11 @@ pub use self::wasabi::Wasabi;
 use crate::util::bip::bip32::Bip32RootKey;
 use crate::util::convert;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, ValueEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum WordCount {
-    #[clap(name = "12")]
     W12 = 12,
-    #[clap(name = "18")]
     W18 = 18,
-    #[clap(name = "24")]
     W24 = 24,
 }
 
@@ -51,8 +47,14 @@ impl WordCount {
     }
 }
 
+impl fmt::Display for WordCount {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.as_u32())
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
-pub enum ErrorIndex {
+pub enum IndexError {
     #[error("Invalid index")]
     InvalidIndex,
     #[error(transparent)]
@@ -65,11 +67,11 @@ pub struct Index(u32);
 pub const MAX_INDEX: u32 = 0x80000000;
 
 impl Index {
-    pub fn new(index: u32) -> Result<Self, ErrorIndex> {
+    pub fn new(index: u32) -> Result<Self, IndexError> {
         if index < MAX_INDEX {
             Ok(Self(index))
         } else {
-            Err(ErrorIndex::InvalidIndex)
+            Err(IndexError::InvalidIndex)
         }
     }
 
@@ -87,7 +89,7 @@ impl Index {
 }
 
 impl FromStr for Index {
-    type Err = ErrorIndex;
+    type Err = IndexError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let index: u32 = s.parse()?;
         Self::new(index)

@@ -9,7 +9,6 @@ use std::path::{Path, PathBuf};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
 use bitcoin::Network;
-use clap::ValueEnum;
 
 use serde::{Deserialize, Serialize};
 
@@ -29,7 +28,7 @@ pub enum Error {
     Json(#[from] serde_json::Error),
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, ValueEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum ElectrumSupportedScripts {
     /// P2PKH (BIP44)
