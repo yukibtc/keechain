@@ -12,7 +12,7 @@ description = "Bitcoin PSBT signer, descriptor exporter and more for offline dev
 homepage = "https://github.com/yukibtc/keechain"
 repository = "https://github.com/yukibtc/keechain.git"
 license = "MIT"
-keywords = ["bitcoin", "signer", "psbt", "offline", "keechain"]
+keywords = ["bitcoin", "signer", "psbt", "offline", "nostr"]
 rust-version = "1.65.0"
 
 [profile.release]

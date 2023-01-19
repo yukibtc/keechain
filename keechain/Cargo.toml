@@ -9,7 +9,7 @@ repository.workspace = true
 license.workspace = true
 readme = "../README.md"
 keywords.workspace = true
-categories = ["GUI"]
+categories = ["gui"]
 rust-version.workspace = true
 
 [features]
