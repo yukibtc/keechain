@@ -1855,9 +1855,9 @@ dependencies = [
 
 [[package]]
 name = "nostr"
-version = "0.14.0"
+version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9ad9b921902013d8406115b59a02394d29a35c072d82068de97522e5bd2fc05"
+checksum = "a8d722cbed24c24dc23b58e5a78df1bee52830cad8e73625b0db13550a984e36"
 dependencies = [
  "bip39",
  "bitcoin",
