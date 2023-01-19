@@ -39,8 +39,11 @@ x86_64-unknown-linux-musl:
 cross:
 	$(Q)cargo install cross --version 0.2.4
 
-precommit:
+precommit: test
 	$(Q)cargo fmt --all && cargo clippy --all
+
+test:
+	$(Q)cargo test -p keechain-core
 
 clean:
 	$(Q)cargo clean
