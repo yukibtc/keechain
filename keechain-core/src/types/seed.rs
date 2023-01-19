@@ -8,7 +8,7 @@ use bitcoin::Network;
 use serde::{Deserialize, Serialize};
 
 use crate::util::bip::bip32::Bip32RootKey;
-use crate::util::convert;
+use crate::util::hex;
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Seed {
@@ -48,7 +48,7 @@ impl Seed {
     }
 
     pub fn to_hex(&self) -> String {
-        convert::bytes_to_hex(self.to_bytes().to_vec())
+        hex::encode(self.to_bytes())
     }
 }
 

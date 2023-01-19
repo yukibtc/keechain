@@ -25,7 +25,7 @@ pub use self::psbt::Psbt;
 pub use self::seed::Seed;
 pub use self::wasabi::Wasabi;
 use crate::util::bip::bip32::Bip32RootKey;
-use crate::util::convert;
+use crate::util::hex;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
@@ -119,7 +119,7 @@ impl Secrets {
         let root_key: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
 
         Ok(Self {
-            entropy: convert::bytes_to_hex(mnemonic.to_entropy()),
+            entropy: hex::encode(mnemonic.to_entropy()),
             mnemonic,
             passphrase: seed.passphrase(),
             seed_hex: seed.to_hex(),

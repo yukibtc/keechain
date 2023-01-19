@@ -4,12 +4,14 @@
 use bitcoin::util::base58;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPubKey};
 
-use crate::util::convert;
+use crate::util::hex;
 
 #[derive(Debug, PartialEq, Eq, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
     Base58(#[from] bitcoin::util::base58::Error),
+    #[error(transparent)]
+    Hex(#[from] hex::Error),
     #[error("Unsupported derivation path")]
     UnsupportedDerivationPath,
 }
@@ -57,7 +59,7 @@ impl ToSlip132 for ExtendedPubKey {
             _ => return Err(Error::UnsupportedDerivationPath),
         };
 
-        let data: Vec<u8> = [convert::hex_to_bytes(hex), data[4..].to_vec()].concat();
+        let data: Vec<u8> = [hex::decode(hex)?, data[4..].to_vec()].concat();
         Ok(base58::check_encode_slice(&data))
     }
 }
