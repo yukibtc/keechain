@@ -76,7 +76,7 @@ pub fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
 
         h.input(&static_events);
     } else {
-        log::warn!("impossible to fetch entropy from dynamic and static events");
+        eprintln!("impossible to fetch entropy from dynamic and static events");
         h.input(&time::timestamp_nanos().to_be_bytes());
     }
 

@@ -1591,7 +1591,6 @@ dependencies = [
  "bitcoin",
  "cbc",
  "dirs",
- "log",
  "nostr",
  "rand",
  "rand_chacha",
