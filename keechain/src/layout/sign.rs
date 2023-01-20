@@ -1,16 +1,32 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use eframe::egui::{RichText, Ui};
-use keechain_core::command;
-use keechain_core::types::Psbt;
+use keechain_core::bitcoin::Network;
+use keechain_core::types::{Psbt, Seed};
+use keechain_core::util::dir;
 use rfd::FileDialog;
 
 use crate::component::{Button, Error, Heading, Identity, View};
 use crate::theme::color::{DARK_GREEN, DARK_RED, ORANGE};
 use crate::{AppState, Menu, Stage};
+
+pub fn sign_file_from_seed<P>(seed: &Seed, network: Network, path: P) -> crate::Result<bool>
+where
+    P: AsRef<Path>,
+{
+    let psbt_file = path.as_ref();
+    let mut psbt: Psbt = Psbt::from_file(psbt_file, network)?;
+    let finalized: bool = psbt.sign(seed)?;
+    if finalized {
+        let mut psbt_file: PathBuf = psbt_file.to_path_buf();
+        dir::rename_psbt_to_signed(&mut psbt_file)?;
+        psbt.save_to_file(psbt_file)?;
+    }
+    Ok(finalized)
+}
 
 #[allow(dead_code)]
 pub struct PsbtFile {
@@ -75,7 +91,7 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                         .render(ui)
                         .clicked()
                     {
-                        match command::psbt::sign_file_from_seed(
+                        match sign_file_from_seed(
                             &keechain.keychain.seed(),
                             app.network,
                             psbt_file.path.clone(),

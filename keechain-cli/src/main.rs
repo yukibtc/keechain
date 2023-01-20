@@ -1,13 +1,13 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use std::path::PathBuf;
 use std::str::FromStr;
 
 use clap::Parser;
 use console::Term;
 use keechain_core::bdk::keys::bip39::Mnemonic;
 use keechain_core::bitcoin::Network;
-use keechain_core::command;
 use keechain_core::types::{BitcoinCore, Descriptors, Electrum, KeeChain, Psbt, Wasabi};
 use keechain_core::util::dir;
 use keechain_core::Result;
@@ -119,8 +119,12 @@ fn main() -> Result<()> {
         }
         Command::Sign { name, file } => {
             let keechain = KeeChain::open(name, io::get_password)?;
-            if command::psbt::sign_file_from_seed(&keechain.keychain.seed(), network, file)? {
-                println!("Signed.")
+            let mut psbt = Psbt::from_file(&file, network)?;
+            if psbt.sign(&keechain.keychain.seed())? {
+                let mut renamed_file: PathBuf = file;
+                dir::rename_psbt_to_signed(&mut renamed_file)?;
+                psbt.save_to_file(renamed_file)?;
+                println!("Signed.");
             } else {
                 println!("PSBT signing not finalized");
             }
