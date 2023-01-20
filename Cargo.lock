@@ -1592,7 +1592,6 @@ dependencies = [
  "cbc",
  "dirs",
  "nostr",
- "rand",
  "rand_chacha",
  "rand_hc",
  "serde",

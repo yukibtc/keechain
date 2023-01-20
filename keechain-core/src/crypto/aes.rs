@@ -4,6 +4,7 @@
 use aes::cipher::block_padding::Pkcs7;
 use aes::cipher::{BlockDecryptMut, BlockEncryptMut, KeyIvInit};
 use aes::Aes256;
+use bitcoin::secp256k1::rand;
 use cbc::{Decryptor, Encryptor};
 
 use super::hash;

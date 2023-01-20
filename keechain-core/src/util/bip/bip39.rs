@@ -3,8 +3,8 @@
 
 use bitcoin::hashes::hmac::{Hmac, HmacEngine};
 use bitcoin::hashes::{sha512, Hash, HashEngine};
-use rand::rngs::OsRng;
-use rand::{RngCore, SeedableRng};
+use bitcoin::secp256k1::rand::rngs::OsRng;
+use bitcoin::secp256k1::rand::{self, RngCore, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 use rand_hc::Hc128Rng;
 use sysinfo::{System, SystemExt};
