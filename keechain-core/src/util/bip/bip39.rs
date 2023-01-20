@@ -6,7 +6,6 @@ use bitcoin::hashes::{sha512, Hash, HashEngine};
 use bitcoin::secp256k1::rand::rngs::OsRng;
 use bitcoin::secp256k1::rand::{self, RngCore, SeedableRng};
 use rand_chacha::ChaCha20Rng;
-use rand_hc::Hc128Rng;
 use sysinfo::{System, SystemExt};
 
 use crate::types::WordCount;
@@ -19,11 +18,6 @@ pub fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
     let mut os_random = [0u8; 32];
     OsRng.fill_bytes(&mut os_random);
     h.input(&os_random);
-
-    let mut hc = Hc128Rng::from_entropy();
-    let mut hc_random = [0u8; 32];
-    hc.fill_bytes(&mut hc_random);
-    h.input(&hc_random);
 
     let mut chacha = ChaCha20Rng::from_entropy();
     let mut chacha_random = [0u8; 32];

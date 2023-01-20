@@ -24,7 +24,6 @@ cbc = { version = "0.1", features = ["alloc"] }
 dirs = "4.0"
 nostr = { version = "0.14", default-features = false, features = ["nip06", "nip19", "nip26"], optional = true }
 rand_chacha = "0.3"
-rand_hc = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sysinfo = "0.26"
