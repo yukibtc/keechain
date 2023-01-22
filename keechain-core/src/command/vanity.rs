@@ -16,6 +16,8 @@ const BECH32_CHARS: &str = "023456789acdefghjklmnpqrstuvwxyz";
 pub enum Error {
     #[error(transparent)]
     BIP32(#[from] bitcoin::util::bip32::Error),
+    #[error(transparent)]
+    Address(#[from] bitcoin::util::address::Error),
     #[error("Unsupported char: {0}")]
     InvalidChar(char),
     #[error("Prefixes not found")]
@@ -54,9 +56,9 @@ pub fn search_address(
                 let derived_public_key: ExtendedPubKey =
                     derived_public_key.ckd_pub(&secp, ChildNumber::from_normal_idx(change)?)?;
                 let pubkey = PublicKey::new(derived_public_key.public_key);
-                let address = Address::p2wpkh(&pubkey, network).unwrap();
+                let address = Address::p2wpkh(&pubkey, network)?;
                 let addr_str = address.to_string();
-                if prefixes.iter().any(|prefix| addr_str.contains(prefix)) {
+                if prefixes.iter().any(|prefix| addr_str.starts_with(prefix)) {
                     println!("{} ms", now.elapsed().as_millis());
                     let path =
                         bip32::get_path(84, network, Some(account), change == 1, Some(index))?;
