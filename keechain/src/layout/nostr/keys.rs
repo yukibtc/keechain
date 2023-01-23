@@ -4,8 +4,8 @@
 use eframe::egui::{Align, Layout, Ui};
 use keechain_core::bitcoin::secp256k1::SecretKey;
 use keechain_core::bitcoin::XOnlyPublicKey;
-use keechain_core::nostr::util::nips::nip06::FromMnemonic;
-use keechain_core::nostr::util::nips::nip19::ToBech32;
+use keechain_core::nostr::nips::nip06::FromMnemonic;
+use keechain_core::nostr::nips::nip19::ToBech32;
 use keechain_core::nostr::Keys;
 use keechain_core::types::Seed;
 

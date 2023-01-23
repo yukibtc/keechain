@@ -40,7 +40,9 @@ cross:
 	$(Q)cargo install cross --version 0.2.4
 
 precommit: test
-	$(Q)cargo fmt --all && cargo clippy --all
+	$(Q)cargo fmt --all
+	$(Q)cargo clippy --all
+	$(Q)cargo clippy --all --all-features
 
 test:
 	$(Q)cargo test -p keechain-core
