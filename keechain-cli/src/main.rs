@@ -64,14 +64,14 @@ fn main() -> Result<()> {
         Command::List => {
             let names = dir::get_keychains_list()?;
             for (index, name) in names.iter().enumerate() {
-                println!("{}. {}", index + 1, name);
+                println!("{}. {name}", index + 1);
             }
             Ok(())
         }
         Command::Identity { name } => {
             let keechain = KeeChain::open(name, io::get_password)?;
             let fingerprint = keechain.keychain.identity(network)?;
-            println!("Fingerprint: {}", fingerprint);
+            println!("Fingerprint: {fingerprint}");
             Ok(())
         }
         Command::Export { export_type } => match export_type {
@@ -79,7 +79,7 @@ fn main() -> Result<()> {
                 let keechain = KeeChain::open(name, io::get_password)?;
                 let descriptors =
                     Descriptors::new(keechain.keychain.seed(), network, Some(account))?;
-                println!("{:#?}", descriptors);
+                println!("{descriptors:#?}");
                 Ok(())
             }
             ExportTypes::BitcoinCore { name, account } => {
@@ -141,7 +141,7 @@ fn main() -> Result<()> {
                     keechain
                         .keychain
                         .deterministic_entropy(network, word_count.into(), index)?;
-                println!("Mnemonic: {}", mnemonic);
+                println!("Mnemonic: {mnemonic}");
                 Ok(())
             }
             AdvancedCommand::Vanity { name, prefixes } => {
@@ -151,8 +151,8 @@ fn main() -> Result<()> {
                     prefixes,
                     network,
                 )?;
-                println!("Path: {}", path);
-                println!("Address: {}", address);
+                println!("Path: {path}");
+                println!("Address: {address}");
                 Ok(())
             }
             AdvancedCommand::Danger { command } => match command {

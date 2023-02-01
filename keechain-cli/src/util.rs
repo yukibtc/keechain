@@ -61,8 +61,8 @@ impl Print for Psbt {
         let mut table = Table::new();
 
         table.set_titles(row![
-            format!("Inputs ({})", inputs_len),
-            format!("Outputs ({})", outputs_len)
+            format!("Inputs ({inputs_len})"),
+            format!("Outputs ({outputs_len})")
         ]);
 
         if inputs_len >= outputs_len {

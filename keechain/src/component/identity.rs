@@ -19,7 +19,7 @@ impl Identity {
     pub fn render(self, ui: &mut Ui) {
         ui.group(|ui| {
             if let Ok(fingerprint) = self.seed.fingerprint(self.network) {
-                ui.label(RichText::new(format!("Fingerprint: {}", fingerprint)).small());
+                ui.label(RichText::new(format!("Fingerprint: {fingerprint}")).small());
             }
             ui.label(
                 RichText::new(format!(

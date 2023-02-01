@@ -109,10 +109,10 @@ impl Psbt {
             let child_priv: ExtendedPrivKey = root.derive_priv(&secp, &path)?;
             let desc = DescriptorSecretKey::from_str(&child_priv.to_string())?;
             let descriptor = match path.into_iter().next() {
-                Some(ChildNumber::Hardened { index: 44 }) => format!("pkh({})", desc),
-                Some(ChildNumber::Hardened { index: 49 }) => format!("sh(wpkh({}))", desc),
-                Some(ChildNumber::Hardened { index: 84 }) => format!("wpkh({})", desc),
-                Some(ChildNumber::Hardened { index: 86 }) => format!("tr({})", desc),
+                Some(ChildNumber::Hardened { index: 44 }) => format!("pkh({desc})"),
+                Some(ChildNumber::Hardened { index: 49 }) => format!("sh(wpkh({desc}))"),
+                Some(ChildNumber::Hardened { index: 84 }) => format!("wpkh({desc})"),
+                Some(ChildNumber::Hardened { index: 86 }) => format!("tr({desc})"),
                 _ => return Err(Error::UnsupportedDerivationPath),
             };
 

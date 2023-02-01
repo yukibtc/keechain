@@ -98,7 +98,7 @@ impl Descriptors {
             None => &ChildNumber::Hardened { index: 0 },
         };
 
-        let descriptor: String = format!(
+        let desc: String = format!(
             "[{}/{:#}/{:#}/{:#}]{}/{}/*",
             root_fingerprint,
             purpose,
@@ -109,10 +109,10 @@ impl Descriptors {
         );
 
         let descriptor: String = match purpose {
-            ChildNumber::Hardened { index: 44 } => format!("pkh({})", descriptor),
-            ChildNumber::Hardened { index: 49 } => format!("sh(wpkh({}))", descriptor),
-            ChildNumber::Hardened { index: 84 } => format!("wpkh({})", descriptor),
-            ChildNumber::Hardened { index: 86 } => format!("tr({})", descriptor),
+            ChildNumber::Hardened { index: 44 } => format!("pkh({desc})"),
+            ChildNumber::Hardened { index: 49 } => format!("sh(wpkh({desc}))"),
+            ChildNumber::Hardened { index: 84 } => format!("wpkh({desc})"),
+            ChildNumber::Hardened { index: 86 } => format!("tr({desc})"),
             _ => return Err(Error::UnsupportedDerivationPath),
         };
 

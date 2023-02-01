@@ -20,7 +20,7 @@ where
     let mut hex: String = String::with_capacity(2 * bytes.len());
     bytes
         .iter()
-        .for_each(|b| hex.push_str(format!("{:02X}", b).as_str()));
+        .for_each(|b| hex.push_str(format!("{b:02X}").as_str()));
     hex.to_lowercase()
 }
 

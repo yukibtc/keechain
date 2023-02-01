@@ -54,7 +54,7 @@ pub fn main() -> Result<()> {
     let app_name = format!(
         "KeeChain{}",
         if network.ne(&Network::Bitcoin) {
-            format!(" [{}]", network)
+            format!(" [{network}]")
         } else {
             String::new()
         }

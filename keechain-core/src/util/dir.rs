@@ -73,13 +73,13 @@ where
 pub fn rename_psbt_to_signed(psbt_file: &mut PathBuf) -> Result<(), Error> {
     if let Some(mut file_name) = psbt_file.file_name().and_then(OsStr::to_str) {
         if let Some(ext) = psbt_file.extension().and_then(OsStr::to_str) {
-            let splitted: Vec<&str> = file_name.split(&format!(".{}", ext)).collect();
+            let splitted: Vec<&str> = file_name.split(&format!(".{ext}")).collect();
             file_name = match splitted.first() {
                 Some(name) => *name,
                 None => return Err(Error::FailedToGetFileName),
             }
         }
-        psbt_file.set_file_name(&format!("{}-signed.psbt", file_name));
+        psbt_file.set_file_name(&format!("{file_name}-signed.psbt"));
         Ok(())
     } else {
         Err(Error::FailedToGetFileName)
