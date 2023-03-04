@@ -28,6 +28,20 @@ use crate::util::bip::bip32::Bip32RootKey;
 use crate::util::hex;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Purpose {
+    PKH = 44,
+    SHWPKH = 49,
+    WPKH = 84,
+    TR = 86,
+}
+
+impl Purpose {
+    pub fn as_u32(&self) -> u32 {
+        *self as u32
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum WordCount {
     W12 = 12,
