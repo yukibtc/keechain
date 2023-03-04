@@ -1,16 +1,17 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use std::collections::HashMap;
 use std::str::FromStr;
 
-use bdk::miniscript::descriptor::Descriptor;
+use bdk::miniscript::descriptor::{Descriptor, DescriptorPublicKey};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{
     ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
 };
 use bitcoin::Network;
 
-use super::Seed;
+use super::{Purpose, Seed};
 use crate::util::bip::bip32::{self, Bip32RootKey};
 
 #[derive(Debug, thiserror::Error)]
@@ -29,8 +30,8 @@ pub enum Error {
 
 #[derive(Debug, Clone)]
 pub struct Descriptors {
-    pub external: Vec<Descriptor<String>>,
-    pub internal: Vec<Descriptor<String>>,
+    external: HashMap<Purpose, Descriptor<DescriptorPublicKey>>,
+    internal: HashMap<Purpose, Descriptor<DescriptorPublicKey>>,
 }
 
 impl Descriptors {
@@ -39,36 +40,44 @@ impl Descriptors {
         let secp = Secp256k1::new();
         let root_fingerprint = root.fingerprint(&secp);
 
-        let paths: Vec<DerivationPath> = vec![
-            bip32::account_extended_path(44, network, account)?,
-            bip32::account_extended_path(49, network, account)?,
-            bip32::account_extended_path(84, network, account)?,
-            bip32::account_extended_path(86, network, account)?,
+        let paths: Vec<(Purpose, DerivationPath)> = vec![
+            (
+                Purpose::PKH,
+                bip32::account_extended_path(44, network, account)?,
+            ),
+            (
+                Purpose::SHWPKH,
+                bip32::account_extended_path(49, network, account)?,
+            ),
+            (
+                Purpose::WPKH,
+                bip32::account_extended_path(84, network, account)?,
+            ),
+            (
+                Purpose::TR,
+                bip32::account_extended_path(86, network, account)?,
+            ),
         ];
 
         let capacity: usize = paths.len();
         let mut descriptors = Descriptors {
-            external: Vec::with_capacity(capacity),
-            internal: Vec::with_capacity(capacity),
+            external: HashMap::with_capacity(capacity),
+            internal: HashMap::with_capacity(capacity),
         };
 
-        for path in paths.iter() {
-            let derived_private_key: ExtendedPrivKey = root.derive_priv(&secp, path)?;
+        for (purpose, path) in paths.into_iter() {
+            let derived_private_key: ExtendedPrivKey = root.derive_priv(&secp, &path)?;
             let derived_public_key: ExtendedPubKey =
                 ExtendedPubKey::from_priv(&secp, &derived_private_key);
 
-            descriptors.external.push(Self::descriptor(
-                root_fingerprint,
-                derived_public_key,
-                path,
-                false,
-            )?);
-            descriptors.internal.push(Self::descriptor(
-                root_fingerprint,
-                derived_public_key,
-                path,
-                true,
-            )?);
+            descriptors.external.insert(
+                purpose,
+                Self::descriptor(root_fingerprint, derived_public_key, &path, false)?,
+            );
+            descriptors.internal.insert(
+                purpose,
+                Self::descriptor(root_fingerprint, derived_public_key, &path, true)?,
+            );
         }
 
         Ok(descriptors)
@@ -79,7 +88,7 @@ impl Descriptors {
         pubkey: ExtendedPubKey,
         path: &DerivationPath,
         change: bool,
-    ) -> Result<Descriptor<String>, Error> {
+    ) -> Result<Descriptor<DescriptorPublicKey>, Error> {
         let mut iter_path = path.into_iter();
 
         let purpose: &ChildNumber = match iter_path.next() {
@@ -117,5 +126,25 @@ impl Descriptors {
         };
 
         Ok(Descriptor::from_str(&descriptor)?)
+    }
+
+    pub fn external(&self) -> Vec<Descriptor<DescriptorPublicKey>> {
+        self.external.clone().into_values().collect()
+    }
+
+    pub fn internal(&self) -> Vec<Descriptor<DescriptorPublicKey>> {
+        self.internal.clone().into_values().collect()
+    }
+
+    pub fn get_by_purpose(
+        &self,
+        purpose: Purpose,
+        internal: bool,
+    ) -> Option<Descriptor<DescriptorPublicKey>> {
+        if internal {
+            self.internal.get(&purpose).cloned()
+        } else {
+            self.external.get(&purpose).cloned()
+        }
     }
 }

@@ -1,7 +1,7 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use bdk::miniscript::descriptor::Descriptor;
+use bdk::miniscript::descriptor::{Descriptor, DescriptorPublicKey};
 use bitcoin::Network;
 use serde::Serialize;
 use serde_json::json;
@@ -18,12 +18,12 @@ pub enum Error {
 pub struct BitcoinCoreDescriptor {
     timestamp: String,
     active: bool,
-    desc: Descriptor<String>,
+    desc: Descriptor<DescriptorPublicKey>,
     internal: bool,
 }
 
 impl BitcoinCoreDescriptor {
-    pub fn new(desc: Descriptor<String>, internal: bool) -> Self {
+    pub fn new(desc: Descriptor<DescriptorPublicKey>, internal: bool) -> Self {
         Self {
             timestamp: String::from("now"),
             active: true,
@@ -41,11 +41,11 @@ impl BitcoinCore {
         let descriptors: Descriptors = Descriptors::new(seed, network, account)?;
         let mut bitcoin_core_descriptors: Vec<BitcoinCoreDescriptor> = Vec::new();
 
-        for desc in descriptors.external.into_iter() {
+        for desc in descriptors.external().into_iter() {
             bitcoin_core_descriptors.push(BitcoinCoreDescriptor::new(desc, false));
         }
 
-        for desc in descriptors.internal.into_iter() {
+        for desc in descriptors.internal().into_iter() {
             bitcoin_core_descriptors.push(BitcoinCoreDescriptor::new(desc, true));
         }
 
