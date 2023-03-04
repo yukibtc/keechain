@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use eframe::egui::{Key, RichText, Ui};
 use eframe::epaint::Color32;
-use keechain_core::bdk::keys::bip39::Mnemonic;
+use keechain_core::bip39::Mnemonic;
 use keechain_core::types::KeeChain;
 
 use crate::component::{Button, Heading, InputField, View};

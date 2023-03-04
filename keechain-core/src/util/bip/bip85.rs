@@ -3,7 +3,7 @@
 
 // https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki
 
-use bdk::keys::bip39::Mnemonic;
+use bip39::Mnemonic;
 use bitcoin::hashes::hmac::{Hmac, HmacEngine};
 use bitcoin::hashes::{sha512, Hash, HashEngine};
 use bitcoin::secp256k1::Secp256k1;
@@ -16,7 +16,7 @@ pub enum Error {
     #[error(transparent)]
     BIP32(#[from] bitcoin::util::bip32::Error),
     #[error(transparent)]
-    BIP39(#[from] bdk::keys::bip39::Error),
+    BIP39(#[from] bip39::Error),
 }
 
 pub trait FromBip85: Sized {

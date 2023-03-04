@@ -75,7 +75,7 @@ pub trait Aes256Encryption: Sized {
 mod tests {
     use std::str::FromStr;
 
-    use bdk::keys::bip39::Mnemonic;
+    use bip39::Mnemonic;
 
     use super::*;
     use crate::types::Seed;

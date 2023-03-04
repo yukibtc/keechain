@@ -6,7 +6,7 @@ use std::str::FromStr;
 
 use clap::Parser;
 use console::Term;
-use keechain_core::bdk::keys::bip39::Mnemonic;
+use keechain_core::bip39::Mnemonic;
 use keechain_core::bitcoin::Network;
 use keechain_core::types::{BitcoinCore, Descriptors, Electrum, KeeChain, Psbt, Wasabi};
 use keechain_core::util::dir;

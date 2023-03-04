@@ -7,7 +7,7 @@ use eframe::egui::Ui;
 use keechain_core::bitcoin::secp256k1::schnorr::Signature;
 use keechain_core::bitcoin::XOnlyPublicKey;
 use keechain_core::nostr::nips::nip06::FromMnemonic;
-use keechain_core::nostr::nips::nip26;
+use keechain_core::nostr::nips::nip26::{self, Conditions};
 use keechain_core::nostr::Keys;
 use keechain_core::types::Seed;
 
@@ -91,14 +91,20 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                         &app.layouts.nostr_sign_delegation.delegatee_pk,
                     ) {
                         Ok(delegatee_pk) => {
-                            match nip26::sign_delegation(
-                                &keys,
-                                delegatee_pk,
-                                app.layouts.nostr_sign_delegation.conditions.clone(),
+                            match Conditions::from_str(
+                                &app.layouts.nostr_sign_delegation.conditions,
                             ) {
-                                Ok(sig) => {
-                                    app.layouts.nostr_sign_delegation.error = None;
-                                    app.layouts.nostr_sign_delegation.signature = Some(sig);
+                                Ok(conditions) => {
+                                    match nip26::sign_delegation(&keys, delegatee_pk, conditions) {
+                                        Ok(sig) => {
+                                            app.layouts.nostr_sign_delegation.error = None;
+                                            app.layouts.nostr_sign_delegation.signature = Some(sig);
+                                        }
+                                        Err(e) => {
+                                            app.layouts.nostr_sign_delegation.error =
+                                                Some(e.to_string())
+                                        }
+                                    }
                                 }
                                 Err(e) => {
                                     app.layouts.nostr_sign_delegation.error = Some(e.to_string())

@@ -5,7 +5,6 @@ use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
-use bdk::keys::bip39::Mnemonic;
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ExtendedPrivKey, Fingerprint};
 use bitcoin::Network;
@@ -15,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use crate::crypto::aes::{self, Aes256Encryption};
 use crate::types::{Index, Secrets, Seed, WordCount};
 use crate::util::bip::bip32::Bip32RootKey;
-use crate::util::bip::bip39;
+use crate::util::bip::bip39::{self, Mnemonic};
 use crate::util::bip::bip85::{self, FromBip85};
 use crate::util::{self, base64, dir};
 use crate::Result;
@@ -37,7 +36,7 @@ pub enum Error {
     #[error(transparent)]
     BIP32(#[from] bitcoin::util::bip32::Error),
     #[error(transparent)]
-    BIP39(#[from] bdk::keys::bip39::Error),
+    BIP39(#[from] bip39::Error),
     #[error(transparent)]
     BIP85(#[from] bip85::Error),
     #[error("File not found")]

@@ -4,6 +4,7 @@
 #![doc = include_str!("../README.md")]
 
 pub extern crate bdk;
+pub extern crate bip39;
 pub extern crate bitcoin;
 #[cfg(feature = "nostr")]
 pub extern crate nostr;

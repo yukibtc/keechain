@@ -68,7 +68,7 @@ impl ToSlip132 for ExtendedPubKey {
 mod tests {
     use std::str::FromStr;
 
-    use bdk::keys::bip39::Mnemonic;
+    use bip39::Mnemonic;
     use bitcoin::secp256k1::Secp256k1;
     use bitcoin::util::bip32::ExtendedPrivKey;
     use bitcoin::Network;

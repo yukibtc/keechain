@@ -4,7 +4,7 @@
 use std::str::FromStr;
 
 use eframe::egui::{Align, ComboBox, Key, Layout, Ui};
-use keechain_core::bdk::keys::bip39::Mnemonic;
+use keechain_core::bip39::Mnemonic;
 use keechain_core::types::{Index, WordCount};
 
 use crate::component::{Button, Error, Heading, InputField, MnemonicViewer, View};
