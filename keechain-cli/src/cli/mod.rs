@@ -103,14 +103,6 @@ pub enum AdvancedCommand {
         #[arg(required = true)]
         index: Index,
     },
-    Vanity {
-        /// Keychain name
-        #[arg(required = true)]
-        name: String,
-        /// Prefixes
-        #[arg(required = true)]
-        prefixes: Vec<String>,
-    },
     /// Danger
     Danger {
         #[command(subcommand)]

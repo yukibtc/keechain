@@ -144,17 +144,6 @@ fn main() -> Result<()> {
                 println!("Mnemonic: {mnemonic}");
                 Ok(())
             }
-            AdvancedCommand::Vanity { name, prefixes } => {
-                let keechain = KeeChain::open(name, io::get_password)?;
-                let (path, address) = keechain_core::command::vanity::search_address(
-                    keechain.keychain.seed(),
-                    prefixes,
-                    network,
-                )?;
-                println!("Path: {path}");
-                println!("Address: {address}");
-                Ok(())
-            }
             AdvancedCommand::Danger { command } => match command {
                 DangerCommand::ViewSecrets { name } => {
                     let keechain = KeeChain::open(name, io::get_password)?;

@@ -9,7 +9,6 @@ pub extern crate bitcoin;
 #[cfg(feature = "nostr")]
 pub extern crate nostr;
 
-pub mod command;
 pub mod crypto;
 pub mod types;
 pub mod util;
