@@ -4,7 +4,6 @@
 pub mod base64;
 pub mod bip;
 pub mod dir;
-pub mod format;
 pub mod hex;
 pub mod serde;
 pub mod slip;

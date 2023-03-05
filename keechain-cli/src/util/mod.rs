@@ -3,9 +3,10 @@
 
 use keechain_core::bitcoin::{Address, Network, TxOut};
 use keechain_core::types::{Psbt, Secrets};
-use keechain_core::util::format;
 use prettytable::format::FormatBuilder;
 use prettytable::{row, Table};
+
+mod format;
 
 pub trait Print {
     fn print(&self);
