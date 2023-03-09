@@ -1,6 +1,7 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use std::path::Path;
 use std::sync::Arc;
 
 use eframe::egui::{self, Align, ComboBox, Key, Layout, Ui};
@@ -10,7 +11,7 @@ use keechain_core::util::dir;
 
 use crate::component::{Button, Error, InputField, View};
 use crate::theme::color::ORANGE;
-use crate::{AppState, Menu, Stage};
+use crate::{AppState, Menu, Stage, KEYCHAINS_PATH};
 
 const LOGO: &[u8] = include_bytes!("../../assets/logo.png");
 
@@ -65,7 +66,8 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                         app.layouts.start.name.as_str()
                     })
                     .show_ui(ui, |ui| {
-                        if let Ok(list) = dir::get_keychains_list() {
+                        if let Ok(list) = dir::get_keychains_list::<&Path>(KEYCHAINS_PATH.as_ref())
+                        {
                             for value in list.into_iter() {
                                 ui.selectable_value(
                                     &mut app.layouts.start.name,
@@ -117,14 +119,18 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
         }
 
         if is_ready && (ui.input().key_pressed(Key::Enter) || button.clicked()) {
-            match KeeChain::open(app.layouts.start.name.clone(), || {
-                Ok(app.layouts.start.password.clone())
-            }) {
-                Ok(keechain) => {
-                    app.layouts.start.clear();
-                    app.set_keechain(Some(keechain));
-                    app.set_stage(Stage::Menu(Menu::Main));
-                }
+            match dir::get_keychain_file::<&Path, String>(
+                KEYCHAINS_PATH.as_ref(),
+                app.layouts.start.name.clone(),
+            ) {
+                Ok(path) => match KeeChain::open(path, || Ok(app.layouts.start.password.clone())) {
+                    Ok(keechain) => {
+                        app.layouts.start.clear();
+                        app.set_keechain(Some(keechain));
+                        app.set_stage(Stage::Menu(Menu::Main));
+                    }
+                    Err(e) => app.layouts.start.error = Some(e.to_string()),
+                },
                 Err(e) => app.layouts.start.error = Some(e.to_string()),
             }
         }

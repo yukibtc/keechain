@@ -2,7 +2,7 @@
 name = "keechain-core"
 version.workspace = true
 edition = "2021"
-description = "KeeChain's Core library."
+description = "KeeChain Core library."
 authors = ["Yuki Kishimoto <yukikishimoto@proton.me>"]
 homepage.workspace = true
 repository.workspace = true
@@ -22,7 +22,6 @@ bdk = { version = "0.27", default-features = false }
 bip39 = "2.0"
 bitcoin = "0.29"
 cbc = { version = "0.1", features = ["alloc"] }
-dirs = "4.0"
 nostr = { version = "0.19", default-features = false, features = ["nip06", "nip19"], optional = true }
 rand_chacha = "0.3"
 serde = { version = "1.0", features = ["derive"] }

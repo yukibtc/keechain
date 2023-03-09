@@ -1,12 +1,15 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use std::path::Path;
+
 use eframe::egui::{Align, ComboBox, Key, Layout, Ui};
 use keechain_core::types::{KeeChain, WordCount};
+use keechain_core::util::dir;
 
 use crate::component::{Button, Error, Heading, InputField, MnemonicViewer, View};
 use crate::theme::color::ORANGE;
-use crate::{AppState, Menu, Stage};
+use crate::{AppState, Menu, Stage, KEYCHAINS_PATH};
 
 const WORD_COUNT_OPTIONS: [WordCount; 3] = [WordCount::W12, WordCount::W18, WordCount::W24];
 
@@ -114,15 +117,21 @@ fn generate_layout(app: &mut AppState, ui: &mut Ui) {
         if app.layouts.new_keychain.password != app.layouts.new_keychain.confirm_password {
             app.layouts.new_keychain.error = Some("Passwords not match".to_string());
         } else {
-            match KeeChain::generate(
+            match dir::get_keychain_file::<&Path, String>(
+                KEYCHAINS_PATH.as_ref(),
                 app.layouts.new_keychain.name.clone(),
-                || Ok(app.layouts.new_keychain.password.clone()),
-                app.layouts.new_keychain.word_count,
-                || Ok(None),
             ) {
-                Ok(keechain) => {
-                    app.layouts.new_keychain.keechain = Some(keechain);
-                }
+                Ok(path) => match KeeChain::generate(
+                    path,
+                    || Ok(app.layouts.new_keychain.password.clone()),
+                    app.layouts.new_keychain.word_count,
+                    || Ok(None),
+                ) {
+                    Ok(keechain) => {
+                        app.layouts.new_keychain.keechain = Some(keechain);
+                    }
+                    Err(e) => app.layouts.new_keychain.error = Some(e.to_string()),
+                },
                 Err(e) => app.layouts.new_keychain.error = Some(e.to_string()),
             }
         }

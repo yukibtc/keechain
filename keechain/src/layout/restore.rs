@@ -1,16 +1,18 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use std::path::Path;
 use std::str::FromStr;
 
 use eframe::egui::{Key, RichText, Ui};
 use eframe::epaint::Color32;
 use keechain_core::bip39::Mnemonic;
 use keechain_core::types::KeeChain;
+use keechain_core::util::dir;
 
 use crate::component::{Button, Heading, InputField, View};
 use crate::theme::color::ORANGE;
-use crate::{AppState, Menu, Stage};
+use crate::{AppState, Menu, Stage, KEYCHAINS_PATH};
 
 #[derive(Default)]
 pub struct RestoreState {
@@ -90,16 +92,22 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                 app.layouts.restore.error = Some("Passwords not match".to_string());
             } else {
                 match Mnemonic::from_str(&app.layouts.restore.mnemonic) {
-                    Ok(mnemonic) => match KeeChain::restore(
+                    Ok(mnemonic) => match dir::get_keychain_file::<&Path, String>(
+                        KEYCHAINS_PATH.as_ref(),
                         app.layouts.restore.name.clone(),
-                        || Ok(app.layouts.restore.password.clone()),
-                        || Ok(mnemonic),
                     ) {
-                        Ok(keechain) => {
-                            app.layouts.restore.clear();
-                            app.set_keechain(Some(keechain));
-                            app.set_stage(Stage::Menu(Menu::Main));
-                        }
+                        Ok(path) => match KeeChain::restore(
+                            path,
+                            || Ok(app.layouts.restore.password.clone()),
+                            || Ok(mnemonic),
+                        ) {
+                            Ok(keechain) => {
+                                app.layouts.restore.clear();
+                                app.set_keechain(Some(keechain));
+                                app.set_stage(Stage::Menu(Menu::Main));
+                            }
+                            Err(e) => app.layouts.restore.error = Some(e.to_string()),
+                        },
                         Err(e) => app.layouts.restore.error = Some(e.to_string()),
                     },
                     Err(e) => app.layouts.restore.error = Some(e.to_string()),

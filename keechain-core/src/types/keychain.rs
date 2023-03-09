@@ -3,7 +3,7 @@
 
 use std::fs::{self, File};
 use std::io::{Read, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ExtendedPrivKey, Fingerprint};
@@ -16,7 +16,7 @@ use crate::types::{Index, Secrets, Seed, WordCount};
 use crate::util::bip::bip32::Bip32RootKey;
 use crate::util::bip::bip39::{self, Mnemonic};
 use crate::util::bip::bip85::{self, FromBip85};
-use crate::util::{self, base64, dir};
+use crate::util::{self, base64};
 use crate::Result;
 
 const KEECHAIN_FILE_VERSION: u8 = 1;
@@ -27,8 +27,6 @@ pub enum Error {
     IO(#[from] std::io::Error),
     #[error(transparent)]
     Aes(#[from] aes::Error),
-    #[error(transparent)]
-    Dir(#[from] dir::Error),
     #[error(transparent)]
     Json(#[from] serde_json::Error),
     #[error(transparent)]
@@ -74,12 +72,12 @@ pub struct KeeChain {
 }
 
 impl KeeChain {
-    pub fn open<S, PSW>(name: S, get_password: PSW) -> Result<Self, Error>
+    pub fn open<P, PSW>(path: P, get_password: PSW) -> Result<Self, Error>
     where
-        S: Into<String>,
+        P: AsRef<Path>,
         PSW: FnOnce() -> Result<String>,
     {
-        let keychain_file: PathBuf = dir::get_keychain_file(name)?;
+        let keychain_file: PathBuf = path.as_ref().to_path_buf();
         if !keychain_file.exists() {
             return Err(Error::FileNotFound);
         }
@@ -102,18 +100,18 @@ impl KeeChain {
         })
     }
 
-    pub fn generate<S, PSW, E>(
-        name: S,
+    pub fn generate<P, PSW, E>(
+        path: P,
         get_password: PSW,
         word_count: WordCount,
         get_custom_entropy: E,
     ) -> Result<Self, Error>
     where
-        S: Into<String>,
+        P: AsRef<Path>,
         PSW: FnOnce() -> Result<String>,
         E: FnOnce() -> Result<Option<Vec<u8>>>,
     {
-        let keychain_file: PathBuf = dir::get_keychain_file(name)?;
+        let keychain_file: PathBuf = path.as_ref().to_path_buf();
         if keychain_file.exists() {
             return Err(Error::FileAlreadyExists);
         }
@@ -141,13 +139,13 @@ impl KeeChain {
         Ok(keechain)
     }
 
-    pub fn restore<S, PSW, M>(name: S, get_password: PSW, get_mnemonic: M) -> Result<Self, Error>
+    pub fn restore<P, PSW, M>(path: P, get_password: PSW, get_mnemonic: M) -> Result<Self, Error>
     where
-        S: Into<String>,
+        P: AsRef<Path>,
         PSW: FnOnce() -> Result<String>,
         M: FnOnce() -> Result<Mnemonic>,
     {
-        let keychain_file: PathBuf = dir::get_keychain_file(name)?;
+        let keychain_file: PathBuf = path.as_ref().to_path_buf();
         if keychain_file.exists() {
             return Err(Error::FileAlreadyExists);
         }
@@ -196,11 +194,11 @@ impl KeeChain {
         self.password == password.into()
     }
 
-    pub fn rename<S>(&mut self, new_name: S) -> Result<(), Error>
+    pub fn rename<P>(&mut self, path: P) -> Result<(), Error>
     where
-        S: Into<String>,
+        P: AsRef<Path>,
     {
-        let new = dir::get_keychain_file(new_name)?;
+        let new = path.as_ref().to_path_buf();
         if new.exists() {
             Err(Error::FileAlreadyExists)
         } else {

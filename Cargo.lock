@@ -1549,7 +1549,9 @@ dependencies = [
  "eframe",
  "egui_extras",
  "image",
+ "keechain-common",
  "keechain-core",
+ "once_cell",
  "rfd",
 ]
 
@@ -1561,8 +1563,16 @@ dependencies = [
  "console",
  "dialoguer",
  "env_logger",
+ "keechain-common",
  "keechain-core",
  "prettytable-rs",
+]
+
+[[package]]
+name = "keechain-common"
+version = "0.1.0"
+dependencies = [
+ "dirs",
 ]
 
 [[package]]
@@ -1575,7 +1585,6 @@ dependencies = [
  "bip39",
  "bitcoin",
  "cbc",
- "dirs",
  "nostr",
  "rand_chacha",
  "serde",

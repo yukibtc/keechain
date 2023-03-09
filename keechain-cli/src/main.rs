@@ -25,6 +25,7 @@ fn main() -> Result<()> {
 
     let args = Cli::parse();
     let network: Network = args.network.into();
+    let keychain_path: PathBuf = keechain_common::keychains()?;
 
     match args.command {
         Command::Generate {
@@ -32,8 +33,9 @@ fn main() -> Result<()> {
             word_count,
             dice_roll,
         } => {
+            let path = dir::get_keychain_file(keychain_path, name)?;
             let keechain = KeeChain::generate(
-                name,
+                path,
                 io::get_password_with_confirmation,
                 word_count.into(),
                 || {
@@ -56,34 +58,38 @@ fn main() -> Result<()> {
             Ok(())
         }
         Command::Restore { name } => {
-            KeeChain::restore(name, io::get_password_with_confirmation, || {
+            let path = dir::get_keychain_file(keychain_path, name)?;
+            KeeChain::restore(path, io::get_password_with_confirmation, || {
                 Ok(Mnemonic::from_str(&io::get_input("Seed")?)?)
             })?;
             Ok(())
         }
         Command::List => {
-            let names = dir::get_keychains_list()?;
+            let names = dir::get_keychains_list(keychain_path)?;
             for (index, name) in names.iter().enumerate() {
                 println!("{}. {name}", index + 1);
             }
             Ok(())
         }
         Command::Identity { name } => {
-            let keechain = KeeChain::open(name, io::get_password)?;
+            let path = dir::get_keychain_file(keychain_path, name)?;
+            let keechain = KeeChain::open(path, io::get_password)?;
             let fingerprint = keechain.keychain.identity(network)?;
             println!("Fingerprint: {fingerprint}");
             Ok(())
         }
         Command::Export { export_type } => match export_type {
             ExportTypes::Descriptors { name, account } => {
-                let keechain = KeeChain::open(name, io::get_password)?;
+                let path = dir::get_keychain_file(keychain_path, name)?;
+                let keechain = KeeChain::open(path, io::get_password)?;
                 let descriptors =
                     Descriptors::new(keechain.keychain.seed(), network, Some(account))?;
                 println!("{descriptors:#?}");
                 Ok(())
             }
             ExportTypes::BitcoinCore { name, account } => {
-                let keechain = KeeChain::open(name, io::get_password)?;
+                let path = dir::get_keychain_file(keychain_path, name)?;
+                let keechain = KeeChain::open(path, io::get_password)?;
                 let descriptors =
                     BitcoinCore::new(keechain.keychain.seed(), network, Some(account))?;
                 println!("{}", descriptors.to_string());
@@ -94,21 +100,23 @@ fn main() -> Result<()> {
                 script,
                 account,
             } => {
-                let keechain = KeeChain::open(name, io::get_password)?;
+                let path = dir::get_keychain_file(keychain_path, name)?;
+                let keechain = KeeChain::open(path, io::get_password)?;
                 let electrum_json_wallet = Electrum::new(
                     keechain.keychain.seed(),
                     network,
                     script.into(),
                     Some(account),
                 )?;
-                let path = electrum_json_wallet.save_to_file(dir::home())?;
+                let path = electrum_json_wallet.save_to_file(keechain_common::home())?;
                 println!("Electrum file exported to {}", path.display());
                 Ok(())
             }
             ExportTypes::Wasabi { name } => {
-                let keechain = KeeChain::open(name, io::get_password)?;
+                let path = dir::get_keychain_file(keychain_path, name)?;
+                let keechain = KeeChain::open(path, io::get_password)?;
                 let wasabi_json_wallet = Wasabi::new(keechain.keychain.seed(), network)?;
-                let path = wasabi_json_wallet.save_to_file(dir::home())?;
+                let path = wasabi_json_wallet.save_to_file(keechain_common::home())?;
                 println!("Wasabi file exported to {}", path.display());
                 Ok(())
             }
@@ -118,7 +126,8 @@ fn main() -> Result<()> {
             Ok(())
         }
         Command::Sign { name, file } => {
-            let keechain = KeeChain::open(name, io::get_password)?;
+            let path = dir::get_keychain_file(keychain_path, name)?;
+            let keechain = KeeChain::open(path, io::get_password)?;
             let mut psbt = Psbt::from_file(&file, network)?;
             if psbt.sign(&keechain.keychain.seed())? {
                 let mut renamed_file: PathBuf = file;
@@ -136,7 +145,8 @@ fn main() -> Result<()> {
                 word_count,
                 index,
             } => {
-                let keechain = KeeChain::open(name, io::get_password)?;
+                let path = dir::get_keychain_file(keychain_path, name)?;
+                let keechain = KeeChain::open(path, io::get_password)?;
                 let mnemonic: Mnemonic =
                     keechain
                         .keychain
@@ -146,13 +156,15 @@ fn main() -> Result<()> {
             }
             AdvancedCommand::Danger { command } => match command {
                 DangerCommand::ViewSecrets { name } => {
-                    let keechain = KeeChain::open(name, io::get_password)?;
+                    let path = dir::get_keychain_file(keychain_path, name)?;
+                    let keechain = KeeChain::open(path, io::get_password)?;
                     keechain.keychain.secrets(network)?.print();
                     Ok(())
                 }
                 DangerCommand::Wipe { name } => {
                     if io::ask("Are you really sure? This action is permanent!")? && io::ask("Again, are you really sure? THIS ACTION IS PERMANENT AND YOU MAY LOSE ALL YOUR FUNDS!")? {
-                        let keechain = KeeChain::open(name, io::get_password)?;
+                        let path = dir::get_keychain_file(keychain_path, name)?;
+                        let keechain = KeeChain::open(path, io::get_password)?;
                         keechain.wipe()?;
                     } else {
                         println!("Aborted.");
@@ -163,11 +175,14 @@ fn main() -> Result<()> {
         },
         Command::Setting { command } => match command {
             SettingCommand::Rename { name, new_name } => {
-                let mut keechain = KeeChain::open(name, io::get_password)?;
-                Ok(keechain.rename(new_name)?)
+                let path = dir::get_keychain_file(&keychain_path, name)?;
+                let mut keechain = KeeChain::open(path, io::get_password)?;
+                let new_path = dir::get_keychain_file(keychain_path, new_name)?;
+                Ok(keechain.rename(new_path)?)
             }
             SettingCommand::ChangePassword { name } => {
-                let mut keechain = KeeChain::open(name, io::get_password)?;
+                let path = dir::get_keychain_file(keychain_path, name)?;
+                let mut keechain = KeeChain::open(path, io::get_password)?;
                 Ok(keechain.change_password(io::get_password_with_confirmation)?)
             }
         },

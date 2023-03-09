@@ -1,6 +1,7 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use std::path::PathBuf;
 use std::str::FromStr;
 
 use eframe::egui::{self, CentralPanel, Context};
@@ -11,6 +12,7 @@ use egui::TextStyle::{Body, Button, Heading, Monospace, Small};
 use keechain_core::bitcoin::Network;
 use keechain_core::types::KeeChain;
 use keechain_core::Result;
+use once_cell::sync::Lazy;
 
 mod component;
 mod layout;
@@ -26,6 +28,9 @@ use self::layout::{NostrKeysState, NostrSignDelegationState};
 
 const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 530.0);
 const GENERIC_FONT_HEIGHT: f32 = 18.0;
+
+static KEYCHAINS_PATH: Lazy<PathBuf> =
+    Lazy::new(|| keechain_common::keychains().expect("Can't get keychains path"));
 
 fn parse_network(args: Vec<String>) -> Result<Network> {
     for (i, arg) in args.iter().enumerate() {

@@ -7,7 +7,6 @@ use std::str::FromStr;
 use eframe::egui::{Align, ComboBox, Layout, RichText, Ui};
 use keechain_core::bitcoin::Network;
 use keechain_core::types::{Electrum, ElectrumSupportedScripts, Index, Seed};
-use keechain_core::util::dir;
 use keechain_core::Result;
 
 use crate::component::{Button, Error, Heading, Identity, InputField, View};
@@ -21,7 +20,7 @@ fn export_electrum(
     account: Option<u32>,
 ) -> Result<PathBuf> {
     let electrum_json_wallet = Electrum::new(seed, network, script, account)?;
-    let home_dir: PathBuf = dir::home();
+    let home_dir: PathBuf = keechain_common::home();
     Ok(electrum_json_wallet.save_to_file(home_dir)?)
 }
 

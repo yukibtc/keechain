@@ -16,36 +16,11 @@ pub enum Error {
     FailedToGetFileName,
 }
 
-pub fn home() -> PathBuf {
-    match dirs::home_dir() {
-        Some(path) => path,
-        None => Path::new("./").to_path_buf(),
-    }
-}
-
-pub fn keechain() -> Result<PathBuf, Error> {
-    Ok(match dirs::home_dir() {
-        Some(path) => {
-            let path: PathBuf = path.join(".keechain");
-            if !path.exists() {
-                std::fs::create_dir_all(path.as_path())?;
-            }
-            path
-        }
-        None => Path::new("./keechain").to_path_buf(),
-    })
-}
-
-pub fn keychains() -> Result<PathBuf, Error> {
-    let path: PathBuf = keechain()?.join("keychains");
-    if !path.exists() {
-        std::fs::create_dir_all(path.as_path())?;
-    }
-    Ok(path)
-}
-
-pub fn get_keychains_list() -> Result<Vec<String>, Error> {
-    let paths = fs::read_dir(keychains()?)?;
+pub fn get_keychains_list<P>(path: P) -> Result<Vec<String>, Error>
+where
+    P: AsRef<Path>,
+{
+    let paths = fs::read_dir(path)?;
     let mut names: Vec<String> = Vec::new();
     for path in paths {
         let path: PathBuf = path?.path();
@@ -61,11 +36,12 @@ pub fn get_keychains_list() -> Result<Vec<String>, Error> {
     Ok(names)
 }
 
-pub fn get_keychain_file<S>(name: S) -> Result<PathBuf, Error>
+pub fn get_keychain_file<P, S>(path: P, name: S) -> Result<PathBuf, Error>
 where
+    P: AsRef<Path>,
     S: Into<String>,
 {
-    let mut keychain_file: PathBuf = keychains()?.join(name.into());
+    let mut keychain_file: PathBuf = path.as_ref().join(name.into());
     keychain_file.set_extension(KEYCHAIN_EXTENSION);
     Ok(keychain_file)
 }

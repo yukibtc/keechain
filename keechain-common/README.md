@@ -1,8 +1,8 @@
-# KeeChain Core
+# KeeChain Common
 
 ## Description
 
-KeeChain Core library.
+KeeChain Common library.
 
 ## Minimum Supported Rust Version (MSRV)
 
