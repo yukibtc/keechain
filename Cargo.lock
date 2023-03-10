@@ -1585,6 +1585,7 @@ dependencies = [
  "bip39",
  "bitcoin",
  "cbc",
+ "getrandom",
  "nostr",
  "rand_chacha",
  "serde",
