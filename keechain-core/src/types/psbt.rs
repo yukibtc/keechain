@@ -97,6 +97,12 @@ impl Psbt {
                     paths.push(path.clone());
                 }
             }
+
+            for (_, (fingerprint, path)) in input.tap_key_origins.values() {
+                if fingerprint.eq(&root_fingerprint) {
+                    paths.push(path.clone());
+                }
+            }
         }
 
         if paths.is_empty() {
