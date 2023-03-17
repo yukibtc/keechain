@@ -8,6 +8,10 @@ use std::path::{Path, PathBuf};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ExtendedPrivKey, Fingerprint};
 use bitcoin::Network;
+#[cfg(feature = "nostr")]
+use nostr::nips::nip06::FromMnemonic;
+#[cfg(feature = "nostr")]
+use nostr::Keys;
 use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
 
@@ -37,6 +41,9 @@ pub enum Error {
     BIP39(#[from] bip39::Error),
     #[error(transparent)]
     BIP85(#[from] bip85::Error),
+    #[cfg(feature = "nostr")]
+    #[error(transparent)]
+    Nostr(#[from] nostr::nips::nip06::Error),
     #[error("File not found")]
     FileNotFound,
     #[error("There is already a file with the same name! Please, choose another name")]
@@ -328,6 +335,14 @@ impl Keychain {
         S: Into<String>,
     {
         self.seed = Seed::new(self.mnemonic.clone(), passphrase);
+    }
+
+    #[cfg(feature = "nostr")]
+    pub fn nostr_keys(&self) -> Result<Keys, Error> {
+        Ok(Keys::from_mnemonic(
+            self.seed.mnemonic().to_string(),
+            self.seed.passphrase(),
+        )?)
     }
 }
 
