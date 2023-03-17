@@ -27,7 +27,7 @@ pub fn encrypt<T>(key: T, content: &[u8]) -> Vec<u8>
 where
     T: AsRef<[u8]>,
 {
-    let key: Vec<u8> = hash::sha256(key);
+    let key: Vec<u8> = hash::sha256(key).to_vec();
 
     let iv: [u8; 16] = rand::random();
     let cipher: Aes256CbcEnc = Aes256CbcEnc::new(key.as_slice().into(), &iv.into());
@@ -47,7 +47,7 @@ where
         return Err(Error::InvalidContentFormat);
     }
 
-    let key: Vec<u8> = hash::sha256(key);
+    let key: Vec<u8> = hash::sha256(key).to_vec();
     let content: Vec<u8> = base64::decode(parsed_content[0]).map_err(|_| Error::Base64Decode)?;
     let iv: Vec<u8> = base64::decode(parsed_content[1]).map_err(|_| Error::Base64Decode)?;
 
