@@ -43,8 +43,11 @@ impl From<CliElectrumSupportedScripts> for ElectrumSupportedScripts {
 
 #[derive(Debug, Clone, ValueEnum)]
 pub enum CliWordCount {
+    #[clap(name = "12")]
     W12,
+    #[clap(name = "18")]
     W18,
+    #[clap(name = "24")]
     W24,
 }
 
