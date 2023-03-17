@@ -15,6 +15,7 @@ use nostr::Keys;
 use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
 
+use super::Descriptors;
 use crate::crypto::aes::{self, Aes256Encryption};
 use crate::types::{Index, Secrets, Seed, WordCount};
 use crate::util::bip::bip32::Bip32RootKey;
@@ -41,6 +42,8 @@ pub enum Error {
     BIP39(#[from] bip39::Error),
     #[error(transparent)]
     BIP85(#[from] bip85::Error),
+    #[error(transparent)]
+    Descriptors(#[from] super::descriptors::Error),
     #[cfg(feature = "nostr")]
     #[error(transparent)]
     Nostr(#[from] nostr::nips::nip06::Error),
@@ -298,8 +301,24 @@ impl Keychain {
         Ok(Mnemonic::from_bip85(&secp, &root, word_count, index)?)
     }
 
+    pub fn descriptors(
+        &self,
+        network: Network,
+        account: Option<u32>,
+    ) -> Result<Descriptors, Error> {
+        Ok(Descriptors::new(self.seed(), network, account)?)
+    }
+
     pub fn secrets(&self, network: Network) -> Result<Secrets, Error> {
         Ok(Secrets::new(self.seed(), network)?)
+    }
+
+    #[cfg(feature = "nostr")]
+    pub fn nostr_keys(&self) -> Result<Keys, Error> {
+        Ok(Keys::from_mnemonic(
+            self.seed.mnemonic().to_string(),
+            self.seed.passphrase(),
+        )?)
     }
 
     pub fn add_passphrase<S>(&mut self, passphrase: S)
@@ -335,14 +354,6 @@ impl Keychain {
         S: Into<String>,
     {
         self.seed = Seed::new(self.mnemonic.clone(), passphrase);
-    }
-
-    #[cfg(feature = "nostr")]
-    pub fn nostr_keys(&self) -> Result<Keys, Error> {
-        Ok(Keys::from_mnemonic(
-            self.seed.mnemonic().to_string(),
-            self.seed.passphrase(),
-        )?)
     }
 }
 
