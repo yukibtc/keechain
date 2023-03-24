@@ -21,7 +21,7 @@ aes = "0.8"
 base64 = "0.21"
 bdk = { version = "0.27", default-features = false }
 bip39 = "2.0"
-bitcoin = "0.29"
+bitcoin = { version = "0.29", features = ["rand", "serde"] }
 cbc = { version = "0.1", features = ["alloc"] }
 nostr = { version = "0.19", default-features = false, features = ["nip06", "nip19"], optional = true }
 rand_chacha = "0.3"
