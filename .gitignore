@@ -1,3 +1,4 @@
 /target
 /output
+/Cargo.lock
 .DS_Store
