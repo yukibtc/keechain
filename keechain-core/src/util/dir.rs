@@ -33,6 +33,7 @@ where
             }
         }
     }
+    names.sort_by_key(|a| a.to_lowercase());
     Ok(names)
 }
 
