@@ -19,7 +19,7 @@ nostr = ["dep:nostr"]
 aes = "0.8"
 base64 = "0.21"
 bip39 = "2.0"
-bitcoin = { version = "0.29", features = ["rand", "serde"] }
+bitcoin = { version = "0.30", features = ["rand", "serde"] }
 cbc = { version = "0.1", features = ["alloc"] }
 nostr = { git = "https://github.com/rust-nostr/nostr", branch = "bitcoin-v0.29", default-features = false, features = ["nip06", "nip19"], optional = true }
 rand_chacha = "0.3"
