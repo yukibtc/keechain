@@ -82,6 +82,26 @@ pub struct KeeChain {
 }
 
 impl KeeChain {
+    pub fn new<P, S>(
+        file: P,
+        password: S,
+        version: u8,
+        encryption_key_type: EncryptionKeyType,
+        keychain: Keychain,
+    ) -> Self
+    where
+        P: AsRef<Path>,
+        S: Into<String>,
+    {
+        Self {
+            file: file.as_ref().to_path_buf(),
+            password: password.into(),
+            version,
+            encryption_key_type,
+            keychain,
+        }
+    }
+
     pub fn open<P, PSW>(path: P, get_password: PSW) -> Result<Self, Error>
     where
         P: AsRef<Path>,
