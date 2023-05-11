@@ -47,7 +47,7 @@ pub fn main() -> Result<()> {
     let options = NativeOptions {
         fullscreen: false,
         resizable: true,
-        always_on_top: true,
+        always_on_top: false,
         default_theme: Theme::Dark,
         follow_system_theme: false,
         initial_window_size: Some(MIN_WINDOWS_SIZE),
