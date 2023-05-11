@@ -18,8 +18,8 @@ where
     P: AsRef<Path>,
 {
     let psbt_file = path.as_ref();
-    let mut psbt: Psbt = Psbt::from_file(psbt_file, network)?;
-    let finalized: bool = psbt.sign(seed)?;
+    let mut psbt: Psbt = Psbt::from_file(psbt_file)?;
+    let finalized: bool = psbt.sign(seed, network)?;
     if finalized {
         let mut psbt_file: PathBuf = psbt_file.to_path_buf();
         dir::rename_psbt_to_signed(&mut psbt_file)?;
@@ -73,7 +73,7 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                 if button.clicked() {
                     if let Some(path) = FileDialog::new().add_filter("psbt", &["psbt"]).pick_file()
                     {
-                        match Psbt::from_file(path.clone(), app.network) {
+                        match Psbt::from_file(path.clone()) {
                             Ok(psbt) => {
                                 app.layouts.sign.error = None;
                                 app.layouts.sign.psbt_file = Some(PsbtFile { psbt, path });

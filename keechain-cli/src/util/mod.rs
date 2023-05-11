@@ -8,31 +8,25 @@ use prettytable::{row, Table};
 
 mod format;
 
-pub trait Print {
-    fn print(&self);
-}
+pub fn print_secrets(secrets: Secrets) {
+    let mut table = Table::new();
 
-impl Print for Secrets {
-    fn print(&self) {
-        let mut table = Table::new();
+    table.add_row(row![
+        format!("Entropy ({} bits)", secrets.entropy.len() / 2 * 8),
+        secrets.entropy
+    ]);
+    table.add_row(row!["Mnemonic (BIP39)", secrets.mnemonic]);
 
-        table.add_row(row![
-            format!("Entropy ({} bits)", self.entropy.len() / 2 * 8),
-            self.entropy
-        ]);
-        table.add_row(row!["Mnemonic (BIP39)", self.mnemonic]);
-
-        if let Some(passphrase) = &self.passphrase {
-            table.add_row(row!["Passphrase (BIP39)", passphrase]);
-        }
-
-        table.add_row(row!["Seed HEX (BIP39)", self.seed_hex]);
-        table.add_row(row!["Network", self.network]);
-        table.add_row(row!["Root Key (BIP32)", self.root_key]);
-        table.add_row(row!["Fingerprint (BIP32)", self.fingerprint]);
-
-        table.printstd();
+    if let Some(passphrase) = &secrets.passphrase {
+        table.add_row(row!["Passphrase (BIP39)", passphrase]);
     }
+
+    table.add_row(row!["Seed HEX (BIP39)", secrets.seed_hex]);
+    table.add_row(row!["Network", secrets.network]);
+    table.add_row(row!["Root Key (BIP32)", secrets.root_key]);
+    table.add_row(row!["Fingerprint (BIP32)", secrets.fingerprint]);
+
+    table.printstd();
 }
 
 fn output_table_row(network: Network, output: &TxOut) -> String {
@@ -53,39 +47,37 @@ fn output_table_row(network: Network, output: &TxOut) -> String {
     table.to_string()
 }
 
-impl Print for Psbt {
-    fn print(&self) {
-        let tx = self.psbt().extract_tx();
-        let inputs_len: usize = tx.input.len();
-        let outputs_len: usize = tx.output.len();
+pub fn print_psbt(psbt: Psbt, network: Network) {
+    let tx = psbt.psbt().extract_tx();
+    let inputs_len: usize = tx.input.len();
+    let outputs_len: usize = tx.output.len();
 
-        let mut table = Table::new();
+    let mut table = Table::new();
 
-        table.set_titles(row![
-            format!("Inputs ({inputs_len})"),
-            format!("Outputs ({outputs_len})")
-        ]);
+    table.set_titles(row![
+        format!("Inputs ({inputs_len})"),
+        format!("Outputs ({outputs_len})")
+    ]);
 
-        if inputs_len >= outputs_len {
-            for (index, input) in tx.input.iter().enumerate() {
-                let input = format!("{}", input.previous_output);
-                if let Some(output) = tx.output.get(index) {
-                    table.add_row(row![input, output_table_row(self.network(), output)]);
-                } else {
-                    table.add_row(row![input, ""]);
-                }
-            }
-        } else {
-            for (index, output) in tx.output.iter().enumerate() {
-                let output = output_table_row(self.network(), output);
-                if let Some(input) = tx.input.get(index) {
-                    table.add_row(row![format!("{}", input.previous_output), output]);
-                } else {
-                    table.add_row(row!["", output]);
-                }
+    if inputs_len >= outputs_len {
+        for (index, input) in tx.input.iter().enumerate() {
+            let input = format!("{}", input.previous_output);
+            if let Some(output) = tx.output.get(index) {
+                table.add_row(row![input, output_table_row(network, output)]);
+            } else {
+                table.add_row(row![input, ""]);
             }
         }
-
-        table.printstd();
+    } else {
+        for (index, output) in tx.output.iter().enumerate() {
+            let output = output_table_row(network, output);
+            if let Some(input) = tx.input.get(index) {
+                table.add_row(row![format!("{}", input.previous_output), output]);
+            } else {
+                table.add_row(row!["", output]);
+            }
+        }
     }
+
+    table.printstd();
 }

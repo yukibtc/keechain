@@ -18,7 +18,6 @@ mod util;
 
 use self::cli::io;
 use self::cli::{AdvancedCommand, Cli, Command, DangerCommand, ExportTypes, SettingCommand};
-use self::util::Print;
 
 fn main() -> Result<()> {
     env_logger::init();
@@ -122,14 +121,15 @@ fn main() -> Result<()> {
             }
         },
         Command::Decode { file } => {
-            Psbt::from_file(file, network)?.print();
+            let psbt = Psbt::from_file(file)?;
+            util::print_psbt(psbt, network);
             Ok(())
         }
         Command::Sign { name, file } => {
             let path = dir::get_keychain_file(keychain_path, name)?;
             let keechain = KeeChain::open(path, io::get_password)?;
-            let mut psbt = Psbt::from_file(&file, network)?;
-            if psbt.sign(&keechain.keychain.seed())? {
+            let mut psbt = Psbt::from_file(&file)?;
+            if psbt.sign(&keechain.keychain.seed(), network)? {
                 let mut renamed_file: PathBuf = file;
                 dir::rename_psbt_to_signed(&mut renamed_file)?;
                 psbt.save_to_file(renamed_file)?;
@@ -158,7 +158,8 @@ fn main() -> Result<()> {
                 DangerCommand::ViewSecrets { name } => {
                     let path = dir::get_keychain_file(keychain_path, name)?;
                     let keechain = KeeChain::open(path, io::get_password)?;
-                    keechain.keychain.secrets(network)?.print();
+                    let secrets = keechain.keychain.secrets(network)?;
+                    util::print_secrets(secrets);
                     Ok(())
                 }
                 DangerCommand::Wipe { name } => {

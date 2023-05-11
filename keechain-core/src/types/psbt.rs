@@ -39,30 +39,30 @@ pub enum Error {
     UnsupportedDerivationPath,
     #[error("Nothing to sign here")]
     NothingToSign,
+    #[error("PSBT not signed")]
+    PsbtNotSigned,
 }
 
 #[derive(Debug, Clone)]
 pub struct Psbt {
     psbt: PartiallySignedTransaction,
-    network: Network,
 }
 
 impl Psbt {
-    pub fn new(psbt: PartiallySignedTransaction, network: Network) -> Self {
-        Self { psbt, network }
+    pub fn new(psbt: PartiallySignedTransaction) -> Self {
+        Self { psbt }
     }
 
-    pub fn from_base64<S>(psbt: S, network: Network) -> Result<Self, Error>
+    pub fn from_base64<S>(psbt: S) -> Result<Self, Error>
     where
         S: Into<String>,
     {
-        Ok(Psbt::new(
-            PartiallySignedTransaction::from_str(&psbt.into())?,
-            network,
-        ))
+        Ok(Psbt::new(PartiallySignedTransaction::from_str(
+            &psbt.into(),
+        )?))
     }
 
-    pub fn from_file<P>(path: P, network: Network) -> Result<Self, Error>
+    pub fn from_file<P>(path: P) -> Result<Self, Error>
     where
         P: AsRef<Path>,
     {
@@ -73,19 +73,15 @@ impl Psbt {
         let mut file: File = File::open(psbt_file)?;
         let mut content: Vec<u8> = Vec::new();
         file.read_to_end(&mut content)?;
-        Self::from_base64(base64::encode(content), network)
+        Self::from_base64(base64::encode(content))
     }
 
     pub fn psbt(&self) -> PartiallySignedTransaction {
         self.psbt.clone()
     }
 
-    pub fn network(&self) -> Network {
-        self.network
-    }
-
-    pub fn sign(&mut self, seed: &Seed) -> Result<bool, Error> {
-        let root: ExtendedPrivKey = seed.to_bip32_root_key(self.network)?;
+    pub fn sign(&mut self, seed: &Seed, network: Network) -> Result<bool, Error> {
+        let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
         let secp = Secp256k1::new();
         let root_fingerprint: Fingerprint = root.fingerprint(&secp);
 
@@ -110,6 +106,7 @@ impl Psbt {
         }
 
         let mut finalized: bool = false;
+        let base_psbt = self.psbt.clone();
 
         for path in paths.into_iter() {
             let child_priv: ExtendedPrivKey = root.derive_priv(&secp, &path)?;
@@ -122,16 +119,21 @@ impl Psbt {
                 _ => return Err(Error::UnsupportedDerivationPath),
             };
 
-            let wallet = Wallet::new(&descriptor, None, self.network, MemoryDatabase::default())?;
+            println!("Signing input for path {path}");
+
+            let wallet = Wallet::new(&descriptor, None, network, MemoryDatabase::default())?;
 
             // Required for sign
             let _ = wallet.get_address(AddressIndex::New)?;
 
-            if wallet.sign(&mut self.psbt, SignOptions::default())? {
-                finalized = true;
-            }
+            finalized = wallet.sign(&mut self.psbt, SignOptions::default())?;
         }
-        Ok(finalized)
+
+        if base_psbt != self.psbt {
+            Ok(finalized)
+        } else {
+            Err(Error::PsbtNotSigned)
+        }
     }
 
     pub fn save_to_file<P>(&self, path: P) -> Result<(), Error>
@@ -139,7 +141,8 @@ impl Psbt {
         P: AsRef<Path>,
     {
         let mut file: File = File::options()
-            .create_new(true)
+            .create(true)
+            .truncate(true)
             .write(true)
             .open(path.as_ref())?;
         file.write_all(&self.as_bytes()?)?;
