@@ -5,8 +5,8 @@ use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const KEYCHAIN_EXTENSION: &str = "keechain";
-const KEYCHAIN_DOT_EXTENSION: &str = ".keechain";
+pub const KEECHAIN_EXTENSION: &str = "keechain";
+const KEECHAIN_DOT_EXTENSION: &str = ".keechain";
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -25,8 +25,8 @@ where
     for path in paths {
         let path: PathBuf = path?.path();
         if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-            if name.ends_with(KEYCHAIN_DOT_EXTENSION) {
-                let splitted: Vec<&str> = name.split(KEYCHAIN_DOT_EXTENSION).collect();
+            if name.ends_with(KEECHAIN_DOT_EXTENSION) {
+                let splitted: Vec<&str> = name.split(KEECHAIN_DOT_EXTENSION).collect();
                 if let Some(value) = splitted.first() {
                     names.push(value.to_string());
                 }
@@ -43,7 +43,7 @@ where
     S: Into<String>,
 {
     let mut keychain_file: PathBuf = path.as_ref().join(name.into());
-    keychain_file.set_extension(KEYCHAIN_EXTENSION);
+    keychain_file.set_extension(KEECHAIN_EXTENSION);
     Ok(keychain_file)
 }
 

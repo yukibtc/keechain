@@ -21,6 +21,7 @@ use crate::types::{Index, Secrets, Seed, WordCount};
 use crate::util::bip::bip32::Bip32RootKey;
 use crate::util::bip::bip39::{self, Mnemonic};
 use crate::util::bip::bip85::{self, FromBip85};
+use crate::util::dir::KEECHAIN_EXTENSION;
 use crate::util::{self, base64};
 use crate::Result;
 
@@ -224,11 +225,13 @@ impl KeeChain {
         self.password == password.into()
     }
 
-    pub fn rename<P>(&mut self, path: P) -> Result<(), Error>
+    pub fn rename<S>(&mut self, new_name: S) -> Result<(), Error>
     where
-        P: AsRef<Path>,
+        S: Into<String>,
     {
-        let new = path.as_ref().to_path_buf();
+        let mut new: PathBuf = self.file.clone();
+        new.set_file_name(new_name.into());
+        new.set_extension(KEECHAIN_EXTENSION);
         if new.exists() {
             Err(Error::FileAlreadyExists)
         } else {

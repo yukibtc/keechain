@@ -1,14 +1,11 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use std::path::Path;
-
 use eframe::egui::{Key, Ui};
-use keechain_core::util::dir;
 
 use crate::component::{Button, Error, Heading, InputField, View};
 use crate::theme::color::ORANGE;
-use crate::{AppState, Menu, Stage, KEYCHAINS_PATH};
+use crate::{AppState, Menu, Stage};
 
 #[derive(Default)]
 pub struct RenameKeychainState {
@@ -52,17 +49,11 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
         if is_ready && (ui.input().key_pressed(Key::Enter) || button.clicked()) {
             match app.keechain.as_mut() {
                 Some(keechain) => {
-                    match dir::get_keychain_file::<&Path, String>(
-                        KEYCHAINS_PATH.as_ref(),
-                        app.layouts.rename_keychain.new_name.clone(),
-                    ) {
-                        Ok(path) => match keechain.rename(path) {
-                            Ok(_) => {
-                                app.layouts.rename_keychain.clear();
-                                app.stage = Stage::Menu(Menu::Setting);
-                            }
-                            Err(e) => app.layouts.rename_keychain.error = Some(e.to_string()),
-                        },
+                    match keechain.rename(app.layouts.rename_keychain.new_name.clone()) {
+                        Ok(_) => {
+                            app.layouts.rename_keychain.clear();
+                            app.stage = Stage::Menu(Menu::Setting);
+                        }
                         Err(e) => app.layouts.rename_keychain.error = Some(e.to_string()),
                     }
                 }

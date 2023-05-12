@@ -178,8 +178,7 @@ fn main() -> Result<()> {
             SettingCommand::Rename { name, new_name } => {
                 let path = dir::get_keychain_file(&keychain_path, name)?;
                 let mut keechain = KeeChain::open(path, io::get_password)?;
-                let new_path = dir::get_keychain_file(keychain_path, new_name)?;
-                Ok(keechain.rename(new_path)?)
+                Ok(keechain.rename(new_name)?)
             }
             SettingCommand::ChangePassword { name } => {
                 let path = dir::get_keychain_file(keychain_path, name)?;
