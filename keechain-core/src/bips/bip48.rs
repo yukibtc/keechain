@@ -1,6 +1,8 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+//! BIP48
+
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, Error};
 use bitcoin::Network;
 

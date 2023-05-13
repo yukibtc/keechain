@@ -9,8 +9,8 @@ use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fing
 use bitcoin::Network;
 use serde::{Deserialize, Serialize};
 
+use crate::bips::bip32::{self, Bip32RootKey};
 use crate::types::Seed;
-use crate::util::bip::bip32::{self, Bip32RootKey};
 use crate::SECP256K1;
 
 #[derive(Debug, thiserror::Error)]

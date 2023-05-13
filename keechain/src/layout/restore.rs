@@ -6,7 +6,7 @@ use std::str::FromStr;
 
 use eframe::egui::{Key, RichText, Ui};
 use eframe::epaint::Color32;
-use keechain_core::bip39::Mnemonic;
+use keechain_core::bips::bip39::Mnemonic;
 use keechain_core::types::KeeChain;
 use keechain_core::util::dir;
 

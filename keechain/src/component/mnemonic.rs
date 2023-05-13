@@ -3,7 +3,7 @@
 
 use eframe::egui::style::Spacing;
 use eframe::egui::{Grid, Ui};
-use keechain_core::bip39::Mnemonic;
+use keechain_core::bips::bip39::Mnemonic;
 
 pub struct MnemonicViewer {
     mnemonic: Mnemonic,

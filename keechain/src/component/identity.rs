@@ -2,9 +2,9 @@
 // Distributed under the MIT software license
 
 use eframe::egui::{RichText, Ui};
+use keechain_core::bips::bip32::Bip32RootKey;
 use keechain_core::bitcoin::Network;
 use keechain_core::types::Seed;
-use keechain_core::util::bip::bip32::Bip32RootKey;
 
 pub struct Identity {
     seed: Seed,

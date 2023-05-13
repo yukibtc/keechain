@@ -6,7 +6,7 @@ use bitcoin::util::bip32::{ExtendedPrivKey, Fingerprint};
 use bitcoin::Network;
 use serde::{Deserialize, Serialize};
 
-use crate::util::bip::bip32::Bip32RootKey;
+use crate::bips::bip32::Bip32RootKey;
 use crate::util::hex;
 use crate::SECP256K1;
 

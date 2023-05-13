@@ -15,11 +15,11 @@ use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
 
 use super::Descriptors;
+use crate::bips::bip32::Bip32RootKey;
+use crate::bips::bip39::{self, Mnemonic};
+use crate::bips::bip85::{self, FromBip85};
 use crate::crypto::aes::{self, Aes256Encryption};
 use crate::types::{Index, Secrets, Seed, WordCount};
-use crate::util::bip::bip32::Bip32RootKey;
-use crate::util::bip::bip39::{self, Mnemonic};
-use crate::util::bip::bip85::{self, FromBip85};
 use crate::util::dir::KEECHAIN_EXTENSION;
 use crate::util::{self, base64};
 use crate::Result;

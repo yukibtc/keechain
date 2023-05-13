@@ -23,7 +23,7 @@ pub use self::keychain::{KeeChain, Keychain};
 pub use self::psbt::Psbt;
 pub use self::seed::Seed;
 pub use self::wasabi::Wasabi;
-use crate::util::bip::bip32::Bip32RootKey;
+use crate::bips::bip32::Bip32RootKey;
 use crate::util::hex;
 use crate::SECP256K1;
 

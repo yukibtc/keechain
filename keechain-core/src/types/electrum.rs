@@ -11,9 +11,9 @@ use bitcoin::Network;
 
 use serde::{Deserialize, Serialize};
 
+use crate::bips::bip32::{self, Bip32RootKey};
+use crate::slips::slip132::{self, ToSlip132};
 use crate::types::Seed;
-use crate::util::bip::bip32::{self, Bip32RootKey};
-use crate::util::slip::slip132::{self, ToSlip132};
 use crate::SECP256K1;
 
 #[derive(Debug, thiserror::Error)]

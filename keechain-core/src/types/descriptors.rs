@@ -11,7 +11,7 @@ use bitcoin::util::bip32::{
 use bitcoin::Network;
 
 use super::{Purpose, Seed};
-use crate::util::bip::bip32::{self, Bip32RootKey};
+use crate::bips::bip32::{self, Bip32RootKey};
 use crate::SECP256K1;
 
 #[derive(Debug, thiserror::Error)]
