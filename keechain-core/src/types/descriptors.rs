@@ -26,6 +26,8 @@ pub enum Error {
     PurposePathNotFound,
     #[error("Invalid derivation path: invalid coin or not provided")]
     CoinPathNotFound,
+    #[error("Descriptor not found")]
+    DescriptorNotFound,
 }
 
 #[derive(Debug, Clone)]
@@ -140,11 +142,17 @@ impl Descriptors {
         &self,
         purpose: Purpose,
         internal: bool,
-    ) -> Option<Descriptor<DescriptorPublicKey>> {
+    ) -> Result<Descriptor<DescriptorPublicKey>, Error> {
         if internal {
-            self.internal.get(&purpose).cloned()
+            self.internal
+                .get(&purpose)
+                .cloned()
+                .ok_or(Error::DescriptorNotFound)
         } else {
-            self.external.get(&purpose).cloned()
+            self.external
+                .get(&purpose)
+                .cloned()
+                .ok_or(Error::DescriptorNotFound)
         }
     }
 }
