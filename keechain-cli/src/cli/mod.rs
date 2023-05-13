@@ -4,6 +4,7 @@
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
+use keechain_core::bdk::miniscript::Descriptor;
 use keechain_core::types::Index;
 
 pub mod io;
@@ -75,6 +76,8 @@ pub enum Command {
         /// PSBT file
         #[arg(required = true)]
         file: PathBuf,
+        /// Descriptor (optional)
+        descriptor: Option<Descriptor<String>>,
     },
     /// Advanced
     Advanced {

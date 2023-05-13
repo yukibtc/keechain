@@ -125,15 +125,25 @@ fn main() -> Result<()> {
             util::print_psbt(psbt, network);
             Ok(())
         }
-        Command::Sign { name, file } => {
+        Command::Sign {
+            name,
+            file,
+            descriptor,
+        } => {
             let path = dir::get_keychain_file(keychain_path, name)?;
             let keechain = KeeChain::open(path, io::get_password)?;
+            let seed = &keechain.keychain.seed();
             let mut psbt = Psbt::from_file(&file)?;
-            if psbt.sign(&keechain.keychain.seed(), network)? {
-                let mut renamed_file: PathBuf = file;
-                dir::rename_psbt_to_signed(&mut renamed_file)?;
-                psbt.save_to_file(renamed_file)?;
-                println!("Signed.");
+            let finalized = match descriptor {
+                Some(descriptor) => psbt.sign_with_descriptor(seed, descriptor, network)?,
+                None => psbt.sign(seed, network)?,
+            };
+            println!("Signed.");
+            let mut renamed_file: PathBuf = file;
+            dir::rename_psbt(&mut renamed_file, finalized)?;
+            psbt.save_to_file(renamed_file)?;
+            if finalized {
+                println!("PSBT finalized");
             } else {
                 println!("PSBT signing not finalized");
             }

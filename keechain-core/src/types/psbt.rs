@@ -1,21 +1,25 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use core::fmt::Debug;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::str::FromStr;
+use std::sync::Arc;
 
 use bdk::database::MemoryDatabase;
-use bdk::miniscript::descriptor::{DescriptorKeyParseError, DescriptorSecretKey};
-use bdk::wallet::AddressIndex;
-use bdk::{SignOptions, Wallet};
+use bdk::miniscript::descriptor::DescriptorKeyParseError;
+use bdk::miniscript::Descriptor;
+use bdk::signer::{SignerContext, SignerOrdering, SignerWrapper};
+use bdk::{KeychainKind, SignOptions, Wallet};
 use bitcoin::psbt::{PartiallySignedTransaction, PsbtParseError};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
-use bitcoin::Network;
+use bitcoin::{Network, PrivateKey};
 
-use crate::types::Seed;
+use super::descriptors;
+use crate::types::{Descriptors, Purpose, Seed};
 use crate::util::base64;
 use crate::util::bip::bip32::Bip32RootKey;
 
@@ -32,11 +36,15 @@ pub enum Error {
     #[error(transparent)]
     DescriptorParse(#[from] DescriptorKeyParseError),
     #[error(transparent)]
+    Descriptor(#[from] descriptors::Error),
+    #[error(transparent)]
     BDK(#[from] bdk::Error),
     #[error("File not found")]
     FileNotFound,
     #[error("Unsupported derivation path")]
     UnsupportedDerivationPath,
+    #[error("Invalid derivation path")]
+    InvalidDerivationPath,
     #[error("Nothing to sign here")]
     NothingToSign,
     #[error("PSBT not signed")]
@@ -81,6 +89,25 @@ impl Psbt {
     }
 
     pub fn sign(&mut self, seed: &Seed, network: Network) -> Result<bool, Error> {
+        self.sign_custom(seed, None, Vec::new(), network)
+    }
+
+    pub fn sign_with_descriptor(
+        &mut self,
+        seed: &Seed,
+        descriptor: Descriptor<String>,
+        network: Network,
+    ) -> Result<bool, Error> {
+        self.sign_custom(seed, Some(descriptor), Vec::new(), network)
+    }
+
+    pub fn sign_custom(
+        &mut self,
+        seed: &Seed,
+        descriptor: Option<Descriptor<String>>,
+        custom_signers: Vec<SignerWrapper<PrivateKey>>,
+        network: Network,
+    ) -> Result<bool, Error> {
         let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
         let secp = Secp256k1::new();
         let root_fingerprint: Fingerprint = root.fingerprint(&secp);
@@ -101,33 +128,81 @@ impl Psbt {
             }
         }
 
-        if paths.is_empty() {
+        if paths.is_empty() && custom_signers.is_empty() {
             return Err(Error::NothingToSign);
         }
 
-        let mut finalized: bool = false;
+        let descriptor: String = match descriptor {
+            Some(desc) => desc.to_string(),
+            None => {
+                let mut first_path = paths.first().ok_or(Error::NothingToSign)?.into_iter();
+                let purpose: Purpose = match first_path.next() {
+                    Some(ChildNumber::Hardened { index: 44 }) => Purpose::PKH,
+                    Some(ChildNumber::Hardened { index: 49 }) => Purpose::SHWPKH,
+                    Some(ChildNumber::Hardened { index: 84 }) => Purpose::WPKH,
+                    Some(ChildNumber::Hardened { index: 86 }) => Purpose::TR,
+                    _ => return Err(Error::UnsupportedDerivationPath),
+                };
+                let _net = first_path.next();
+                let account = first_path.next().ok_or(Error::InvalidDerivationPath)?;
+                let account = if let ChildNumber::Hardened { index } = account {
+                    *index
+                } else {
+                    return Err(Error::InvalidDerivationPath);
+                };
+                let change = first_path.next().ok_or(Error::InvalidDerivationPath)?;
+                let change = if let ChildNumber::Normal { index } = change {
+                    match index {
+                        0 => false,
+                        1 => true,
+                        _ => return Err(Error::InvalidDerivationPath),
+                    }
+                } else {
+                    return Err(Error::InvalidDerivationPath);
+                };
+
+                let descriptors = Descriptors::new(seed.clone(), network, Some(account))?;
+                let descriptor = descriptors.get_by_purpose(purpose, change)?;
+                descriptor.to_string()
+            }
+        };
+
+        let mut wallet = Wallet::new(&descriptor, None, network, MemoryDatabase::default())?;
+
         let base_psbt = self.psbt.clone();
+        let mut counter: usize = 0;
 
         for path in paths.into_iter() {
             let child_priv: ExtendedPrivKey = root.derive_priv(&secp, &path)?;
-            let desc = DescriptorSecretKey::from_str(&child_priv.to_string())?;
-            let descriptor = match path.into_iter().next() {
-                Some(ChildNumber::Hardened { index: 44 }) => format!("pkh({desc})"),
-                Some(ChildNumber::Hardened { index: 49 }) => format!("sh(wpkh({desc}))"),
-                Some(ChildNumber::Hardened { index: 84 }) => format!("wpkh({desc})"),
-                Some(ChildNumber::Hardened { index: 86 }) => format!("tr({desc})"),
+            let private_key: PrivateKey = PrivateKey::new(child_priv.private_key, network);
+            let signer_ctx: SignerContext = match path.into_iter().next() {
+                Some(ChildNumber::Hardened { index: 44 }) => SignerContext::Legacy,
+                Some(ChildNumber::Hardened { index: 49 }) => SignerContext::Segwitv0,
+                Some(ChildNumber::Hardened { index: 84 }) => SignerContext::Segwitv0,
+                Some(ChildNumber::Hardened { index: 86 }) => SignerContext::Tap {
+                    is_internal_key: false,
+                },
                 _ => return Err(Error::UnsupportedDerivationPath),
             };
-
-            println!("Signing input for path {path}");
-
-            let wallet = Wallet::new(&descriptor, None, network, MemoryDatabase::default())?;
-
-            // Required for sign
-            let _ = wallet.get_address(AddressIndex::New)?;
-
-            finalized = wallet.sign(&mut self.psbt, SignOptions::default())?;
+            let signer = SignerWrapper::new(private_key, signer_ctx);
+            wallet.add_signer(
+                KeychainKind::External,
+                SignerOrdering(counter),
+                Arc::new(signer),
+            );
+            counter += 1;
         }
+
+        for signer in custom_signers.into_iter() {
+            wallet.add_signer(
+                KeychainKind::External,
+                SignerOrdering(counter),
+                Arc::new(signer),
+            );
+            counter += 1;
+        }
+
+        let finalized = wallet.sign(&mut self.psbt, SignOptions::default())?;
 
         if base_psbt != self.psbt {
             Ok(finalized)

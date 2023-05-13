@@ -2,29 +2,39 @@
 // Distributed under the MIT software license
 
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
 use eframe::egui::{RichText, Ui};
+use keechain_core::bdk::miniscript::Descriptor;
 use keechain_core::bitcoin::Network;
 use keechain_core::types::{Psbt, Seed};
 use keechain_core::util::dir;
 use rfd::FileDialog;
 
-use crate::component::{Button, Error, Heading, Identity, View};
+use crate::component::{Button, Error, Heading, Identity, InputField, View};
 use crate::theme::color::{DARK_GREEN, DARK_RED, ORANGE};
 use crate::{AppState, Menu, Stage};
 
-pub fn sign_file_from_seed<P>(seed: &Seed, network: Network, path: P) -> crate::Result<bool>
+pub fn sign_file_from_seed<P>(
+    seed: &Seed,
+    descriptor: String,
+    network: Network,
+    path: P,
+) -> crate::Result<bool>
 where
     P: AsRef<Path>,
 {
     let psbt_file = path.as_ref();
     let mut psbt: Psbt = Psbt::from_file(psbt_file)?;
-    let finalized: bool = psbt.sign(seed, network)?;
-    if finalized {
-        let mut psbt_file: PathBuf = psbt_file.to_path_buf();
-        dir::rename_psbt_to_signed(&mut psbt_file)?;
-        psbt.save_to_file(psbt_file)?;
-    }
+    let finalized: bool = if descriptor.is_empty() {
+        psbt.sign(seed, network)?
+    } else {
+        let descriptor = Descriptor::from_str(&descriptor)?;
+        psbt.sign_with_descriptor(seed, descriptor, network)?
+    };
+    let mut psbt_file: PathBuf = psbt_file.to_path_buf();
+    dir::rename_psbt(&mut psbt_file, finalized)?;
+    psbt.save_to_file(psbt_file)?;
     Ok(finalized)
 }
 
@@ -36,6 +46,8 @@ pub struct PsbtFile {
 
 #[derive(Default)]
 pub struct SignState {
+    descriptor: String,
+    custom_descriptor: bool,
     psbt_file: Option<PsbtFile>,
     error: Option<String>,
     finish: bool,
@@ -43,6 +55,8 @@ pub struct SignState {
 
 impl SignState {
     pub fn clear(&mut self) {
+        self.descriptor = String::new();
+        self.custom_descriptor = false;
         self.psbt_file = None;
         self.error = None;
         self.finish = false;
@@ -85,6 +99,16 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
             }
 
             if is_ready_to_sign && !is_signed {
+                if app.layouts.sign.custom_descriptor {
+                    InputField::new("Custom descriptor (optional)")
+                        .placeholder("Custom descriptor (ex. multisig desc")
+                        .rows(3)
+                        .render(ui, &mut app.layouts.sign.descriptor);
+                }
+                ui.checkbox(
+                    &mut app.layouts.sign.custom_descriptor,
+                    "Use custom descriptor",
+                );
                 if let Some(psbt_file) = app.layouts.sign.psbt_file.as_ref() {
                     if Button::new("Sign")
                         .background_color(ORANGE)
@@ -93,16 +117,16 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                     {
                         match sign_file_from_seed(
                             &keechain.keychain.seed(),
+                            app.layouts.sign.descriptor.clone(),
                             app.network,
                             psbt_file.path.clone(),
                         ) {
                             Ok(finalized) => {
-                                if finalized {
-                                    app.layouts.sign.clear();
-                                    app.layouts.sign.finish = true;
-                                } else {
+                                app.layouts.sign.clear();
+                                app.layouts.sign.finish = true;
+                                if !finalized {
                                     app.layouts.sign.error =
-                                        Some("PSBT signing not finalized".to_string());
+                                        Some("PSBT signed but not finalized".to_string());
                                 }
                             }
                             Err(e) => app.layouts.sign.error = Some(e.to_string()),

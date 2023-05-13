@@ -47,7 +47,7 @@ where
     Ok(keychain_file)
 }
 
-pub fn rename_psbt_to_signed(psbt_file: &mut PathBuf) -> Result<(), Error> {
+pub fn rename_psbt(psbt_file: &mut PathBuf, finalized: bool) -> Result<(), Error> {
     if let Some(mut file_name) = psbt_file.file_name().and_then(OsStr::to_str) {
         if let Some(ext) = psbt_file.extension().and_then(OsStr::to_str) {
             let splitted: Vec<&str> = file_name.split(&format!(".{ext}")).collect();
@@ -56,7 +56,22 @@ pub fn rename_psbt_to_signed(psbt_file: &mut PathBuf) -> Result<(), Error> {
                 None => return Err(Error::FailedToGetFileName),
             }
         }
-        psbt_file.set_file_name(&format!("{file_name}-signed.psbt"));
+
+        let mut filename = file_name.to_string();
+
+        for i in 1..u16::MAX {
+            let part = if finalized {
+                String::from("finalized")
+            } else {
+                format!("part-{i}")
+            };
+            filename = format!("{file_name}-{part}.psbt");
+            if !Path::new(&filename).exists() {
+                break;
+            }
+        }
+
+        psbt_file.set_file_name(filename);
         Ok(())
     } else {
         Err(Error::FailedToGetFileName)
