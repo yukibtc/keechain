@@ -1,6 +1,8 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+//! PSBT
+
 use core::fmt::Debug;
 use std::fs::File;
 use std::io::{Read, Write};
@@ -51,26 +53,12 @@ pub enum Error {
     PsbtNotSigned,
 }
 
-#[derive(Debug, Clone)]
-pub struct Psbt {
-    psbt: PartiallySignedTransaction,
-}
-
-impl Psbt {
-    pub fn new(psbt: PartiallySignedTransaction) -> Self {
-        Self { psbt }
-    }
-
-    pub fn from_base64<S>(psbt: S) -> Result<Self, Error>
+pub trait Psbt: Sized {
+    fn from_base64<S>(psbt: S) -> Result<Self, Error>
     where
-        S: Into<String>,
-    {
-        Ok(Psbt::new(PartiallySignedTransaction::from_str(
-            &psbt.into(),
-        )?))
-    }
+        S: Into<String>;
 
-    pub fn from_file<P>(path: P) -> Result<Self, Error>
+    fn from_file<P>(path: P) -> Result<Self, Error>
     where
         P: AsRef<Path>,
     {
@@ -84,15 +72,11 @@ impl Psbt {
         Self::from_base64(base64::encode(content))
     }
 
-    pub fn psbt(&self) -> PartiallySignedTransaction {
-        self.psbt.clone()
-    }
-
-    pub fn sign(&mut self, seed: &Seed, network: Network) -> Result<bool, Error> {
+    fn sign(&mut self, seed: &Seed, network: Network) -> Result<bool, Error> {
         self.sign_custom(seed, None, Vec::new(), network)
     }
 
-    pub fn sign_with_descriptor(
+    fn sign_with_descriptor(
         &mut self,
         seed: &Seed,
         descriptor: Descriptor<String>,
@@ -101,7 +85,43 @@ impl Psbt {
         self.sign_custom(seed, Some(descriptor), Vec::new(), network)
     }
 
-    pub fn sign_custom(
+    fn sign_custom(
+        &mut self,
+        seed: &Seed,
+        descriptor: Option<Descriptor<String>>,
+        custom_signers: Vec<SignerWrapper<PrivateKey>>,
+        network: Network,
+    ) -> Result<bool, Error>;
+
+    fn save_to_file<P>(&self, path: P) -> Result<(), Error>
+    where
+        P: AsRef<Path>,
+    {
+        let mut file: File = File::options()
+            .create(true)
+            .truncate(true)
+            .write(true)
+            .open(path.as_ref())?;
+        file.write_all(&self.as_bytes()?)?;
+        Ok(())
+    }
+
+    fn as_base64(&self) -> String;
+
+    fn as_bytes(&self) -> Result<Vec<u8>, Error> {
+        Ok(base64::decode(self.as_base64())?)
+    }
+}
+
+impl Psbt for PartiallySignedTransaction {
+    fn from_base64<S>(psbt: S) -> Result<Self, Error>
+    where
+        S: Into<String>,
+    {
+        Ok(PartiallySignedTransaction::from_str(&psbt.into())?)
+    }
+
+    fn sign_custom(
         &mut self,
         seed: &Seed,
         descriptor: Option<Descriptor<String>>,
@@ -113,7 +133,7 @@ impl Psbt {
 
         let mut paths: Vec<DerivationPath> = Vec::new();
 
-        for input in self.psbt.inputs.iter() {
+        for input in self.inputs.iter() {
             for (fingerprint, path) in input.bip32_derivation.values() {
                 if fingerprint.eq(&root_fingerprint) {
                     paths.push(path.clone());
@@ -168,7 +188,7 @@ impl Psbt {
 
         let mut wallet = Wallet::new(&descriptor, None, network, MemoryDatabase::default())?;
 
-        let base_psbt = self.psbt.clone();
+        let base_psbt = self.clone();
         let mut counter: usize = 0;
 
         for path in paths.into_iter() {
@@ -201,33 +221,16 @@ impl Psbt {
             counter += 1;
         }
 
-        let finalized = wallet.sign(&mut self.psbt, SignOptions::default())?;
+        let finalized = wallet.sign(self, SignOptions::default())?;
 
-        if base_psbt != self.psbt {
+        if base_psbt != *self {
             Ok(finalized)
         } else {
             Err(Error::PsbtNotSigned)
         }
     }
 
-    pub fn save_to_file<P>(&self, path: P) -> Result<(), Error>
-    where
-        P: AsRef<Path>,
-    {
-        let mut file: File = File::options()
-            .create(true)
-            .truncate(true)
-            .write(true)
-            .open(path.as_ref())?;
-        file.write_all(&self.as_bytes()?)?;
-        Ok(())
-    }
-
-    pub fn as_base64(&self) -> String {
-        self.psbt.to_string()
-    }
-
-    pub fn as_bytes(&self) -> Result<Vec<u8>, Error> {
-        Ok(base64::decode(self.as_base64())?)
+    fn as_base64(&self) -> String {
+        self.to_string()
     }
 }

@@ -7,6 +7,7 @@ use std::str::FromStr;
 use clap::Parser;
 use console::Term;
 use keechain_core::bips::bip39::Mnemonic;
+use keechain_core::bitcoin::psbt::PartiallySignedTransaction;
 use keechain_core::bitcoin::Network;
 use keechain_core::types::{BitcoinCore, Descriptors, Electrum, KeeChain, Psbt, Wasabi};
 use keechain_core::util::dir;
@@ -133,7 +134,8 @@ fn main() -> Result<()> {
             let path = dir::get_keychain_file(keychain_path, name)?;
             let keechain = KeeChain::open(path, io::get_password)?;
             let seed = &keechain.keychain.seed();
-            let mut psbt = Psbt::from_file(&file)?;
+            let mut psbt: PartiallySignedTransaction =
+                PartiallySignedTransaction::from_file(&file)?;
             let finalized = match descriptor {
                 Some(descriptor) => psbt.sign_with_descriptor(seed, descriptor, network)?,
                 None => psbt.sign(seed, network)?,

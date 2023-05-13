@@ -6,6 +6,7 @@ use std::str::FromStr;
 
 use eframe::egui::{RichText, Ui};
 use keechain_core::bdk::miniscript::Descriptor;
+use keechain_core::bitcoin::psbt::PartiallySignedTransaction;
 use keechain_core::bitcoin::Network;
 use keechain_core::types::{Psbt, Seed};
 use keechain_core::util::dir;
@@ -25,7 +26,7 @@ where
     P: AsRef<Path>,
 {
     let psbt_file = path.as_ref();
-    let mut psbt: Psbt = Psbt::from_file(psbt_file)?;
+    let mut psbt: PartiallySignedTransaction = PartiallySignedTransaction::from_file(psbt_file)?;
     let finalized: bool = if descriptor.is_empty() {
         psbt.sign(seed, network)?
     } else {
@@ -40,7 +41,7 @@ where
 
 #[allow(dead_code)]
 pub struct PsbtFile {
-    psbt: Psbt,
+    psbt: PartiallySignedTransaction,
     path: PathBuf,
 }
 

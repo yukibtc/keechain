@@ -1,8 +1,9 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use keechain_core::bitcoin::psbt::PartiallySignedTransaction;
 use keechain_core::bitcoin::{Address, Network, TxOut};
-use keechain_core::types::{Psbt, Secrets};
+use keechain_core::types::Secrets;
 use prettytable::format::FormatBuilder;
 use prettytable::{row, Table};
 
@@ -47,8 +48,8 @@ fn output_table_row(network: Network, output: &TxOut) -> String {
     table.to_string()
 }
 
-pub fn print_psbt(psbt: Psbt, network: Network) {
-    let tx = psbt.psbt().extract_tx();
+pub fn print_psbt(psbt: PartiallySignedTransaction, network: Network) {
+    let tx = psbt.extract_tx();
     let inputs_len: usize = tx.input.len();
     let outputs_len: usize = tx.output.len();
 
