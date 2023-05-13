@@ -19,5 +19,4 @@ rust-version = "1.65.0"
 [profile.release]
 lto = true
 codegen-units = 1
-strip = "debuginfo"
 panic = "abort"
