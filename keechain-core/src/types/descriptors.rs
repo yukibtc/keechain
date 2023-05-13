@@ -5,7 +5,6 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use bdk::miniscript::descriptor::{Descriptor, DescriptorPublicKey};
-use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{
     ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
 };
@@ -13,6 +12,7 @@ use bitcoin::Network;
 
 use super::{Purpose, Seed};
 use crate::util::bip::bip32::{self, Bip32RootKey};
+use crate::SECP256K1;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -39,8 +39,7 @@ pub struct Descriptors {
 impl Descriptors {
     pub fn new(seed: Seed, network: Network, account: Option<u32>) -> Result<Self, Error> {
         let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
-        let secp = Secp256k1::new();
-        let root_fingerprint = root.fingerprint(&secp);
+        let root_fingerprint = root.fingerprint(&SECP256K1);
 
         let paths: Vec<(Purpose, DerivationPath)> = vec![
             (
@@ -68,9 +67,9 @@ impl Descriptors {
         };
 
         for (purpose, path) in paths.into_iter() {
-            let derived_private_key: ExtendedPrivKey = root.derive_priv(&secp, &path)?;
+            let derived_private_key: ExtendedPrivKey = root.derive_priv(&SECP256K1, &path)?;
             let derived_public_key: ExtendedPubKey =
-                ExtendedPubKey::from_priv(&secp, &derived_private_key);
+                ExtendedPubKey::from_priv(&SECP256K1, &derived_private_key);
 
             descriptors.external.insert(
                 purpose,

@@ -2,13 +2,13 @@
 // Distributed under the MIT software license
 
 use bip39::Mnemonic;
-use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ExtendedPrivKey, Fingerprint};
 use bitcoin::Network;
 use serde::{Deserialize, Serialize};
 
 use crate::util::bip::bip32::Bip32RootKey;
 use crate::util::hex;
+use crate::SECP256K1;
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Seed {
@@ -60,8 +60,7 @@ impl Bip32RootKey for Seed {
 
     fn fingerprint(&self, network: Network) -> Result<Fingerprint, Self::Err> {
         let root: ExtendedPrivKey = self.to_bip32_root_key(network)?;
-        let secp = Secp256k1::new();
-        Ok(root.fingerprint(&secp))
+        Ok(root.fingerprint(&SECP256K1))
     }
 }
 

@@ -1,15 +1,17 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
-// https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki
+//! BIP85
+//!
+//! <https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki>
 
 use bip39::Mnemonic;
 use bitcoin::hashes::hmac::{Hmac, HmacEngine};
 use bitcoin::hashes::{sha512, Hash, HashEngine};
-use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey};
 
 use crate::types::{Index, WordCount};
+use crate::SECP256K1;
 
 #[derive(Debug, PartialEq, Eq, thiserror::Error)]
 pub enum Error {
@@ -21,27 +23,22 @@ pub enum Error {
 
 pub trait FromBip85: Sized {
     type Err;
-    fn from_bip85<C>(
-        secp: &Secp256k1<C>,
+
+    fn from_bip85(
         root: &ExtendedPrivKey,
         word_count: WordCount,
         index: Index,
-    ) -> Result<Self, Self::Err>
-    where
-        C: bitcoin::secp256k1::Signing;
+    ) -> Result<Self, Self::Err>;
 }
 
 impl FromBip85 for Mnemonic {
     type Err = Error;
-    fn from_bip85<C>(
-        secp: &Secp256k1<C>,
+
+    fn from_bip85(
         root: &ExtendedPrivKey,
         word_count: WordCount,
         index: Index,
-    ) -> Result<Self, Self::Err>
-    where
-        C: bitcoin::secp256k1::Signing,
-    {
+    ) -> Result<Self, Self::Err> {
         let word_count: u32 = word_count.as_u32();
         let path: Vec<ChildNumber> = vec![
             ChildNumber::from_hardened_idx(83696968)?,
@@ -51,7 +48,7 @@ impl FromBip85 for Mnemonic {
             ChildNumber::from_hardened_idx(index.as_u32())?,
         ];
         let path: DerivationPath = DerivationPath::from(path);
-        let derived: ExtendedPrivKey = root.derive_priv(secp, &path)?;
+        let derived: ExtendedPrivKey = root.derive_priv(&SECP256K1, &path)?;
 
         let mut h = HmacEngine::<sha512::Hash>::new(b"bip-entropy-from-k");
         h.input(&derived.private_key.secret_bytes());
@@ -77,12 +74,11 @@ mod tests {
         let seed = Seed::new(mnemonic, passphrase);
 
         let root = ExtendedPrivKey::new_master(Network::Bitcoin, &seed.to_bytes()).unwrap();
-        let secp = Secp256k1::new();
 
         // Words: 12
         // Index: 0
         assert_eq!(
-            Mnemonic::from_bip85(&secp, &root, WordCount::W12, Index::new(0).unwrap())
+            Mnemonic::from_bip85(&root, WordCount::W12, Index::new(0).unwrap())
                 .unwrap()
                 .to_string(),
             "gap gun smooth leader muscle renew impulse hundred twin enact fetch zoo".to_string()
@@ -91,7 +87,7 @@ mod tests {
         // Words: 12
         // Index: 1
         assert_eq!(
-            Mnemonic::from_bip85(&secp, &root, WordCount::W12, Index::new(1).unwrap())
+            Mnemonic::from_bip85(&root, WordCount::W12, Index::new(1).unwrap())
                 .unwrap()
                 .to_string(),
             "join siren history age snack dial initial raise kick enter vintage rabbit".to_string()
@@ -100,7 +96,7 @@ mod tests {
         // Words: 24
         // Index: 57
         assert_eq!(
-            Mnemonic::from_bip85(&secp, &root, WordCount::W24, Index::new(57).unwrap())
+            Mnemonic::from_bip85(&root, WordCount::W24, Index::new(57).unwrap())
                 .unwrap()
                 .to_string(),
             "this supply project flush south sport acid focus damp pulp hundred convince ramp mandate picnic area bracket group pact piano coconut cigar decline actress".to_string()
@@ -108,7 +104,7 @@ mod tests {
 
         // Test wrong seed
         assert_ne!(
-            Mnemonic::from_bip85(&secp, &root, WordCount::W12, Index::new(12).unwrap())
+            Mnemonic::from_bip85(&root, WordCount::W12, Index::new(12).unwrap())
                 .unwrap()
                 .to_string(),
             "pride drama job inform cross recall vapor lake weasel basket curve pencil".to_string()

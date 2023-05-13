@@ -5,7 +5,6 @@ use std::fmt;
 use std::str::FromStr;
 
 use bip39::Mnemonic;
-use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ExtendedPrivKey, Fingerprint};
 use bitcoin::Network;
 
@@ -26,6 +25,7 @@ pub use self::seed::Seed;
 pub use self::wasabi::Wasabi;
 use crate::util::bip::bip32::Bip32RootKey;
 use crate::util::hex;
+use crate::SECP256K1;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Purpose {
@@ -128,7 +128,6 @@ pub struct Secrets {
 
 impl Secrets {
     pub fn new(seed: Seed, network: Network) -> Result<Self, bitcoin::util::bip32::Error> {
-        let secp = Secp256k1::new();
         let mnemonic: Mnemonic = seed.mnemonic();
         let root_key: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
 
@@ -139,7 +138,7 @@ impl Secrets {
             seed_hex: seed.to_hex(),
             network,
             root_key,
-            fingerprint: root_key.fingerprint(&secp),
+            fingerprint: root_key.fingerprint(&SECP256K1),
         })
     }
 }

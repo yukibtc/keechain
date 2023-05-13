@@ -14,7 +14,6 @@ use bdk::miniscript::Descriptor;
 use bdk::signer::{SignerContext, SignerOrdering, SignerWrapper};
 use bdk::{KeychainKind, SignOptions, Wallet};
 use bitcoin::psbt::{PartiallySignedTransaction, PsbtParseError};
-use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
 use bitcoin::{Network, PrivateKey};
 
@@ -22,6 +21,7 @@ use super::descriptors;
 use crate::types::{Descriptors, Purpose, Seed};
 use crate::util::base64;
 use crate::util::bip::bip32::Bip32RootKey;
+use crate::SECP256K1;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -109,8 +109,7 @@ impl Psbt {
         network: Network,
     ) -> Result<bool, Error> {
         let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
-        let secp = Secp256k1::new();
-        let root_fingerprint: Fingerprint = root.fingerprint(&secp);
+        let root_fingerprint: Fingerprint = root.fingerprint(&SECP256K1);
 
         let mut paths: Vec<DerivationPath> = Vec::new();
 
@@ -173,7 +172,7 @@ impl Psbt {
         let mut counter: usize = 0;
 
         for path in paths.into_iter() {
-            let child_priv: ExtendedPrivKey = root.derive_priv(&secp, &path)?;
+            let child_priv: ExtendedPrivKey = root.derive_priv(&SECP256K1, &path)?;
             let private_key: PrivateKey = PrivateKey::new(child_priv.private_key, network);
             let signer_ctx: SignerContext = match path.into_iter().next() {
                 Some(ChildNumber::Hardened { index: 44 }) => SignerContext::Legacy,

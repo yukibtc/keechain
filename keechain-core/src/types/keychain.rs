@@ -5,7 +5,6 @@ use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
-use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::bip32::{ExtendedPrivKey, Fingerprint};
 use bitcoin::Network;
 #[cfg(feature = "nostr")]
@@ -320,8 +319,7 @@ impl Keychain {
         index: Index,
     ) -> Result<Mnemonic, Error> {
         let root: ExtendedPrivKey = self.seed.to_bip32_root_key(network)?;
-        let secp = Secp256k1::new();
-        Ok(Mnemonic::from_bip85(&secp, &root, word_count, index)?)
+        Ok(Mnemonic::from_bip85(&root, word_count, index)?)
     }
 
     pub fn descriptors(
