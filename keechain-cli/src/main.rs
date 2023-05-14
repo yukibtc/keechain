@@ -84,7 +84,14 @@ fn main() -> Result<()> {
                 let keechain = KeeChain::open(path, io::get_password)?;
                 let descriptors =
                     Descriptors::new(keechain.keychain.seed(), network, Some(account))?;
-                println!("{descriptors:#?}");
+                println!("Extenrals:");
+                for desc in descriptors.external().iter() {
+                    println!("- {desc}");
+                }
+                println!("Internals:");
+                for desc in descriptors.external().iter() {
+                    println!("- {desc}");
+                }
                 Ok(())
             }
             ExportTypes::BitcoinCore { name, account } => {
