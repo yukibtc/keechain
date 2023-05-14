@@ -94,7 +94,6 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                 Some(keechain) => {
                     match Index::from_str(app.layouts.deterministic_entropy.index.as_str()) {
                         Ok(index) => match keechain.keychain.deterministic_entropy(
-                            app.network,
                             app.layouts.deterministic_entropy.word_count,
                             index,
                         ) {

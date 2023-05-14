@@ -8,8 +8,9 @@
 use bip39::Mnemonic;
 use bitcoin::hashes::hmac::{Hmac, HmacEngine};
 use bitcoin::hashes::{sha512, Hash, HashEngine};
-use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey};
+use bitcoin::Network;
 
+use super::bip32::{self, Bip32, ChildNumber, DerivationPath, ExtendedPrivKey};
 use crate::types::{Index, WordCount};
 use crate::SECP256K1;
 
@@ -22,23 +23,19 @@ pub enum Error {
 }
 
 pub trait FromBip85: Sized {
-    type Err;
-
     fn from_bip85(
         root: &ExtendedPrivKey,
         word_count: WordCount,
         index: Index,
-    ) -> Result<Self, Self::Err>;
+    ) -> Result<Self, Error>;
 }
 
 impl FromBip85 for Mnemonic {
-    type Err = Error;
-
     fn from_bip85(
         root: &ExtendedPrivKey,
         word_count: WordCount,
         index: Index,
-    ) -> Result<Self, Self::Err> {
+    ) -> Result<Self, Error> {
         let word_count: u32 = word_count.as_u32();
         let path: Vec<ChildNumber> = vec![
             ChildNumber::from_hardened_idx(83696968)?,
@@ -58,6 +55,23 @@ impl FromBip85 for Mnemonic {
     }
 }
 
+pub trait Bip85: Sized + Bip32
+where
+    Error: From<<Self as bip32::Bip32>::Err>,
+{
+    /// Derive BIP85 mnemonic
+    ///
+    /// <https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki>
+    fn derive_bip85_mnemonic(
+        &self,
+        word_count: WordCount,
+        index: Index,
+    ) -> Result<Mnemonic, Error> {
+        let root: ExtendedPrivKey = self.to_bip32_root_key(Network::Bitcoin)?;
+        Mnemonic::from_bip85(&root, word_count, index)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
@@ -67,13 +81,15 @@ mod tests {
     use super::*;
     use crate::types::{Index, Seed, WordCount};
 
+    const NETWORK: Network = Network::Testnet;
+
     #[test]
-    fn test_bip85() {
+    fn test_from_bip85() {
         let mnemonic = Mnemonic::from_str("easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt").unwrap();
         let passphrase: Option<&str> = Some("mypassphrase");
         let seed = Seed::new(mnemonic, passphrase);
 
-        let root = ExtendedPrivKey::new_master(Network::Bitcoin, &seed.to_bytes()).unwrap();
+        let root = ExtendedPrivKey::new_master(NETWORK, &seed.to_bytes()).unwrap();
 
         // Words: 12
         // Index: 0
@@ -109,5 +125,68 @@ mod tests {
                 .to_string(),
             "pride drama job inform cross recall vapor lake weasel basket curve pencil".to_string()
         )
+    }
+
+    #[test]
+    fn test_to_bip85() {
+        let mnemonic = Mnemonic::from_str("easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt").unwrap();
+        let passphrase: Option<&str> = Some("mypassphrase");
+        let seed = Seed::new(mnemonic, passphrase);
+
+        // Words: 12
+        // Index: 0
+        assert_eq!(
+            seed.derive_bip85_mnemonic(WordCount::W12, Index::new(0).unwrap())
+                .unwrap()
+                .to_string(),
+            "gap gun smooth leader muscle renew impulse hundred twin enact fetch zoo".to_string()
+        );
+
+        // Words: 12
+        // Index: 1
+        assert_eq!(
+            seed.derive_bip85_mnemonic(WordCount::W12, Index::new(1).unwrap())
+                .unwrap()
+                .to_string(),
+            "join siren history age snack dial initial raise kick enter vintage rabbit".to_string()
+        );
+
+        // Words: 24
+        // Index: 57
+        assert_eq!(
+            seed.derive_bip85_mnemonic(WordCount::W24, Index::new(57).unwrap())
+                .unwrap()
+                .to_string(),
+            "this supply project flush south sport acid focus damp pulp hundred convince ramp mandate picnic area bracket group pact piano coconut cigar decline actress".to_string()
+        );
+
+        // Test wrong seed
+        assert_ne!(
+            seed.derive_bip85_mnemonic(WordCount::W12, Index::new(12).unwrap())
+                .unwrap()
+                .to_string(),
+            "pride drama job inform cross recall vapor lake weasel basket curve pencil".to_string()
+        )
+    }
+
+    #[test]
+    fn test_eq_bip85_result() {
+        let mnemonic = Mnemonic::from_str("easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt").unwrap();
+        let passphrase: Option<&str> = Some("mypassphrase");
+        let seed = Seed::new(mnemonic, passphrase);
+
+        let root = ExtendedPrivKey::new_master(Network::Testnet, &seed.to_bytes()).unwrap();
+        assert_eq!(
+            seed.derive_bip85_mnemonic(WordCount::W12, Index::new(0).unwrap())
+                .unwrap(),
+            Mnemonic::from_bip85(&root, WordCount::W12, Index::new(0).unwrap()).unwrap()
+        );
+
+        let root = ExtendedPrivKey::new_master(Network::Regtest, &seed.to_bytes()).unwrap();
+        assert_eq!(
+            seed.derive_bip85_mnemonic(WordCount::W24, Index::new(4).unwrap())
+                .unwrap(),
+            Mnemonic::from_bip85(&root, WordCount::W24, Index::new(4).unwrap()).unwrap()
+        );
     }
 }

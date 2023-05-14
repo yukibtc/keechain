@@ -14,9 +14,9 @@ use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
 
 use super::Descriptors;
-use crate::bips::bip32::{self, Bip32, ExtendedPrivKey, Fingerprint};
+use crate::bips::bip32::{self, Bip32, Fingerprint};
 use crate::bips::bip39::{self, Mnemonic};
-use crate::bips::bip85::{self, FromBip85};
+use crate::bips::bip85::{self, Bip85};
 use crate::crypto::aes::{self, Aes256Encryption};
 use crate::types::{Index, Secrets, Seed, WordCount};
 use crate::util::dir::KEECHAIN_EXTENSION;
@@ -313,12 +313,10 @@ impl Keychain {
 
     pub fn deterministic_entropy(
         &self,
-        network: Network,
         word_count: WordCount,
         index: Index,
     ) -> Result<Mnemonic, Error> {
-        let root: ExtendedPrivKey = self.seed.to_bip32_root_key(network)?;
-        Ok(Mnemonic::from_bip85(&root, word_count, index)?)
+        Ok(self.seed.derive_bip85_mnemonic(word_count, index)?)
     }
 
     pub fn descriptors(

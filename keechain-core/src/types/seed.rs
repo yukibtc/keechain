@@ -6,6 +6,7 @@ use bitcoin::Network;
 use serde::{Deserialize, Serialize};
 
 use crate::bips::bip32::{self, Bip32, ExtendedPrivKey};
+use crate::bips::bip85::Bip85;
 use crate::util::hex;
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -56,6 +57,8 @@ impl Bip32 for Seed {
         ExtendedPrivKey::new_master(network, &self.to_bytes())
     }
 }
+
+impl Bip85 for Seed {}
 
 #[cfg(test)]
 mod tests {

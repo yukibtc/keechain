@@ -159,10 +159,9 @@ fn main() -> Result<()> {
             } => {
                 let path = dir::get_keychain_file(keychain_path, name)?;
                 let keechain = KeeChain::open(path, io::get_password)?;
-                let mnemonic: Mnemonic =
-                    keechain
-                        .keychain
-                        .deterministic_entropy(network, word_count.into(), index)?;
+                let mnemonic: Mnemonic = keechain
+                    .keychain
+                    .deterministic_entropy(word_count.into(), index)?;
                 println!("Mnemonic: {mnemonic}");
                 Ok(())
             }
