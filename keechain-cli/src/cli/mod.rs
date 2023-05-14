@@ -66,6 +66,9 @@ pub enum Command {
         /// PSBT file
         #[arg(required = true)]
         file: PathBuf,
+        /// Print base64
+        #[clap(long)]
+        base64: bool,
     },
     /// Sign PSBT
     #[command(arg_required_else_help = true)]

@@ -128,9 +128,13 @@ fn main() -> Result<()> {
                 Ok(())
             }
         },
-        Command::Decode { file } => {
-            let psbt = Psbt::from_file(file)?;
-            util::print_psbt(psbt, network);
+        Command::Decode { file, base64 } => {
+            let psbt = PartiallySignedTransaction::from_file(file)?;
+            if base64 {
+                println!("{}", psbt.as_base64());
+            } else {
+                util::print_psbt(psbt, network);
+            }
             Ok(())
         }
         Command::Sign {
