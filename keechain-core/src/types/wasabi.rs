@@ -5,11 +5,12 @@ use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
 use bitcoin::Network;
 use serde::{Deserialize, Serialize};
 
-use crate::bips::bip32::{self, Bip32RootKey};
+use crate::bips::bip32::{
+    self, Bip32, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
+};
 use crate::types::Seed;
 use crate::SECP256K1;
 
@@ -18,7 +19,7 @@ pub enum Error {
     #[error(transparent)]
     IO(#[from] std::io::Error),
     #[error(transparent)]
-    BIP32(#[from] bitcoin::util::bip32::Error),
+    BIP32(#[from] bip32::Error),
     #[error(transparent)]
     Json(#[from] serde_json::Error),
 }

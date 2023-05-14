@@ -5,7 +5,6 @@ use std::fmt;
 use std::str::FromStr;
 
 use bip39::Mnemonic;
-use bitcoin::util::bip32::{ExtendedPrivKey, Fingerprint};
 use bitcoin::Network;
 
 pub mod bitcoin_core;
@@ -23,7 +22,7 @@ pub use self::keychain::{KeeChain, Keychain};
 pub use self::psbt::Psbt;
 pub use self::seed::Seed;
 pub use self::wasabi::Wasabi;
-use crate::bips::bip32::Bip32RootKey;
+use crate::bips::bip32::{Bip32, ExtendedPrivKey, Fingerprint};
 use crate::util::hex;
 use crate::SECP256K1;
 

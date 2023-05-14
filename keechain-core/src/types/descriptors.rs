@@ -5,13 +5,12 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use bdk::miniscript::descriptor::{Descriptor, DescriptorPublicKey};
-use bitcoin::util::bip32::{
-    ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
-};
 use bitcoin::Network;
 
 use super::{Purpose, Seed};
-use crate::bips::bip32::{self, Bip32RootKey};
+use crate::bips::bip32::{
+    self, Bip32, ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
+};
 use crate::SECP256K1;
 
 #[derive(Debug, thiserror::Error)]

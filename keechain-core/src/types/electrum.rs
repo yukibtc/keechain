@@ -6,12 +6,13 @@ use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
 use bitcoin::Network;
 
 use serde::{Deserialize, Serialize};
 
-use crate::bips::bip32::{self, Bip32RootKey};
+use crate::bips::bip32::{
+    self, Bip32, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
+};
 use crate::slips::slip132::{self, ToSlip132};
 use crate::types::Seed;
 use crate::SECP256K1;

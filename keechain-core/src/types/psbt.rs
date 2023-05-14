@@ -16,11 +16,10 @@ use bdk::miniscript::Descriptor;
 use bdk::signer::{SignerContext, SignerOrdering, SignerWrapper};
 use bdk::{KeychainKind, SignOptions, Wallet};
 use bitcoin::psbt::{PartiallySignedTransaction, PsbtParseError};
-use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
 use bitcoin::{Network, PrivateKey};
 
 use super::descriptors;
-use crate::bips::bip32::Bip32RootKey;
+use crate::bips::bip32::{Bip32, ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
 use crate::types::{Descriptors, Purpose, Seed};
 use crate::util::base64;
 use crate::SECP256K1;

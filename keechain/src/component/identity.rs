@@ -2,7 +2,7 @@
 // Distributed under the MIT software license
 
 use eframe::egui::{RichText, Ui};
-use keechain_core::bips::bip32::Bip32RootKey;
+use keechain_core::bips::bip32::Bip32;
 use keechain_core::bitcoin::Network;
 use keechain_core::types::Seed;
 

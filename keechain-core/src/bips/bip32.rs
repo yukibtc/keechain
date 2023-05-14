@@ -1,13 +1,20 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use bitcoin::util::bip32::{ChildNumber, DerivationPath, Error, ExtendedPrivKey, Fingerprint};
+pub use bitcoin::util::bip32::*;
 use bitcoin::Network;
 
-pub trait Bip32RootKey {
+use crate::SECP256K1;
+
+pub trait Bip32 {
     type Err;
+
     fn to_bip32_root_key(&self, network: Network) -> Result<ExtendedPrivKey, Self::Err>;
-    fn fingerprint(&self, network: Network) -> Result<Fingerprint, Self::Err>;
+
+    fn fingerprint(&self, network: Network) -> Result<Fingerprint, Self::Err> {
+        let root: ExtendedPrivKey = self.to_bip32_root_key(network)?;
+        Ok(root.fingerprint(&SECP256K1))
+    }
 }
 
 pub fn account_extended_path(
