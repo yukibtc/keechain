@@ -5,6 +5,7 @@ use bip39::Mnemonic;
 use bitcoin::Network;
 use serde::{Deserialize, Serialize};
 
+use super::descriptors::ToDescriptor;
 use crate::bips::bip32::{self, Bip32, ExtendedPrivKey};
 use crate::bips::bip85::Bip85;
 use crate::util::hex;
@@ -59,6 +60,7 @@ impl Bip32 for Seed {
 }
 
 impl Bip85 for Seed {}
+impl ToDescriptor for Seed {}
 
 #[cfg(test)]
 mod tests {

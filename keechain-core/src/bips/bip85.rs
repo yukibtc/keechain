@@ -10,7 +10,7 @@ use bitcoin::hashes::hmac::{Hmac, HmacEngine};
 use bitcoin::hashes::{sha512, Hash, HashEngine};
 use bitcoin::Network;
 
-use super::bip32::{self, Bip32, ChildNumber, DerivationPath, ExtendedPrivKey};
+use super::bip32::{Bip32, ChildNumber, DerivationPath, ExtendedPrivKey};
 use crate::types::{Index, WordCount};
 use crate::SECP256K1;
 
@@ -57,7 +57,7 @@ impl FromBip85 for Mnemonic {
 
 pub trait Bip85: Sized + Bip32
 where
-    Error: From<<Self as bip32::Bip32>::Err>,
+    Error: From<<Self as Bip32>::Err>,
 {
     /// Derive BIP85 mnemonic
     ///
