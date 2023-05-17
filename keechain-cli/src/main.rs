@@ -89,7 +89,7 @@ fn main() -> Result<()> {
                     println!("- {desc}");
                 }
                 println!("Internals:");
-                for desc in descriptors.external().iter() {
+                for desc in descriptors.internal().iter() {
                     println!("- {desc}");
                 }
                 Ok(())
