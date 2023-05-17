@@ -5,6 +5,7 @@ use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
+use bitcoin::hashes::Hash;
 use bitcoin::Network;
 #[cfg(feature = "nostr")]
 use nostr::nips::nip06::FromMnemonic;
@@ -18,6 +19,7 @@ use crate::bips::bip32::{self, Bip32, Fingerprint};
 use crate::bips::bip39::{self, Mnemonic};
 use crate::bips::bip85::{self, Bip85};
 use crate::crypto::aes::{self, Aes256Encryption};
+use crate::crypto::hash;
 use crate::types::{Index, Secrets, Seed, WordCount};
 use crate::util::dir::KEECHAIN_EXTENSION;
 use crate::util::{self, base64};
@@ -118,7 +120,7 @@ impl KeeChain {
         let password: String = get_password().map_err(|e| Error::Generic(e.to_string()))?;
 
         let keechain_raw_file: KeeChainRaw = util::serde::deserialize(content)?;
-        let content: Vec<u8> = base64::decode(keechain_raw_file.keychain)?;
+        let content: Vec<u8> = base64::decode(keechain_raw_file.keychain)?; // TODO: remove this and bump keechain version file
 
         Ok(Self {
             file: keychain_file,
@@ -200,11 +202,11 @@ impl KeeChain {
     }
 
     pub fn save(&self) -> Result<(), Error> {
-        let keychain: Vec<u8> = self.keychain.encrypt(self.password.clone())?;
+        let keychain: String = self.keychain.encrypt(self.password.clone())?;
         let raw = KeeChainRaw {
             version: self.version,
             encryption_key_type: self.encryption_key_type.clone(),
-            keychain: base64::encode(keychain),
+            keychain: base64::encode(keychain), // TODO: remove this and bump keechain version file
         };
         let data: Vec<u8> = util::serde::serialize(raw)?;
         let mut file: File = File::options()
@@ -377,18 +379,20 @@ impl Keychain {
 
 impl Aes256Encryption for Keychain {
     type Err = Error;
-    fn encrypt<K>(&self, key: K) -> Result<Vec<u8>, Self::Err>
+    fn encrypt<K>(&self, key: K) -> Result<String, Self::Err>
     where
         K: AsRef<[u8]>,
     {
         let serialized: Vec<u8> = util::serde::serialize(self)?;
-        Ok(aes::encrypt(key, &serialized))
+        let key: [u8; 32] = hash::sha256(key).into_inner();
+        Ok(aes::encrypt(key, serialized))
     }
 
     fn decrypt<K>(key: K, content: &[u8]) -> Result<Self, Self::Err>
     where
         K: AsRef<[u8]>,
     {
+        let key: [u8; 32] = hash::sha256(key).into_inner();
         match aes::decrypt(key, content) {
             Ok(data) => Ok(util::serde::deserialize(data)?),
             Err(aes::Error::WrongBlockMode) => Err(Error::DecryptionFailed),
