@@ -15,7 +15,7 @@ use bdk::miniscript::descriptor::DescriptorKeyParseError;
 use bdk::miniscript::Descriptor;
 use bdk::signer::{SignerContext, SignerOrdering, SignerWrapper};
 use bdk::{KeychainKind, SignOptions, Wallet};
-use bitcoin::psbt::{PartiallySignedTransaction, PsbtParseError};
+use bitcoin::psbt::{self, PartiallySignedTransaction, PsbtParseError};
 use bitcoin::{Network, PrivateKey};
 
 use super::descriptors;
@@ -32,6 +32,8 @@ pub enum Error {
     Base64(#[from] base64::DecodeError),
     #[error(transparent)]
     BIP32(#[from] bitcoin::util::bip32::Error),
+    #[error(transparent)]
+    Psbt(#[from] psbt::Error),
     #[error(transparent)]
     PsbtParse(#[from] PsbtParseError),
     #[error(transparent)]
@@ -50,6 +52,12 @@ pub enum Error {
     NothingToSign,
     #[error("PSBT not signed")]
     PsbtNotSigned,
+    /// Negative fee
+    #[error("negative fee")]
+    NegativeFee,
+    /// Integer overflow in fee calculation
+    #[error("fee overflow")]
+    FeeOverflow,
 }
 
 pub trait Psbt: Sized {
@@ -110,6 +118,18 @@ pub trait Psbt: Sized {
     fn as_bytes(&self) -> Result<Vec<u8>, Error> {
         Ok(base64::decode(self.as_base64())?)
     }
+
+    /// Calculates transaction fee.
+    ///
+    /// 'Fee' being the amount that will be paid for mining a transaction with the current inputs
+    /// and outputs i.e., the difference in value of the total inputs and the total outputs.
+    ///
+    /// ## Errors
+    ///
+    /// - [`Error::MissingUtxo`] when UTXO information for any input is not present or is invalid.
+    /// - [`Error::NegativeFee`] if calculated value is negative.
+    /// - [`Error::FeeOverflow`] if an integer overflow occurs.
+    fn fee(&self) -> Result<u64, Error>;
 }
 
 impl Psbt for PartiallySignedTransaction {
@@ -231,6 +251,28 @@ impl Psbt for PartiallySignedTransaction {
 
     fn as_base64(&self) -> String {
         self.to_string()
+    }
+
+    /// Calculates transaction fee.
+    ///
+    /// 'Fee' being the amount that will be paid for mining a transaction with the current inputs
+    /// and outputs i.e., the difference in value of the total inputs and the total outputs.
+    ///
+    /// ## Errors
+    ///
+    /// - [`Error::MissingUtxo`] when UTXO information for any input is not present or is invalid.
+    /// - [`Error::NegativeFee`] if calculated value is negative.
+    /// - [`Error::FeeOverflow`] if an integer overflow occurs.
+    fn fee(&self) -> Result<u64, Error> {
+        let mut inputs: u64 = 0;
+        for utxo in self.iter_funding_utxos() {
+            inputs = inputs.checked_add(utxo?.value).ok_or(Error::FeeOverflow)?;
+        }
+        let mut outputs: u64 = 0;
+        for out in &self.unsigned_tx.output {
+            outputs = outputs.checked_add(out.value).ok_or(Error::FeeOverflow)?;
+        }
+        inputs.checked_sub(outputs).ok_or(Error::NegativeFee)
     }
 }
 
