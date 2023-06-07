@@ -150,7 +150,7 @@ where
     }
 }
 
-fn descriptor(
+pub fn descriptor(
     root_fingerprint: Fingerprint,
     pubkey: ExtendedPubKey,
     path: &DerivationPath,
@@ -187,7 +187,7 @@ fn descriptor(
     Ok((*purpose, DescriptorPublicKey::from_str(&desc)?))
 }
 
-fn typed_descriptor(
+pub fn typed_descriptor(
     root_fingerprint: Fingerprint,
     pubkey: ExtendedPubKey,
     path: &DerivationPath,
