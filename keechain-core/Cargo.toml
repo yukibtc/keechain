@@ -20,7 +20,7 @@ aes = "0.8"
 base64 = "0.21"
 bdk = { version = "0.28", default-features = false, features = ["std"] }
 bip39 = "2.0"
-bitcoin = { version = "0.29", features = ["rand", "serde"] }
+bitcoin = { version = "0.29", default-features = false, features = ["rand", "serde"] }
 cbc = { version = "0.1", features = ["alloc"] }
 nostr = { version = "=0.22.0-bitcoin-v0.29", default-features = false, features = ["nip06", "nip19"], optional = true }
 once_cell = "1.17"
