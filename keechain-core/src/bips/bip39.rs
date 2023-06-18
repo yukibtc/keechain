@@ -4,9 +4,12 @@
 pub use bip39::*;
 use bitcoin::hashes::hmac::{Hmac, HmacEngine};
 use bitcoin::hashes::{sha512, Hash, HashEngine};
+#[cfg(all(feature = "sysinfo", not(target_os = "ios")))]
+use bitcoin::secp256k1::rand;
 use bitcoin::secp256k1::rand::rngs::OsRng;
-use bitcoin::secp256k1::rand::{self, RngCore, SeedableRng};
+use bitcoin::secp256k1::rand::{RngCore, SeedableRng};
 use rand_chacha::ChaCha20Rng;
+#[cfg(all(feature = "sysinfo", not(target_os = "ios")))]
 use sysinfo::{System, SystemExt};
 
 use crate::types::WordCount;
@@ -25,6 +28,7 @@ pub fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
     chacha.fill_bytes(&mut chacha_random);
     h.input(&chacha_random);
 
+    #[cfg(all(feature = "sysinfo", not(target_os = "ios")))]
     if System::IS_SUPPORTED {
         let system_info: System = System::new_all();
 
@@ -74,6 +78,9 @@ pub fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
         eprintln!("impossible to fetch entropy from dynamic and static events");
         h.input(&time::timestamp_nanos().to_be_bytes());
     }
+
+    #[cfg(any(not(feature = "sysinfo"), target_os = "ios"))]
+    h.input(&time::timestamp_nanos().to_be_bytes());
 
     // Add custom entropy
     if let Some(custom) = custom {
