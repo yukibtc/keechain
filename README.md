@@ -22,8 +22,8 @@ Obviously, anyone else can use and test `keechain`!
 * Generate mnemonic (BIP39) using many sources of entropy:
     - True random number generator (TRNG)
     - Cryptographically secure pseudo-random number generator (CSPRNG)
-    - Dynamic events: timestamp, boot time, total and free memory, total and free SWAP, OS processes and load average
-    - Static events: hostname, OS and kernel version, global CPU info and device users
+    - Dynamic events: timestamp, boot time, total and free memory, total and free SWAP, OS processes and load average (NOT available on `apple` devices)
+    - Static events: hostname, OS and kernel version, global CPU info and device users (NOT available on `apple` devices)
     - Optional: dice roll 🎲
 * Restore mnemonic (BIP39)
 * Apply and, optionally, save passphrases (BIP39)
