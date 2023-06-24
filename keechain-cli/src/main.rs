@@ -148,7 +148,7 @@ fn main() -> Result<()> {
             let mut psbt: PartiallySignedTransaction =
                 PartiallySignedTransaction::from_file(&file)?;
             let finalized = match descriptor {
-                Some(descriptor) => psbt.sign_with_descriptor(seed, descriptor, network)?,
+                Some(descriptor) => psbt.sign_with_descriptor(seed, descriptor, false, network)?,
                 None => psbt.sign(seed, network)?,
             };
             println!("Signed.");

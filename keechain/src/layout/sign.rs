@@ -31,7 +31,7 @@ where
         psbt.sign(seed, network)?
     } else {
         let descriptor = Descriptor::from_str(&descriptor)?;
-        psbt.sign_with_descriptor(seed, descriptor, network)?
+        psbt.sign_with_descriptor(seed, descriptor, false, network)?
     };
     let mut psbt_file: PathBuf = psbt_file.to_path_buf();
     dir::rename_psbt(&mut psbt_file, finalized)?;
