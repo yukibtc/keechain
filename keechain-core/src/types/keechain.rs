@@ -11,7 +11,7 @@ use super::keychain::{self, Keychain};
 use crate::bips::bip39::{self, Mnemonic};
 use crate::crypto::aes::Aes256Encryption;
 use crate::types::WordCount;
-use crate::util::dir::KEECHAIN_EXTENSION;
+use crate::util::dir::{KEECHAIN_DOT_EXTENSION, KEECHAIN_EXTENSION};
 use crate::util::{self, base64};
 use crate::Result;
 
@@ -178,6 +178,13 @@ impl KeeChain {
         keechain.save()?;
 
         Ok(keechain)
+    }
+
+    /// Get keechain file name
+    pub fn name(&self) -> Option<String> {
+        let file_name = self.file.file_name()?;
+        let file_name = file_name.to_str()?.to_string();
+        Some(file_name.replace(KEECHAIN_DOT_EXTENSION, ""))
     }
 
     pub fn save(&self) -> Result<(), Error> {

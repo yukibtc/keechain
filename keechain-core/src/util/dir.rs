@@ -6,7 +6,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 pub const KEECHAIN_EXTENSION: &str = "keechain";
-const KEECHAIN_DOT_EXTENSION: &str = ".keechain";
+pub(crate) const KEECHAIN_DOT_EXTENSION: &str = ".keechain";
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
