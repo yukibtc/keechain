@@ -37,8 +37,6 @@ pub enum Error {
     FileAlreadyExists,
     #[error("Invalid password")]
     InvalidPassword,
-    #[error("Password not match")]
-    PasswordNotMatch,
     #[error("{0}")]
     Generic(String),
 }
@@ -245,6 +243,11 @@ impl KeeChain {
     {
         let mut password = self.password.write();
         let new_password: String = get_new_password().map_err(|e| Error::Generic(e.to_string()))?;
+
+        if new_password.is_empty() {
+            return Err(Error::InvalidPassword);
+        }
+
         if *password != new_password {
             // Set password
             *password = new_password;
@@ -254,11 +257,9 @@ impl KeeChain {
 
             // Re-save the file
             self.save()?;
-
-            Ok(())
-        } else {
-            Err(Error::PasswordNotMatch)
         }
+
+        Ok(())
     }
 
     pub fn wipe(&self) -> Result<(), Error> {
