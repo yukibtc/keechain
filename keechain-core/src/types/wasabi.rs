@@ -45,6 +45,10 @@ impl Wasabi {
         })
     }
 
+    pub fn as_json(&self) -> String {
+        serde_json::json!(self).to_string()
+    }
+
     pub fn save_to_file<P>(&self, path: P) -> Result<PathBuf, Error>
     where
         P: AsRef<Path>,
