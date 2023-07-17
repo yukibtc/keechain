@@ -31,3 +31,7 @@ thiserror = "1.0"
 
 [target.'cfg(not(target_vendor = "apple"))'.dependencies]
 sysinfo = { version = "0.29", optional = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+bdk = { version = "0.28", default-features = false, features = ["async-interface", "std"] }
+getrandom = { version = "0.2", features = ["js"] }
