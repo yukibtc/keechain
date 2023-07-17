@@ -4,7 +4,9 @@
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 
 use super::keychain::{self, Keychain};
@@ -35,6 +37,8 @@ pub enum Error {
     FileAlreadyExists,
     #[error("Invalid password")]
     InvalidPassword,
+    #[error("Password not match")]
+    PasswordNotMatch,
     #[error("{0}")]
     Generic(String),
 }
@@ -54,8 +58,8 @@ struct KeeChainRaw {
 
 #[derive(Debug, Clone)]
 pub struct KeeChain {
-    file: PathBuf,
-    password: String,
+    file: Arc<RwLock<PathBuf>>,
+    password: Arc<RwLock<String>>,
     version: u8,
     encryption_key_type: EncryptionKeyType,
     pub keychain: Keychain,
@@ -74,8 +78,8 @@ impl KeeChain {
         S: Into<String>,
     {
         Self {
-            file: file.as_ref().to_path_buf(),
-            password: password.into(),
+            file: Arc::new(RwLock::new(file.as_ref().to_path_buf())),
+            password: Arc::new(RwLock::new(password.into())),
             version,
             encryption_key_type,
             keychain,
@@ -101,13 +105,13 @@ impl KeeChain {
         let keechain_raw_file: KeeChainRaw = util::serde::deserialize(content)?;
         let content: Vec<u8> = base64::decode(keechain_raw_file.keychain)?; // TODO: remove this and bump keechain version file
 
-        Ok(Self {
-            file: keychain_file,
-            password: password.clone(),
-            version: keechain_raw_file.version,
-            encryption_key_type: keechain_raw_file.encryption_key_type,
-            keychain: Keychain::decrypt(password, &content)?,
-        })
+        Ok(Self::new(
+            keychain_file,
+            password.clone(),
+            keechain_raw_file.version,
+            keechain_raw_file.encryption_key_type,
+            Keychain::decrypt(password, &content)?,
+        ))
     }
 
     pub fn generate<P, PSW, E>(
@@ -136,13 +140,13 @@ impl KeeChain {
         let entropy: Vec<u8> = bip39::entropy(word_count, custom_entropy);
         let mnemonic = Mnemonic::from_entropy(&entropy)?;
 
-        let keechain = Self {
-            file: keychain_file,
+        let keechain = Self::new(
+            keychain_file,
             password,
-            version: KEECHAIN_FILE_VERSION,
-            encryption_key_type: EncryptionKeyType::Password,
-            keychain: Keychain::new(mnemonic, Vec::new()),
-        };
+            KEECHAIN_FILE_VERSION,
+            EncryptionKeyType::Password,
+            Keychain::new(mnemonic, Vec::new()),
+        );
 
         keechain.save()?;
 
@@ -167,28 +171,34 @@ impl KeeChain {
 
         let mnemonic: Mnemonic = get_mnemonic().map_err(|e| Error::Generic(e.to_string()))?;
 
-        let keechain = Self {
-            file: keychain_file,
+        let keechain = Self::new(
+            keychain_file,
             password,
-            version: KEECHAIN_FILE_VERSION,
-            encryption_key_type: EncryptionKeyType::Password,
-            keychain: Keychain::new(mnemonic, Vec::new()),
-        };
+            KEECHAIN_FILE_VERSION,
+            EncryptionKeyType::Password,
+            Keychain::new(mnemonic, Vec::new()),
+        );
 
         keechain.save()?;
 
         Ok(keechain)
     }
 
+    pub fn file_path(&self) -> PathBuf {
+        self.file.read().clone()
+    }
+
     /// Get keechain file name
     pub fn name(&self) -> Option<String> {
-        let file_name = self.file.file_name()?;
+        let file = self.file.read();
+        let file_name = file.file_name()?;
         let file_name = file_name.to_str()?.to_string();
         Some(file_name.replace(KEECHAIN_DOT_EXTENSION, ""))
     }
 
     pub fn save(&self) -> Result<(), Error> {
-        let keychain: String = self.keychain.encrypt(self.password.clone())?;
+        let password = self.password.read();
+        let keychain: String = self.keychain.encrypt(password.clone())?;
         let raw = KeeChainRaw {
             version: self.version,
             encryption_key_type: self.encryption_key_type.clone(),
@@ -199,7 +209,7 @@ impl KeeChain {
             .create(true)
             .write(true)
             .truncate(true)
-            .open(self.file.as_path())?;
+            .open(self.file.read().as_path())?;
         file.write_all(&data)?;
         Ok(())
     }
@@ -208,44 +218,55 @@ impl KeeChain {
     where
         S: Into<String>,
     {
-        self.password == password.into()
+        *self.password.read() == password.into()
     }
 
-    pub fn rename<S>(&mut self, new_name: S) -> Result<(), Error>
+    pub fn rename<S>(&self, new_name: S) -> Result<(), Error>
     where
         S: Into<String>,
     {
-        let mut new: PathBuf = self.file.clone();
+        let old: PathBuf = self.file_path();
+        let mut new: PathBuf = old.clone();
         new.set_file_name(new_name.into());
         new.set_extension(KEECHAIN_EXTENSION);
         if new.exists() {
             Err(Error::FileAlreadyExists)
         } else {
-            fs::rename(self.file.as_path(), new.as_path())?;
-            self.file = new;
+            fs::rename(old.as_path(), new.as_path())?;
+            let mut file = self.file.write();
+            *file = new;
             Ok(())
         }
     }
 
-    pub fn change_password<NPSW>(&mut self, get_new_password: NPSW) -> Result<(), Error>
+    pub fn change_password<NPSW>(&self, get_new_password: NPSW) -> Result<(), Error>
     where
         NPSW: FnOnce() -> Result<String>,
     {
+        let mut password = self.password.write();
         let new_password: String = get_new_password().map_err(|e| Error::Generic(e.to_string()))?;
-        if self.password != new_password {
-            self.password = new_password;
+        if *password != new_password {
+            // Set password
+            *password = new_password;
+
+            // Drop the RwLock
+            drop(password);
+
+            // Re-save the file
             self.save()?;
+
+            Ok(())
+        } else {
+            Err(Error::PasswordNotMatch)
         }
-        Ok(())
     }
 
     pub fn wipe(&self) -> Result<(), Error> {
-        let mut file: File = File::options()
-            .write(true)
-            .truncate(true)
-            .open(self.file.as_path())?;
+        let file = self.file.read();
+        let path = file.as_path();
+        let mut file: File = File::options().write(true).truncate(true).open(path)?;
         file.write_all(&[0u8; 21])?;
-        std::fs::remove_file(self.file.as_path())?;
+        std::fs::remove_file(path)?;
         Ok(())
     }
 }

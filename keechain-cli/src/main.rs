@@ -199,12 +199,12 @@ fn main() -> Result<()> {
         Command::Setting { command } => match command {
             SettingCommand::Rename { name, new_name } => {
                 let path = dir::get_keychain_file(&keychain_path, name)?;
-                let mut keechain = KeeChain::open(path, io::get_password)?;
+                let keechain = KeeChain::open(path, io::get_password)?;
                 Ok(keechain.rename(new_name)?)
             }
             SettingCommand::ChangePassword { name } => {
                 let path = dir::get_keychain_file(keychain_path, name)?;
-                let mut keechain = KeeChain::open(path, io::get_password)?;
+                let keechain = KeeChain::open(path, io::get_password)?;
                 Ok(keechain.change_password(io::get_password_with_confirmation)?)
             }
         },
