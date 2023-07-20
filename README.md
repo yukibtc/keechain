@@ -35,6 +35,7 @@ Obviously, anyone else can use and test `keechain`!
     - Wasabi JSON file (BIP84)
 * Sign and decode PSBT file
 * Deterministic Entropy (BIP85)
+* Miniscript support
 * Danger:
     - View secrets: entropy, mnemonic, passphrase, HEX seed, BIP32 root key and fingerprint.
     - Wipe: permanently delete keychain
