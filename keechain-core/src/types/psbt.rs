@@ -10,7 +10,6 @@ use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use bdk::database::MemoryDatabase;
 use bdk::miniscript::descriptor::DescriptorKeyParseError;
 use bdk::miniscript::Descriptor;
 use bdk::signer::{SignerContext, SignerOrdering, SignerWrapper};
@@ -40,6 +39,8 @@ pub enum Error {
     DescriptorParse(#[from] DescriptorKeyParseError),
     #[error(transparent)]
     Descriptor(#[from] descriptors::Error),
+    #[error(transparent)]
+    BdkDescriptor(#[from] bdk::descriptor::DescriptorError),
     #[error(transparent)]
     BDK(#[from] bdk::Error),
     #[error("File not found")]
@@ -214,7 +215,7 @@ impl Psbt for PartiallySignedTransaction {
             }
         };
 
-        let mut wallet = Wallet::new(&descriptor, None, network, MemoryDatabase::default())?;
+        let mut wallet = Wallet::new_no_persist(&descriptor, None, network)?;
 
         let base_psbt = self.clone();
         let mut counter: usize = 0;
