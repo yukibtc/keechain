@@ -117,6 +117,7 @@ impl fmt::Debug for Index {
     }
 }
 
+#[derive(Clone)]
 pub struct Secrets {
     pub entropy: String,
     pub mnemonic: Mnemonic,
@@ -125,6 +126,12 @@ pub struct Secrets {
     pub network: Network,
     pub root_key: ExtendedPrivKey,
     pub fingerprint: Fingerprint,
+}
+
+impl fmt::Debug for Secrets {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "<secret>")
+    }
 }
 
 impl Secrets {
