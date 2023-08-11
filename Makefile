@@ -36,6 +36,7 @@ precommit: test
 	@cargo fmt --all -- --config format_code_in_doc_comments=true
 	cargo clippy --all
 	cargo clippy --all --all-features
+	cargo clippy -p keechain-core --target wasm32-unknown-unknown
 
 test:
 	cargo test -p keechain-core
