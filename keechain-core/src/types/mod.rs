@@ -130,7 +130,7 @@ pub struct Secrets {
 
 impl fmt::Debug for Secrets {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "<secret>")
+        write!(f, "<sensitive>")
     }
 }
 

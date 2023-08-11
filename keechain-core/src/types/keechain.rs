@@ -1,6 +1,7 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use core::fmt;
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -54,13 +55,19 @@ struct KeeChainRaw {
     keychain: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct KeeChain {
     file: Arc<RwLock<PathBuf>>,
     password: Arc<RwLock<String>>,
     version: u8,
     encryption_key_type: EncryptionKeyType,
     pub keychain: Keychain,
+}
+
+impl fmt::Debug for KeeChain {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "<sensitive>")
+    }
 }
 
 impl KeeChain {

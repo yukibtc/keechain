@@ -1,6 +1,8 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use core::fmt;
+
 use bitcoin::hashes::Hash;
 use bitcoin::Network;
 #[cfg(feature = "nostr")]
@@ -45,12 +47,18 @@ struct KeychainIntermediate {
     passphrases: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Clone, Serialize)]
 pub struct Keychain {
     mnemonic: Mnemonic,
     passphrases: Vec<String>,
     #[serde(skip_serializing)]
     pub seed: Seed,
+}
+
+impl fmt::Debug for Keychain {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "<sensitive>")
+    }
 }
 
 impl<'de> Deserialize<'de> for Keychain {

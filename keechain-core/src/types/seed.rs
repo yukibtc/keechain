@@ -1,6 +1,8 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use core::fmt;
+
 use bip39::Mnemonic;
 use bitcoin::Network;
 use serde::{Deserialize, Serialize};
@@ -10,10 +12,16 @@ use crate::bips::bip32::{self, Bip32, ExtendedPrivKey};
 use crate::bips::bip85::Bip85;
 use crate::util::hex;
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Seed {
     mnemonic: Mnemonic,
     passphrase: Option<String>,
+}
+
+impl fmt::Debug for Seed {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "<sensitive>")
+    }
 }
 
 impl Seed {
