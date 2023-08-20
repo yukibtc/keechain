@@ -1,0 +1,10 @@
+[bindings.kotlin]
+package_name = "keechain"
+cdylib_name = "keechain_ffi"
+
+[bindings.swift]
+ffi_module_filename = "keechainFFI"
+cdylib_name = "keechain_ffi"
+
+[bindings.python]
+cdylib_name = "keechain_ffi"

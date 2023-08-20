@@ -1,0 +1,23 @@
+[package]
+name = "keechain-ffi"
+version.workspace = true
+edition = "2021"
+description = "Keechain Core FFI."
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[lib]
+name = "keechain_ffi"
+crate-type = ["cdylib", "staticlib"]
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "uniffi-bindgen.rs"
+
+[dependencies]
+keechain-core = { path = "../keechain-core" }
+uniffi = { version = "0.24", features = ["cli"] }
+
+[build-dependencies]
+uniffi = { version = "0.24", features = ["build"] }
