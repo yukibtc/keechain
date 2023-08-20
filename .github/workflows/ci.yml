@@ -29,6 +29,7 @@ jobs:
           [
             "-p keechain-core --no-default-features",
             "-p keechain-core --features nostr",
+            "-p keechain-ffi",
             "-p keechain-cli --no-default-features",
             "-p keechain-cli --features nostr",
             "-p keechain --no-default-features",
