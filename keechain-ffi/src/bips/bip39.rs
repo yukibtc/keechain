@@ -2,8 +2,8 @@
 // Distributed under the MIT software license
 
 use std::ops::Deref;
-use std::sync::Arc;
 use std::str::FromStr;
+use std::sync::Arc;
 
 use keechain_core::bips::bip39;
 use uniffi::Object;
@@ -12,7 +12,7 @@ use crate::error::Result;
 
 #[derive(Object)]
 pub struct Mnemonic {
-    inner: bip39::Mnemonic
+    inner: bip39::Mnemonic,
 }
 
 impl Deref for Mnemonic {
@@ -22,12 +22,18 @@ impl Deref for Mnemonic {
     }
 }
 
+impl From<bip39::Mnemonic> for Mnemonic {
+    fn from(inner: bip39::Mnemonic) -> Self {
+        Self { inner }
+    }
+}
+
 #[uniffi::export]
 impl Mnemonic {
     #[uniffi::constructor]
     pub fn from_string(mnemonic: String) -> Result<Arc<Self>> {
         Ok(Arc::new(Self {
-            inner: bip39::Mnemonic::from_str(&mnemonic)?
+            inner: bip39::Mnemonic::from_str(&mnemonic)?,
         }))
     }
 

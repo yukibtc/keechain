@@ -25,3 +25,9 @@ impl From<keechain_core::bips::bip39::Error> for KeechainError {
         Self::Generic { err: e.to_string() }
     }
 }
+
+impl From<keechain_core::types::keychain::Error> for KeechainError {
+    fn from(e: keechain_core::types::keychain::Error) -> KeechainError {
+        Self::Generic { err: e.to_string() }
+    }
+}
