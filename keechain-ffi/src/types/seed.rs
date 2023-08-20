@@ -1,14 +1,13 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use std::str::FromStr;
+use std::ops::Deref;
 use std::sync::Arc;
 
 use keechain_core::types::seed;
-use keechain_core::bips::bip39::Mnemonic;
 use uniffi::Object;
 
-use crate::error::Result;
+use crate::bips::bip39::Mnemonic;
 
 #[derive(Object)]
 pub struct Seed {
@@ -24,11 +23,10 @@ impl From<seed::Seed> for Seed {
 #[uniffi::export]
 impl Seed {
     #[uniffi::constructor]
-    pub fn from_mnemonic(mnemonic: String) -> Result<Arc<Self>> {
-        let mnemonic = Mnemonic::from_str(&mnemonic)?;
-        Ok(Arc::new(Self {
-            inner: seed::Seed::from_mnemonic(mnemonic),
-        }))
+    pub fn from_mnemonic(mnemonic: Arc<Mnemonic>) -> Arc<Self> {
+        Arc::new(Self {
+            inner: seed::Seed::from_mnemonic(mnemonic.as_ref().deref().clone()),
+        })
     }
 
     pub fn mnemonic(&self) -> String {

@@ -3,7 +3,9 @@
 
 mod types;
 mod error;
+mod bips;
 
+pub use self::bips::bip39::Mnemonic;
 pub use self::types::seed::Seed;
 pub use self::error::KeechainError;
 
