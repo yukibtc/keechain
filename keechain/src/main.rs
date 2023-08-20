@@ -23,8 +23,6 @@ use self::layout::{
     PassphraseState, RenameKeychainState, RestoreState, SignState, StartState, ViewSecretsState,
     WipeKeychainState,
 };
-#[cfg(feature = "nostr")]
-use self::layout::{NostrKeysState, NostrSignDelegationState};
 
 const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 530.0);
 const GENERIC_FONT_HEIGHT: f32 = 18.0;
@@ -79,10 +77,6 @@ pub enum Command {
     Passphrase,
     Sign,
     Export(ExportTypes),
-    #[cfg(feature = "nostr")]
-    NostrKeys,
-    #[cfg(feature = "nostr")]
-    NostrSignDelegation,
     RenameKeychain,
     ChangePassword,
     ViewSecrets,
@@ -97,8 +91,6 @@ pub enum Menu {
     Advanced,
     Setting,
     Danger,
-    #[cfg(feature = "nostr")]
-    Nostr,
 }
 
 pub enum Stage {
@@ -122,10 +114,6 @@ pub struct AppLayoutStates {
     restore: RestoreState,
     sign: SignState,
     passphrase: PassphraseState,
-    #[cfg(feature = "nostr")]
-    nostr_keys: NostrKeysState,
-    #[cfg(feature = "nostr")]
-    nostr_sign_delegation: NostrSignDelegationState,
     rename_keychain: RenameKeychainState,
     change_password: ChangePasswordState,
     view_secrets: ViewSecretsState,
@@ -184,10 +172,6 @@ impl App for AppState {
                 Command::Export(export_type) => {
                     layout::export::update(self, export_type.clone(), ui)
                 }
-                #[cfg(feature = "nostr")]
-                Command::NostrKeys => layout::nostr::keys::update(self, ui),
-                #[cfg(feature = "nostr")]
-                Command::NostrSignDelegation => layout::nostr::sign_delegation::update(self, ui),
                 Command::RenameKeychain => layout::setting::rename::update(self, ui),
                 Command::ChangePassword => layout::setting::change_password::update(self, ui),
                 Command::ViewSecrets => layout::advanced::danger::view_secrets::update(self, ui),

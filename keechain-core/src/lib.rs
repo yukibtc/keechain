@@ -5,8 +5,6 @@
 
 pub extern crate bdk;
 pub extern crate bitcoin;
-#[cfg(feature = "nostr")]
-pub extern crate nostr;
 
 use bitcoin::secp256k1::{rand, All, Secp256k1};
 use once_cell::sync::Lazy;

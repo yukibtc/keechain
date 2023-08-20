@@ -7,8 +7,6 @@ use eframe::Frame;
 mod advanced;
 mod export;
 mod main;
-#[cfg(feature = "nostr")]
-mod nostr;
 mod setting;
 
 use crate::{AppState, Menu};
@@ -20,7 +18,5 @@ pub fn update(app: &mut AppState, menu: Menu, ui: &mut Ui, frame: &mut Frame) {
         Menu::Advanced => self::advanced::update(app, ui),
         Menu::Setting => self::setting::update(app, ui),
         Menu::Danger => self::advanced::danger::update(app, ui),
-        #[cfg(feature = "nostr")]
-        Menu::Nostr => self::nostr::update(app, ui),
     }
 }

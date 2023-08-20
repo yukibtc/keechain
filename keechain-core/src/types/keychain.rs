@@ -5,10 +5,6 @@ use core::fmt;
 
 use bitcoin::hashes::Hash;
 use bitcoin::Network;
-#[cfg(feature = "nostr")]
-use nostr::nips::nip06::FromMnemonic;
-#[cfg(feature = "nostr")]
-use nostr::Keys;
 use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
 
@@ -34,9 +30,6 @@ pub enum Error {
     BIP85(#[from] bip85::Error),
     #[error(transparent)]
     Descriptors(#[from] super::descriptors::Error),
-    #[cfg(feature = "nostr")]
-    #[error(transparent)]
-    Nostr(#[from] nostr::nips::nip06::Error),
     #[error("Impossible to decrypt file: invalid password or content")]
     DecryptionFailed,
 }
@@ -114,14 +107,6 @@ impl Keychain {
 
     pub fn secrets(&self, network: Network) -> Result<Secrets, Error> {
         Ok(Secrets::new(self.seed(), network)?)
-    }
-
-    #[cfg(feature = "nostr")]
-    pub fn nostr_keys(&self) -> Result<Keys, Error> {
-        Ok(Keys::from_mnemonic(
-            self.seed.mnemonic().to_string(),
-            self.seed.passphrase(),
-        )?)
     }
 
     pub fn add_passphrase<S>(&mut self, passphrase: S)

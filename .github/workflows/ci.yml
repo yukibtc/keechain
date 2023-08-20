@@ -28,12 +28,10 @@ jobs:
         build-args:
           [
             "-p keechain-core --no-default-features",
-            "-p keechain-core --features nostr",
+            "-p keechain-core",
             "-p keechain-ffi",
-            "-p keechain-cli --no-default-features",
-            "-p keechain-cli --features nostr",
-            "-p keechain --no-default-features",
-            "-p keechain --features nostr",
+            "-p keechain-cli",
+            "-p keechain",
           ]
     steps:
     - name: Checkout
@@ -71,7 +69,7 @@ jobs:
         build-args:
           [
             "-p keechain-core --no-default-features",
-            "-p keechain-core --features nostr",
+            "-p keechain-core",
           ]
     steps:
     - name: Checkout

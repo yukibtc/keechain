@@ -12,10 +12,6 @@ keywords.workspace = true
 categories = ["command-line-utilities"]
 rust-version.workspace = true
 
-[features]
-default = []
-nostr = ["keechain-core/nostr"]
-
 [dependencies]
 clap = { version = "4.1", features = ["derive"] }
 console = "0.15.4"

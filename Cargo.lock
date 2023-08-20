@@ -1757,7 +1757,6 @@ dependencies = [
  "bitcoin",
  "cbc",
  "getrandom",
- "nostr",
  "once_cell",
  "rand_chacha",
  "serde",
@@ -2036,25 +2035,6 @@ checksum = "d273983c5a657a70a3e8f2a01329822f3b8c8172b73826411a55751e404a0a4a"
 dependencies = [
  "memchr",
  "minimal-lexical",
-]
-
-[[package]]
-name = "nostr"
-version = "0.22.0-bitcoin-v0.29"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e2ee369508fd15077ed2a72e4a2f5308ac3f80c44fbd6f5b45bbc30872d3c97"
-dependencies = [
- "bech32",
- "bip39",
- "bitcoin",
- "bitcoin_hashes",
- "getrandom",
- "instant",
- "log",
- "secp256k1",
- "serde",
- "serde_json",
- "url",
 ]
 
 [[package]]
@@ -3126,7 +3106,6 @@ dependencies = [
  "form_urlencoded",
  "idna",
  "percent-encoding",
- "serde",
 ]
 
 [[package]]

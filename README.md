@@ -39,8 +39,6 @@ Obviously, anyone else can use and test `keechain`!
 * Danger:
     - View secrets: entropy, mnemonic, passphrase, HEX seed, BIP32 root key and fingerprint.
     - Wipe: permanently delete keychain
-* Optional:
-    - [Nostr](https://github.com/nostr-protocol/nostr) sign event delegation (NIP26) 
 
 ## State
 

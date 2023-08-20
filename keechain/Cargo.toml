@@ -12,10 +12,6 @@ keywords.workspace = true
 categories = ["gui"]
 rust-version.workspace = true
 
-[features]
-default = []
-nostr = ["keechain-core/nostr"]
-
 [dependencies]
 eframe = "0.20.1"
 egui_extras = { version = "0.20.0", features = ["image"] }
