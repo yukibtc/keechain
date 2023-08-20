@@ -1,0 +1,16 @@
+.tox/
+dist/
+keechain.egg-info/
+__pycache__/
+libkeechain_ffi.dylib
+.idea/
+.DS_Store
+
+*.swp
+
+src/keechain/keechain.py
+src/keechain/*.so
+*.whl
+build/
+
+testing-setup-py-simple-example.py

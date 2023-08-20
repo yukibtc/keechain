@@ -1,0 +1,3 @@
+include ./src/keechain/libkeechain_ffi.dylib
+include ./src/keechain/libkeechain_ffi.so
+include ./src/keechain/keechain_ffi.dll

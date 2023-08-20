@@ -38,4 +38,12 @@ impl Seed {
     pub fn passphrase(&self) -> Option<String> {
         self.inner.passphrase()
     }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.inner.to_bytes().to_vec()
+    }
+
+    pub fn to_hex(&self) -> String {
+        self.inner.to_hex()
+    }
 }
