@@ -73,10 +73,11 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
             {
                 app.layouts.change_password.error = Some("Passwords not match".to_string());
             } else {
-                match app.keechain.as_mut() {
+                match app.keechain.as_ref() {
                     Some(keechain) => {
                         if keechain
                             .check_password(app.layouts.change_password.current_password.clone())
+                            .unwrap_or_default()
                         {
                             match keechain.change_password(|| {
                                 Ok(app.layouts.change_password.new_password.clone())

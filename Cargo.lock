@@ -1759,7 +1759,6 @@ dependencies = [
  "getrandom",
  "nostr",
  "once_cell",
- "parking_lot",
  "rand_chacha",
  "serde",
  "serde_json",

@@ -5,9 +5,8 @@ use core::fmt;
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
-use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 
 use super::keychain::{self, Keychain};
@@ -32,6 +31,8 @@ pub enum Error {
     BIP39(#[from] bip39::Error),
     #[error(transparent)]
     Keychain(#[from] keychain::Error),
+    #[error("RwLock: {0}")]
+    RwLock(String),
     #[error("File not found")]
     FileNotFound,
     #[error("There is already a file with the same name! Please, choose another name")]
@@ -189,20 +190,27 @@ impl KeeChain {
         Ok(keechain)
     }
 
-    pub fn file_path(&self) -> PathBuf {
-        self.file.read().clone()
+    pub fn file_path(&self) -> Result<PathBuf, Error> {
+        Ok(self
+            .file
+            .read()
+            .map_err(|e| Error::RwLock(e.to_string()))?
+            .clone())
     }
 
     /// Get keechain file name
     pub fn name(&self) -> Option<String> {
-        let file = self.file.read();
+        let file = self.file.read().ok()?;
         let file_name = file.file_name()?;
         let file_name = file_name.to_str()?.to_string();
         Some(file_name.replace(KEECHAIN_DOT_EXTENSION, ""))
     }
 
     pub fn save(&self) -> Result<(), Error> {
-        let password = self.password.read();
+        let password = self
+            .password
+            .read()
+            .map_err(|e| Error::RwLock(e.to_string()))?;
         let keychain: String = self.keychain.encrypt(password.clone())?;
         let raw = KeeChainRaw {
             version: self.version,
@@ -210,27 +218,32 @@ impl KeeChain {
             keychain: base64::encode(keychain), // TODO: remove this and bump keechain version file
         };
         let data: Vec<u8> = util::serde::serialize(raw)?;
+        let file = self.file.read().map_err(|e| Error::RwLock(e.to_string()))?;
         let mut file: File = File::options()
             .create(true)
             .write(true)
             .truncate(true)
-            .open(self.file.read().as_path())?;
+            .open(file.as_path())?;
         file.write_all(&data)?;
         Ok(())
     }
 
-    pub fn check_password<S>(&self, password: S) -> bool
+    pub fn check_password<S>(&self, password: S) -> Result<bool, Error>
     where
         S: Into<String>,
     {
-        *self.password.read() == password.into()
+        Ok(*self
+            .password
+            .read()
+            .map_err(|e| Error::RwLock(e.to_string()))?
+            == password.into())
     }
 
     pub fn rename<S>(&self, new_name: S) -> Result<(), Error>
     where
         S: Into<String>,
     {
-        let old: PathBuf = self.file_path();
+        let old: PathBuf = self.file_path()?;
         let mut new: PathBuf = old.clone();
         new.set_file_name(new_name.into());
         new.set_extension(KEECHAIN_EXTENSION);
@@ -238,7 +251,10 @@ impl KeeChain {
             Err(Error::FileAlreadyExists)
         } else {
             fs::rename(old.as_path(), new.as_path())?;
-            let mut file = self.file.write();
+            let mut file = self
+                .file
+                .write()
+                .map_err(|e| Error::RwLock(e.to_string()))?;
             *file = new;
             Ok(())
         }
@@ -248,7 +264,10 @@ impl KeeChain {
     where
         NPSW: FnOnce() -> Result<String>,
     {
-        let mut password = self.password.write();
+        let mut password = self
+            .password
+            .write()
+            .map_err(|e| Error::RwLock(e.to_string()))?;
         let new_password: String = get_new_password().map_err(|e| Error::Generic(e.to_string()))?;
 
         if new_password.is_empty() {
@@ -270,7 +289,7 @@ impl KeeChain {
     }
 
     pub fn wipe(&self) -> Result<(), Error> {
-        let file = self.file.read();
+        let file = self.file.read().map_err(|e| Error::RwLock(e.to_string()))?;
         let path = file.as_path();
         let mut file: File = File::options().write(true).truncate(true).open(path)?;
         file.write_all(&[0u8; 21])?;
