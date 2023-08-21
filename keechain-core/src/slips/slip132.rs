@@ -3,8 +3,8 @@
 
 use core::fmt;
 
-use bitcoin::util::base58;
-use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPubKey};
+use bdk::bitcoin::base58;
+use bdk::bitcoin::bip32::{ChildNumber, DerivationPath, ExtendedPubKey};
 
 use crate::util::hex;
 
@@ -47,7 +47,7 @@ pub trait ToSlip132 {
 impl ToSlip132 for ExtendedPubKey {
     type Err = Error;
     fn to_slip132(&self, path: &DerivationPath) -> Result<String, Self::Err> {
-        let data: Vec<u8> = base58::from_check(&self.to_string())?;
+        let data: Vec<u8> = base58::decode_check(&self.to_string())?;
 
         let mut iter = path.into_iter();
         let purpose: Option<&ChildNumber> = iter.next();
@@ -83,7 +83,7 @@ impl ToSlip132 for ExtendedPubKey {
         };
 
         let data: Vec<u8> = [hex::decode(hex)?, data[4..].to_vec()].concat();
-        Ok(base58::check_encode_slice(&data))
+        Ok(base58::encode_check(&data))
     }
 }
 
@@ -91,10 +91,10 @@ impl ToSlip132 for ExtendedPubKey {
 mod tests {
     use std::str::FromStr;
 
+    use bdk::bitcoin::bip32::ExtendedPrivKey;
+    use bdk::bitcoin::secp256k1::Secp256k1;
+    use bdk::bitcoin::Network;
     use bip39::Mnemonic;
-    use bitcoin::secp256k1::Secp256k1;
-    use bitcoin::util::bip32::ExtendedPrivKey;
-    use bitcoin::Network;
 
     use super::*;
     use crate::types::Seed;

@@ -1,13 +1,13 @@
 // Copyright (c) 2022 Yuki Kishimoto
 // Distributed under the MIT software license
 
-pub use bip39::*;
-use bitcoin::hashes::hmac::{Hmac, HmacEngine};
-use bitcoin::hashes::{sha512, Hash, HashEngine};
+use bdk::bitcoin::hashes::hmac::{Hmac, HmacEngine};
+use bdk::bitcoin::hashes::{sha512, Hash, HashEngine};
 #[cfg(all(feature = "sysinfo", not(target_vendor = "apple")))]
-use bitcoin::secp256k1::rand;
-use bitcoin::secp256k1::rand::rngs::OsRng;
-use bitcoin::secp256k1::rand::{RngCore, SeedableRng};
+use bdk::bitcoin::secp256k1::rand;
+use bdk::bitcoin::secp256k1::rand::rngs::OsRng;
+use bdk::bitcoin::secp256k1::rand::{RngCore, SeedableRng};
+pub use bip39::*;
 use rand_chacha::ChaCha20Rng;
 #[cfg(all(feature = "sysinfo", not(target_vendor = "apple")))]
 use sysinfo::{System, SystemExt};
@@ -82,7 +82,7 @@ pub fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
         h.input(&custom);
     }
 
-    let entropy: [u8; 64] = Hmac::from_engine(h).into_inner();
+    let entropy: [u8; 64] = Hmac::from_engine(h).to_byte_array();
     let len: u32 = word_count.as_u32() * 4 / 3;
     entropy[0..len as usize].to_vec()
 }

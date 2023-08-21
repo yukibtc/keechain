@@ -5,9 +5,9 @@ use core::fmt;
 use std::collections::HashMap;
 use std::str::FromStr;
 
+use bdk::bitcoin::secp256k1::{Secp256k1, Signing};
+use bdk::bitcoin::Network;
 use bdk::miniscript::descriptor::{Descriptor, DescriptorKeyParseError, DescriptorPublicKey};
-use bitcoin::secp256k1::{Secp256k1, Signing};
-use bitcoin::Network;
 
 use super::{Purpose, Seed};
 use crate::bips::bip32::{
@@ -241,7 +241,7 @@ pub fn typed_descriptor(
 ) -> Result<Descriptor<DescriptorPublicKey>, Error> {
     let (purpose, desc) = descriptor(root_fingerprint, pubkey, path, change)?;
     match purpose {
-        ChildNumber::Hardened { index: 44 } => Ok(Descriptor::new_pkh(desc)),
+        ChildNumber::Hardened { index: 44 } => Ok(Descriptor::new_pkh(desc)?),
         ChildNumber::Hardened { index: 49 } => Ok(Descriptor::new_sh_wpkh(desc)?),
         ChildNumber::Hardened { index: 84 } => Ok(Descriptor::new_wpkh(desc)?),
         ChildNumber::Hardened { index: 86 } => Ok(Descriptor::new_tr(desc, None)?),

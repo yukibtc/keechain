@@ -28,7 +28,7 @@ where
     let psbt_file = path.as_ref();
     let mut psbt: PartiallySignedTransaction = PartiallySignedTransaction::from_file(psbt_file)?;
     let finalized: bool = if descriptor.is_empty() {
-        psbt.sign(seed, network, &SECP256K1)?
+        psbt.sign_with_seed(seed, network, &SECP256K1)?
     } else {
         let descriptor = Descriptor::from_str(&descriptor)?;
         psbt.sign_with_descriptor(seed, descriptor, false, network, &SECP256K1)?

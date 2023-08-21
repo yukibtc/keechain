@@ -7,12 +7,12 @@
 
 use core::fmt;
 
+use bdk::bitcoin::bip32;
+use bdk::bitcoin::hashes::hmac::{Hmac, HmacEngine};
+use bdk::bitcoin::hashes::{sha512, Hash, HashEngine};
+use bdk::bitcoin::secp256k1::{Secp256k1, Signing};
+use bdk::bitcoin::Network;
 use bip39::Mnemonic;
-use bitcoin::hashes::hmac::{Hmac, HmacEngine};
-use bitcoin::hashes::{sha512, Hash, HashEngine};
-use bitcoin::secp256k1::{Secp256k1, Signing};
-use bitcoin::util::bip32;
-use bitcoin::Network;
 
 use super::bip32::{Bip32, ChildNumber, DerivationPath, ExtendedPrivKey};
 use crate::types::{Index, WordCount};
@@ -80,7 +80,7 @@ impl FromBip85 for Mnemonic {
 
         let mut h = HmacEngine::<sha512::Hash>::new(b"bip-entropy-from-k");
         h.input(&derived.private_key.secret_bytes());
-        let data: [u8; 64] = Hmac::from_engine(h).into_inner();
+        let data: [u8; 64] = Hmac::from_engine(h).to_byte_array();
         let len: u32 = word_count * 4 / 3;
         Ok(Mnemonic::from_entropy(&data[0..len as usize])?)
     }
@@ -111,7 +111,7 @@ where
 mod tests {
     use std::str::FromStr;
 
-    use bitcoin::Network;
+    use bdk::bitcoin::Network;
 
     use super::*;
     use crate::types::{Index, Seed, WordCount};

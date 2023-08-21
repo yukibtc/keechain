@@ -5,9 +5,9 @@ use core::fmt;
 use std::num::ParseIntError;
 use std::str::FromStr;
 
+use bdk::bitcoin::secp256k1::{Secp256k1, Signing};
+use bdk::bitcoin::Network;
 use bip39::Mnemonic;
-use bitcoin::secp256k1::{Secp256k1, Signing};
-use bitcoin::Network;
 
 pub mod bitcoin_core;
 pub mod descriptors;

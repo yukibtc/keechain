@@ -10,13 +10,13 @@ use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
 
+use bdk::bitcoin::psbt::{self, PartiallySignedTransaction, PsbtParseError};
+use bdk::bitcoin::secp256k1::{Secp256k1, Signing};
+use bdk::bitcoin::{Network, PrivateKey};
 use bdk::miniscript::descriptor::DescriptorKeyParseError;
 use bdk::miniscript::Descriptor;
 use bdk::signer::{SignerContext, SignerOrdering, SignerWrapper};
 use bdk::{KeychainKind, SignOptions, Wallet};
-use bitcoin::psbt::{self, PartiallySignedTransaction, PsbtParseError};
-use bitcoin::secp256k1::{Secp256k1, Signing};
-use bitcoin::{Network, PrivateKey};
 
 use super::descriptors;
 use crate::bips::bip32::{self, Bip32, ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
@@ -143,7 +143,12 @@ pub trait Psbt: Sized {
         Self::from_base64(base64::encode(content))
     }
 
-    fn sign<C>(&mut self, seed: &Seed, network: Network, secp: &Secp256k1<C>) -> Result<bool, Error>
+    fn sign_with_seed<C>(
+        &mut self,
+        seed: &Seed,
+        network: Network,
+        secp: &Secp256k1<C>,
+    ) -> Result<bool, Error>
     where
         C: Signing,
     {
@@ -369,8 +374,8 @@ impl Psbt for PartiallySignedTransaction {
 mod tests {
     use std::str::FromStr;
 
+    use bdk::bitcoin::Network;
     use bip39::Mnemonic;
-    use bitcoin::Network;
 
     use super::*;
     use crate::types::Seed;
@@ -383,7 +388,7 @@ mod tests {
         let mnemonic = Mnemonic::from_str("easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt").unwrap();
         let seed = Seed::new::<&str>(mnemonic, None);
         let mut psbt = PartiallySignedTransaction::from_base64("cHNidP8BAFICAAAAATjFB9Xkau6+MTmNTT9GN6i299X9n9MSQhVVMVegw8qOAAAAAAD9////AcAHAAAAAAAAFgAUAhYIdK3p2Bvf/ZnzIYQcWWZkxCJ4HiUATwEENYfPA+UBpeaAAAAAVd9MbQ78ZD7Ie5K8FXctxNRCrS4DNFhPiSzC2CpygWICsOropyXycdL0H0uI5TUbJL1w8/detLdnP5WxGGUZ+5UQm/Q1S1QAAIABAACAAAAAgAABAHECAAAAAYqdaqOD/k1QaGShhL4ilryMhXgOJu+cFcKFAUMZQ+wrAAAAAAD9////Ai4IAAAAAAAAFgAUqjLdU2PqfvD/lSvnNLJZ0ab4kUPxCQAAAAAAABYAFO9WcMNPGiI5MjypE7Ku0dT1LOgRI9wkAAEBHy4IAAAAAAAAFgAUqjLdU2PqfvD/lSvnNLJZ0ab4kUMBAwQBAAAAIgYCyh1DqpGE/SatxQ86lKeUBXZ1BGpZuwNnGiGq9pDdTbkYm/Q1S1QAAIABAACAAAAAgAAAAAAAAAAAAAA=").unwrap();
-        let finalized = psbt.sign(&seed, NETWORK, &secp).unwrap();
+        let finalized = psbt.sign_with_seed(&seed, NETWORK, &secp).unwrap();
         assert!(finalized);
     }
 

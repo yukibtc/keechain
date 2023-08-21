@@ -6,7 +6,7 @@ use core::fmt;
 use aes::cipher::block_padding::Pkcs7;
 use aes::cipher::{BlockDecryptMut, BlockEncryptMut, KeyIvInit};
 use aes::Aes256;
-use bitcoin::secp256k1::rand;
+use bdk::bitcoin::secp256k1::rand;
 use cbc::{Decryptor, Encryptor};
 
 use crate::util::base64;
@@ -83,8 +83,8 @@ pub trait Aes256Encryption: Sized {
 mod tests {
     use std::str::FromStr;
 
+    use bdk::bitcoin::hashes::Hash;
     use bip39::Mnemonic;
-    use bitcoin::hashes::Hash;
 
     use super::*;
     use crate::crypto::hash;
@@ -94,7 +94,7 @@ mod tests {
     #[test]
     fn test_encryption_decryption() {
         let key: &str = "supersecretpassword";
-        let key: [u8; 32] = hash::sha256(key).into_inner();
+        let key: [u8; 32] = hash::sha256(key).to_byte_array();
         let text: &[u8] = b"My Text";
 
         let encrypted_content: String = encrypt(key, text);
@@ -124,7 +124,7 @@ mod tests {
     #[test]
     fn test_encryption_decryption_seed() {
         let key: &str = "supersecretpassword";
-        let key: [u8; 32] = hash::sha256(key).into_inner();
+        let key: [u8; 32] = hash::sha256(key).to_byte_array();
         let mnemonic = Mnemonic::from_str("easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt").unwrap();
         let passphrase: Option<&str> = Some("mypassphrase");
         let seed = Seed::new(mnemonic, passphrase);

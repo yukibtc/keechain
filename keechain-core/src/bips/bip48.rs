@@ -3,8 +3,8 @@
 
 //! BIP48
 
-use bitcoin::util::bip32::{ChildNumber, DerivationPath, Error};
-use bitcoin::Network;
+use bdk::bitcoin::bip32::{ChildNumber, DerivationPath, Error};
+use bdk::bitcoin::Network;
 
 use super::bip32;
 

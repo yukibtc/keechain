@@ -6,8 +6,8 @@ use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use bitcoin::secp256k1::{Secp256k1, Signing};
-use bitcoin::Network;
+use bdk::bitcoin::secp256k1::{Secp256k1, Signing};
+use bdk::bitcoin::Network;
 use serde::{Deserialize, Serialize};
 
 use crate::bips::bip32::{

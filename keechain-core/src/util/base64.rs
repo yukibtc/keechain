@@ -1,7 +1,7 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
-pub use base64::DecodeError;
+pub use bdk::bitcoin::base64::{self, DecodeError};
 
 pub fn encode<T>(input: T) -> String
 where

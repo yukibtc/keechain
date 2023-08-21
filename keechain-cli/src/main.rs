@@ -152,7 +152,7 @@ fn main() -> Result<()> {
                 Some(descriptor) => {
                     psbt.sign_with_descriptor(seed, descriptor, false, network, &secp)?
                 }
-                None => psbt.sign(seed, network, &secp)?,
+                None => psbt.sign_with_seed(seed, network, &secp)?,
             };
             println!("Signed.");
             let mut renamed_file: PathBuf = file;

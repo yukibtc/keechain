@@ -3,9 +3,9 @@
 
 use core::fmt;
 
+use bdk::bitcoin::secp256k1::{Secp256k1, Signing};
+use bdk::bitcoin::Network;
 use bdk::miniscript::descriptor::{Descriptor, DescriptorPublicKey};
-use bitcoin::secp256k1::{Secp256k1, Signing};
-use bitcoin::Network;
 use serde::Serialize;
 use serde_json::json;
 

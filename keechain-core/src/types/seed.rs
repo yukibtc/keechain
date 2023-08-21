@@ -3,8 +3,8 @@
 
 use core::fmt;
 
+use bdk::bitcoin::Network;
 use bip39::Mnemonic;
-use bitcoin::Network;
 use serde::{Deserialize, Serialize};
 
 use super::descriptors::ToDescriptor;

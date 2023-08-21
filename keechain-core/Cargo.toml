@@ -3,7 +3,7 @@ name = "keechain-core"
 version.workspace = true
 edition = "2021"
 description = "KeeChain Core library."
-authors = ["Yuki Kishimoto <yukikishimoto@proton.me>"]
+authors = ["Yuki Kishimoto <yukikishimoto@protonmain.com>"]
 homepage.workspace = true
 repository.workspace = true
 license.workspace = true
@@ -16,10 +16,8 @@ default = ["sysinfo"]
 
 [dependencies]
 aes = "0.8"
-base64 = "0.13"
-bdk = { version = "=1.0.0-alpha.1", default-features = false, features = ["std"] }
+bdk = { git = "https://github.com/bitcoindevkit/bdk", rev = "d6bcd9b725a63b5db9157fb11a827a472ddcf73d", default-features = false, features = ["std"] }
 bip39 = "2.0"
-bitcoin = { version = "0.29", default-features = false, features = ["rand", "serde"] }
 cbc = { version = "0.1", features = ["alloc"] }
 rand_chacha = "0.3"
 serde = { version = "=1.0.171", features = ["derive"] }

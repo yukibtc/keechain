@@ -1,9 +1,9 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use bitcoin::secp256k1::{Secp256k1, Signing};
-pub use bitcoin::util::bip32::*;
-use bitcoin::Network;
+pub use bdk::bitcoin::bip32::*;
+use bdk::bitcoin::secp256k1::{Secp256k1, Signing};
+use bdk::bitcoin::Network;
 
 pub trait Bip32 {
     type Err;

@@ -3,9 +3,9 @@
 
 use core::fmt;
 
-use bitcoin::hashes::Hash;
-use bitcoin::secp256k1::{Secp256k1, Signing};
-use bitcoin::Network;
+use bdk::bitcoin::hashes::Hash;
+use bdk::bitcoin::secp256k1::{Secp256k1, Signing};
+use bdk::bitcoin::Network;
 use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
 
@@ -207,7 +207,7 @@ impl Aes256Encryption for Keychain {
         K: AsRef<[u8]>,
     {
         let serialized: Vec<u8> = util::serde::serialize(self)?;
-        let key: [u8; 32] = hash::sha256(key).into_inner();
+        let key: [u8; 32] = hash::sha256(key).to_byte_array();
         Ok(aes::encrypt(key, serialized))
     }
 
@@ -215,7 +215,7 @@ impl Aes256Encryption for Keychain {
     where
         K: AsRef<[u8]>,
     {
-        let key: [u8; 32] = hash::sha256(key).into_inner();
+        let key: [u8; 32] = hash::sha256(key).to_byte_array();
         match aes::decrypt(key, content) {
             Ok(data) => Ok(util::serde::deserialize(data)?),
             Err(aes::Error::WrongBlockMode) => Err(Error::DecryptionFailed),
