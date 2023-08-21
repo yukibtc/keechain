@@ -22,8 +22,6 @@ use self::cli::io;
 use self::cli::{AdvancedCommand, Cli, Command, DangerCommand, ExportTypes, SettingCommand};
 
 fn main() -> Result<()> {
-    env_logger::init();
-
     let args = Cli::parse();
     let secp = Secp256k1::new();
     let network: Network = args.network.into();

@@ -16,7 +16,6 @@ rust-version.workspace = true
 clap = { version = "4.1", features = ["derive"] }
 console = "0.15.4"
 dialoguer = "0.10.2"
-env_logger = "0.9.0"
 keechain-common = { version = "0.1", path = "../keechain-common" }
 keechain-core = { version = "0.1", path = "../keechain-core" }
 prettytable-rs = "0.10"
