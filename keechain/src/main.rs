@@ -69,8 +69,11 @@ pub fn main() -> Result<()> {
             String::new()
         }
     );
-    eframe::run_native(&app_name, options, Box::new(|_cc| Box::new(app)));
-    Ok(())
+    Ok(eframe::run_native(
+        &app_name,
+        options,
+        Box::new(|_cc| Box::new(app)),
+    )?)
 }
 
 #[derive(Clone)]

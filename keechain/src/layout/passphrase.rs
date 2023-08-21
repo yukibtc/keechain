@@ -99,7 +99,7 @@ pub fn apply_new_layout(app: &mut AppState, ui: &mut Ui) {
         app.set_stage(Stage::Menu(Menu::Main));
     }
 
-    if is_ready && (ui.input().key_pressed(Key::Enter) || button.clicked()) {
+    if is_ready && (ui.input(|i| i.key_pressed(Key::Enter)) || button.clicked()) {
         match app.keechain.as_mut() {
             Some(keechain) => {
                 if app.layouts.passphrase.save {
@@ -177,7 +177,7 @@ pub fn show_saved_layout(app: &mut AppState, ui: &mut Ui) {
                     app.layouts.passphrase.clear();
                 }
 
-                if is_ready && (ui.input().key_pressed(Key::Enter) || button.clicked()) {
+                if is_ready && (ui.input(|i| i.key_pressed(Key::Enter)) || button.clicked()) {
                     keechain
                         .keychain
                         .apply_passphrase(Some(app.layouts.passphrase.passphrase.clone()));

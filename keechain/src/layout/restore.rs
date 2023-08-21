@@ -87,7 +87,7 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
             app.set_stage(Stage::Start);
         }
 
-        if is_ready && (ui.input().key_pressed(Key::Enter) || button.clicked()) {
+        if is_ready && (ui.input(|i| i.key_pressed(Key::Enter)) || button.clicked()) {
             if app.layouts.restore.password != app.layouts.restore.confirm_password {
                 app.layouts.restore.error = Some("Passwords not match".to_string());
             } else {

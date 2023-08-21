@@ -118,7 +118,7 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
             app.set_stage(Stage::RestoreKeychain);
         }
 
-        if is_ready && (ui.input().key_pressed(Key::Enter) || button.clicked()) {
+        if is_ready && (ui.input(|i| i.key_pressed(Key::Enter)) || button.clicked()) {
             match dir::get_keychain_file::<&Path, String>(
                 KEYCHAINS_PATH.as_ref(),
                 app.layouts.start.name.clone(),

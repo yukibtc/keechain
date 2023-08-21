@@ -89,7 +89,7 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
             .enabled(is_ready)
             .render(ui);
 
-        if is_ready && (ui.input().key_pressed(Key::Enter) || button.clicked()) {
+        if is_ready && (ui.input(|i| i.key_pressed(Key::Enter)) || button.clicked()) {
             match app.keechain.as_mut() {
                 Some(keechain) => {
                     match Index::from_str(app.layouts.deterministic_entropy.index.as_str()) {
