@@ -6,6 +6,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+use bitcoin::secp256k1::{Secp256k1, Signing};
 use bitcoin::Network;
 use serde::{Deserialize, Serialize};
 
@@ -13,7 +14,6 @@ use crate::bips::bip32::{
     self, Bip32, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
 };
 use crate::types::Seed;
-use crate::SECP256K1;
 
 #[derive(Debug)]
 pub enum Error {
@@ -61,15 +61,18 @@ pub struct Wasabi {
 }
 
 impl Wasabi {
-    pub fn new(seed: Seed, network: Network) -> Result<Self, Error> {
+    pub fn new<C>(seed: Seed, network: Network, secp: &Secp256k1<C>) -> Result<Self, Error>
+    where
+        C: Signing,
+    {
         let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
         let path: DerivationPath = bip32::account_extended_path(84, network, None)?;
-        let xpriv: ExtendedPrivKey = root.derive_priv(&SECP256K1, &path)?;
-        let pubkey: ExtendedPubKey = ExtendedPubKey::from_priv(&SECP256K1, &xpriv);
+        let xpriv: ExtendedPrivKey = root.derive_priv(secp, &path)?;
+        let pubkey: ExtendedPubKey = ExtendedPubKey::from_priv(secp, &xpriv);
 
         Ok(Self {
             xpub: pubkey,
-            root_fingerprint: root.fingerprint(&SECP256K1),
+            root_fingerprint: root.fingerprint(secp),
         })
     }
 

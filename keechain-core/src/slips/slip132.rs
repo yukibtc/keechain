@@ -92,15 +92,16 @@ mod tests {
     use std::str::FromStr;
 
     use bip39::Mnemonic;
+    use bitcoin::secp256k1::Secp256k1;
     use bitcoin::util::bip32::ExtendedPrivKey;
     use bitcoin::Network;
 
     use super::*;
     use crate::types::Seed;
-    use crate::SECP256K1;
 
     #[test]
     fn test_slip132() {
+        let secp = Secp256k1::new();
         let mnemonic = Mnemonic::from_str("easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt").unwrap();
         let passphrase: Option<&str> = Some("mypassphrase");
         let seed = Seed::new(mnemonic, passphrase);
@@ -109,17 +110,17 @@ mod tests {
 
         let path = DerivationPath::from_str("m/44'/0'/0'").unwrap();
         let pubkey: ExtendedPubKey =
-            ExtendedPubKey::from_priv(&SECP256K1, &root.derive_priv(&SECP256K1, &path).unwrap());
+            ExtendedPubKey::from_priv(&secp, &root.derive_priv(&secp, &path).unwrap());
         assert_eq!(pubkey.to_slip132(&path).unwrap(), "xpub6DScrJ7HSQK8XudnGBmuW7Ln9vGfCKYSFP1kyX3UoVo2oj1shjsTj2a3U62ERFnX9rEECxB2EdY8UfarEGLCezmHMTArJtGwRhZxbNkzKwF".to_string());
 
         let path = DerivationPath::from_str("m/49'/0'/0'").unwrap();
         let pubkey: ExtendedPubKey =
-            ExtendedPubKey::from_priv(&SECP256K1, &root.derive_priv(&SECP256K1, &path).unwrap());
+            ExtendedPubKey::from_priv(&secp, &root.derive_priv(&secp, &path).unwrap());
         assert_eq!(pubkey.to_slip132(&path).unwrap(), "ypub6XdTaSG128psDt3wtUyHPRexBo2HYnjDt9JfpiZWhbfV3vBjHfdkot32QkdbnYmBBNxHqG3HW49efmhQGLv3Waudourm6NqDtK4dLdyA3u4".to_string());
 
         let path = DerivationPath::from_str("m/84'/0'/0'").unwrap();
         let pubkey: ExtendedPubKey =
-            ExtendedPubKey::from_priv(&SECP256K1, &root.derive_priv(&SECP256K1, &path).unwrap());
+            ExtendedPubKey::from_priv(&secp, &root.derive_priv(&secp, &path).unwrap());
         assert_eq!(pubkey.to_slip132(&path).unwrap(), "zpub6qR4RRKqYzgY9psfVvZFQchEZfH6upEMWJRJSLWAXeYk4KXNKoLuBzC7977uUKMFiVYNMqMrrjNgJ871YQeJEbgzQ6hZevYE8uB6NipiLLj".to_string());
 
         assert_eq!(

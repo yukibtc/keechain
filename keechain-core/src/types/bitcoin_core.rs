@@ -4,6 +4,7 @@
 use core::fmt;
 
 use bdk::miniscript::descriptor::{Descriptor, DescriptorPublicKey};
+use bitcoin::secp256k1::{Secp256k1, Signing};
 use bitcoin::Network;
 use serde::Serialize;
 use serde_json::json;
@@ -54,8 +55,16 @@ impl BitcoinCoreDescriptor {
 pub struct BitcoinCore(Vec<BitcoinCoreDescriptor>);
 
 impl BitcoinCore {
-    pub fn new(seed: Seed, network: Network, account: Option<u32>) -> Result<Self, Error> {
-        let descriptors: Descriptors = Descriptors::new(seed, network, account)?;
+    pub fn new<C>(
+        seed: Seed,
+        network: Network,
+        account: Option<u32>,
+        secp: &Secp256k1<C>,
+    ) -> Result<Self, Error>
+    where
+        C: Signing,
+    {
+        let descriptors: Descriptors = Descriptors::new(seed, network, account, secp)?;
         let mut bitcoin_core_descriptors: Vec<BitcoinCoreDescriptor> = Vec::new();
 
         for desc in descriptors.external().into_iter() {

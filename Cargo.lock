@@ -1757,7 +1757,6 @@ dependencies = [
  "bitcoin",
  "cbc",
  "getrandom",
- "once_cell",
  "rand_chacha",
  "serde",
  "serde_json",

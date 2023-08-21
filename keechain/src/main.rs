@@ -9,6 +9,7 @@ use eframe::epaint::FontFamily::Proportional;
 use eframe::epaint::{FontId, Vec2};
 use eframe::{App, Frame, NativeOptions, Theme};
 use egui::TextStyle::{Body, Button, Heading, Monospace, Small};
+use keechain_core::bitcoin::secp256k1::{rand, All, Secp256k1};
 use keechain_core::bitcoin::Network;
 use keechain_core::types::KeeChain;
 use keechain_core::Result;
@@ -27,6 +28,12 @@ use self::layout::{
 const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 530.0);
 const GENERIC_FONT_HEIGHT: f32 = 18.0;
 
+static SECP256K1: Lazy<Secp256k1<All>> = Lazy::new(|| {
+    let mut ctx = Secp256k1::new();
+    let mut rng = rand::thread_rng();
+    ctx.randomize(&mut rng);
+    ctx
+});
 static KEYCHAINS_PATH: Lazy<PathBuf> =
     Lazy::new(|| keechain_common::keychains().expect("Can't get keychains path"));
 

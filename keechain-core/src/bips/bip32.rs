@@ -1,19 +1,25 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use bitcoin::secp256k1::{Secp256k1, Signing};
 pub use bitcoin::util::bip32::*;
 use bitcoin::Network;
-
-use crate::SECP256K1;
 
 pub trait Bip32 {
     type Err;
 
     fn to_bip32_root_key(&self, network: Network) -> Result<ExtendedPrivKey, Self::Err>;
 
-    fn fingerprint(&self, network: Network) -> Result<Fingerprint, Self::Err> {
+    fn fingerprint<C>(
+        &self,
+        network: Network,
+        secp: &Secp256k1<C>,
+    ) -> Result<Fingerprint, Self::Err>
+    where
+        C: Signing,
+    {
         let root: ExtendedPrivKey = self.to_bip32_root_key(network)?;
-        Ok(root.fingerprint(&SECP256K1))
+        Ok(root.fingerprint(secp))
     }
 }
 

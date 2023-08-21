@@ -21,7 +21,6 @@ bdk = { version = "=1.0.0-alpha.1", default-features = false, features = ["std"]
 bip39 = "2.0"
 bitcoin = { version = "0.29", default-features = false, features = ["rand", "serde"] }
 cbc = { version = "0.1", features = ["alloc"] }
-once_cell = "1.17"
 rand_chacha = "0.3"
 serde = { version = "=1.0.171", features = ["derive"] }
 serde_json = "1.0"

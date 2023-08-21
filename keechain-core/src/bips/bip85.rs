@@ -10,12 +10,12 @@ use core::fmt;
 use bip39::Mnemonic;
 use bitcoin::hashes::hmac::{Hmac, HmacEngine};
 use bitcoin::hashes::{sha512, Hash, HashEngine};
+use bitcoin::secp256k1::{Secp256k1, Signing};
 use bitcoin::util::bip32;
 use bitcoin::Network;
 
 use super::bip32::{Bip32, ChildNumber, DerivationPath, ExtendedPrivKey};
 use crate::types::{Index, WordCount};
-use crate::SECP256K1;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
@@ -47,19 +47,26 @@ impl From<bip39::Error> for Error {
 }
 
 pub trait FromBip85: Sized {
-    fn from_bip85(
+    fn from_bip85<C>(
         root: &ExtendedPrivKey,
         word_count: WordCount,
         index: Index,
-    ) -> Result<Self, Error>;
+        secp: &Secp256k1<C>,
+    ) -> Result<Self, Error>
+    where
+        C: Signing;
 }
 
 impl FromBip85 for Mnemonic {
-    fn from_bip85(
+    fn from_bip85<C>(
         root: &ExtendedPrivKey,
         word_count: WordCount,
         index: Index,
-    ) -> Result<Self, Error> {
+        secp: &Secp256k1<C>,
+    ) -> Result<Self, Error>
+    where
+        C: Signing,
+    {
         let word_count: u32 = word_count.as_u32();
         let path: Vec<ChildNumber> = vec![
             ChildNumber::from_hardened_idx(83696968)?,
@@ -69,7 +76,7 @@ impl FromBip85 for Mnemonic {
             ChildNumber::from_hardened_idx(index.as_u32())?,
         ];
         let path: DerivationPath = DerivationPath::from(path);
-        let derived: ExtendedPrivKey = root.derive_priv(&SECP256K1, &path)?;
+        let derived: ExtendedPrivKey = root.derive_priv(secp, &path)?;
 
         let mut h = HmacEngine::<sha512::Hash>::new(b"bip-entropy-from-k");
         h.input(&derived.private_key.secret_bytes());
@@ -86,13 +93,17 @@ where
     /// Derive BIP85 mnemonic
     ///
     /// <https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki>
-    fn derive_bip85_mnemonic(
+    fn derive_bip85_mnemonic<C>(
         &self,
         word_count: WordCount,
         index: Index,
-    ) -> Result<Mnemonic, Error> {
+        secp: &Secp256k1<C>,
+    ) -> Result<Mnemonic, Error>
+    where
+        C: Signing,
+    {
         let root: ExtendedPrivKey = self.to_bip32_root_key(Network::Bitcoin)?;
-        Mnemonic::from_bip85(&root, word_count, index)
+        Mnemonic::from_bip85(&root, word_count, index, secp)
     }
 }
 
@@ -109,6 +120,7 @@ mod tests {
 
     #[test]
     fn test_from_bip85() {
+        let secp = Secp256k1::new();
         let mnemonic = Mnemonic::from_str("easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt").unwrap();
         let passphrase: Option<&str> = Some("mypassphrase");
         let seed = Seed::new(mnemonic, passphrase);
@@ -118,7 +130,7 @@ mod tests {
         // Words: 12
         // Index: 0
         assert_eq!(
-            Mnemonic::from_bip85(&root, WordCount::W12, Index::new(0).unwrap())
+            Mnemonic::from_bip85(&root, WordCount::W12, Index::new(0).unwrap(), &secp)
                 .unwrap()
                 .to_string(),
             "gap gun smooth leader muscle renew impulse hundred twin enact fetch zoo".to_string()
@@ -127,7 +139,7 @@ mod tests {
         // Words: 12
         // Index: 1
         assert_eq!(
-            Mnemonic::from_bip85(&root, WordCount::W12, Index::new(1).unwrap())
+            Mnemonic::from_bip85(&root, WordCount::W12, Index::new(1).unwrap(), &secp)
                 .unwrap()
                 .to_string(),
             "join siren history age snack dial initial raise kick enter vintage rabbit".to_string()
@@ -136,7 +148,7 @@ mod tests {
         // Words: 24
         // Index: 57
         assert_eq!(
-            Mnemonic::from_bip85(&root, WordCount::W24, Index::new(57).unwrap())
+            Mnemonic::from_bip85(&root, WordCount::W24, Index::new(57).unwrap(), &secp)
                 .unwrap()
                 .to_string(),
             "this supply project flush south sport acid focus damp pulp hundred convince ramp mandate picnic area bracket group pact piano coconut cigar decline actress".to_string()
@@ -144,7 +156,7 @@ mod tests {
 
         // Test wrong seed
         assert_ne!(
-            Mnemonic::from_bip85(&root, WordCount::W12, Index::new(12).unwrap())
+            Mnemonic::from_bip85(&root, WordCount::W12, Index::new(12).unwrap(), &secp)
                 .unwrap()
                 .to_string(),
             "pride drama job inform cross recall vapor lake weasel basket curve pencil".to_string()
@@ -153,6 +165,7 @@ mod tests {
 
     #[test]
     fn test_to_bip85() {
+        let secp = Secp256k1::new();
         let mnemonic = Mnemonic::from_str("easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt").unwrap();
         let passphrase: Option<&str> = Some("mypassphrase");
         let seed = Seed::new(mnemonic, passphrase);
@@ -160,7 +173,7 @@ mod tests {
         // Words: 12
         // Index: 0
         assert_eq!(
-            seed.derive_bip85_mnemonic(WordCount::W12, Index::new(0).unwrap())
+            seed.derive_bip85_mnemonic(WordCount::W12, Index::new(0).unwrap(), &secp)
                 .unwrap()
                 .to_string(),
             "gap gun smooth leader muscle renew impulse hundred twin enact fetch zoo".to_string()
@@ -169,7 +182,7 @@ mod tests {
         // Words: 12
         // Index: 1
         assert_eq!(
-            seed.derive_bip85_mnemonic(WordCount::W12, Index::new(1).unwrap())
+            seed.derive_bip85_mnemonic(WordCount::W12, Index::new(1).unwrap(), &secp)
                 .unwrap()
                 .to_string(),
             "join siren history age snack dial initial raise kick enter vintage rabbit".to_string()
@@ -178,7 +191,7 @@ mod tests {
         // Words: 24
         // Index: 57
         assert_eq!(
-            seed.derive_bip85_mnemonic(WordCount::W24, Index::new(57).unwrap())
+            seed.derive_bip85_mnemonic(WordCount::W24, Index::new(57).unwrap(), &secp)
                 .unwrap()
                 .to_string(),
             "this supply project flush south sport acid focus damp pulp hundred convince ramp mandate picnic area bracket group pact piano coconut cigar decline actress".to_string()
@@ -186,7 +199,7 @@ mod tests {
 
         // Test wrong seed
         assert_ne!(
-            seed.derive_bip85_mnemonic(WordCount::W12, Index::new(12).unwrap())
+            seed.derive_bip85_mnemonic(WordCount::W12, Index::new(12).unwrap(), &secp)
                 .unwrap()
                 .to_string(),
             "pride drama job inform cross recall vapor lake weasel basket curve pencil".to_string()
@@ -195,22 +208,23 @@ mod tests {
 
     #[test]
     fn test_eq_bip85_result() {
+        let secp = Secp256k1::new();
         let mnemonic = Mnemonic::from_str("easy uncover favorite crystal bless differ energy seat ecology match carry group refuse together chat observe hidden glad brave month diesel sustain depth salt").unwrap();
         let passphrase: Option<&str> = Some("mypassphrase");
         let seed = Seed::new(mnemonic, passphrase);
 
         let root = ExtendedPrivKey::new_master(Network::Testnet, &seed.to_bytes()).unwrap();
         assert_eq!(
-            seed.derive_bip85_mnemonic(WordCount::W12, Index::new(0).unwrap())
+            seed.derive_bip85_mnemonic(WordCount::W12, Index::new(0).unwrap(), &secp)
                 .unwrap(),
-            Mnemonic::from_bip85(&root, WordCount::W12, Index::new(0).unwrap()).unwrap()
+            Mnemonic::from_bip85(&root, WordCount::W12, Index::new(0).unwrap(), &secp).unwrap()
         );
 
         let root = ExtendedPrivKey::new_master(Network::Regtest, &seed.to_bytes()).unwrap();
         assert_eq!(
-            seed.derive_bip85_mnemonic(WordCount::W24, Index::new(4).unwrap())
+            seed.derive_bip85_mnemonic(WordCount::W24, Index::new(4).unwrap(), &secp)
                 .unwrap(),
-            Mnemonic::from_bip85(&root, WordCount::W24, Index::new(4).unwrap()).unwrap()
+            Mnemonic::from_bip85(&root, WordCount::W24, Index::new(4).unwrap(), &secp).unwrap()
         );
     }
 }

@@ -6,9 +6,6 @@
 pub extern crate bdk;
 pub extern crate bitcoin;
 
-use bitcoin::secp256k1::{rand, All, Secp256k1};
-use once_cell::sync::Lazy;
-
 pub mod bips;
 pub mod crypto;
 pub mod slips;
@@ -18,10 +15,3 @@ pub mod util;
 pub use self::types::{KeeChain, Keychain};
 
 pub type Result<T, E = Box<dyn std::error::Error>> = std::result::Result<T, E>;
-
-pub static SECP256K1: Lazy<Secp256k1<All>> = Lazy::new(|| {
-    let mut ctx = Secp256k1::new();
-    let mut rng = rand::thread_rng();
-    ctx.randomize(&mut rng);
-    ctx
-});

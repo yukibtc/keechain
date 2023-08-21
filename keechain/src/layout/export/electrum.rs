@@ -11,7 +11,7 @@ use keechain_core::Result;
 
 use crate::component::{Button, Error, Heading, Identity, InputField, View};
 use crate::theme::color::{DARK_GREEN, ORANGE};
-use crate::{AppState, Menu, Stage};
+use crate::{AppState, Menu, Stage, SECP256K1};
 
 fn export_electrum(
     seed: Seed,
@@ -19,7 +19,7 @@ fn export_electrum(
     script: ElectrumSupportedScripts,
     account: Option<u32>,
 ) -> Result<PathBuf> {
-    let electrum_json_wallet = Electrum::new(seed, network, script, account)?;
+    let electrum_json_wallet = Electrum::new(seed, network, script, account, &SECP256K1)?;
     let home_dir: PathBuf = keechain_common::home();
     Ok(electrum_json_wallet.save_to_file(home_dir)?)
 }

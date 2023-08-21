@@ -6,13 +6,13 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use bdk::miniscript::descriptor::{Descriptor, DescriptorKeyParseError, DescriptorPublicKey};
+use bitcoin::secp256k1::{Secp256k1, Signing};
 use bitcoin::Network;
 
 use super::{Purpose, Seed};
 use crate::bips::bip32::{
     self, Bip32, ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
 };
-use crate::SECP256K1;
 
 #[derive(Debug)]
 pub enum Error {
@@ -68,9 +68,17 @@ pub struct Descriptors {
 }
 
 impl Descriptors {
-    pub fn new(seed: Seed, network: Network, account: Option<u32>) -> Result<Self, Error> {
+    pub fn new<C>(
+        seed: Seed,
+        network: Network,
+        account: Option<u32>,
+        secp: &Secp256k1<C>,
+    ) -> Result<Self, Error>
+    where
+        C: Signing,
+    {
         let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
-        let root_fingerprint = root.fingerprint(&SECP256K1);
+        let root_fingerprint = root.fingerprint(secp);
 
         let paths: Vec<(Purpose, DerivationPath)> = vec![
             (
@@ -98,9 +106,9 @@ impl Descriptors {
         };
 
         for (purpose, path) in paths.into_iter() {
-            let derived_private_key: ExtendedPrivKey = root.derive_priv(&SECP256K1, &path)?;
+            let derived_private_key: ExtendedPrivKey = root.derive_priv(secp, &path)?;
             let derived_public_key: ExtendedPubKey =
-                ExtendedPubKey::from_priv(&SECP256K1, &derived_private_key);
+                ExtendedPubKey::from_priv(secp, &derived_private_key);
 
             descriptors.external.insert(
                 purpose,
@@ -146,36 +154,44 @@ pub trait ToDescriptor: Bip32
 where
     Error: From<<Self as Bip32>::Err>,
 {
-    fn to_descriptor(
+    fn to_descriptor<C>(
         &self,
         purpose: Purpose,
         account: Option<u32>,
         change: bool,
         network: Network,
-    ) -> Result<DescriptorPublicKey, Error> {
+        secp: &Secp256k1<C>,
+    ) -> Result<DescriptorPublicKey, Error>
+    where
+        C: Signing,
+    {
         let root: ExtendedPrivKey = self.to_bip32_root_key(network)?;
-        let root_fingerprint = root.fingerprint(&SECP256K1);
+        let root_fingerprint = root.fingerprint(secp);
         let path = bip32::account_extended_path(purpose.as_u32(), network, account)?;
-        let derived_private_key: ExtendedPrivKey = root.derive_priv(&SECP256K1, &path)?;
+        let derived_private_key: ExtendedPrivKey = root.derive_priv(secp, &path)?;
         let derived_public_key: ExtendedPubKey =
-            ExtendedPubKey::from_priv(&SECP256K1, &derived_private_key);
+            ExtendedPubKey::from_priv(secp, &derived_private_key);
         let (_, desc) = descriptor(root_fingerprint, derived_public_key, &path, change)?;
         Ok(desc)
     }
 
-    fn to_typed_descriptor(
+    fn to_typed_descriptor<C>(
         &self,
         purpose: Purpose,
         account: Option<u32>,
         change: bool,
         network: Network,
-    ) -> Result<Descriptor<DescriptorPublicKey>, Error> {
+        secp: &Secp256k1<C>,
+    ) -> Result<Descriptor<DescriptorPublicKey>, Error>
+    where
+        C: Signing,
+    {
         let root: ExtendedPrivKey = self.to_bip32_root_key(network)?;
-        let root_fingerprint = root.fingerprint(&SECP256K1);
+        let root_fingerprint = root.fingerprint(secp);
         let path = bip32::account_extended_path(purpose.as_u32(), network, account)?;
-        let derived_private_key: ExtendedPrivKey = root.derive_priv(&SECP256K1, &path)?;
+        let derived_private_key: ExtendedPrivKey = root.derive_priv(secp, &path)?;
         let derived_public_key: ExtendedPubKey =
-            ExtendedPubKey::from_priv(&SECP256K1, &derived_private_key);
+            ExtendedPubKey::from_priv(secp, &derived_private_key);
         typed_descriptor(root_fingerprint, derived_public_key, &path, change)
     }
 }
@@ -241,36 +257,38 @@ mod test {
 
     #[test]
     fn test_seed_to_descriptor() {
+        let secp = Secp256k1::new();
         let mnemonic = Mnemonic::from_str("range special tuna oblige own drama trend render harsh army outdoor bulb brisk sing analyst own fork senior stove flash fire bulk umbrella vast").unwrap();
         let seed = Seed::from_mnemonic(mnemonic);
 
         // Tr
         let desc: DescriptorPublicKey = seed
-            .to_descriptor(Purpose::TR, None, false, Network::Bitcoin)
+            .to_descriptor(Purpose::TR, None, false, Network::Bitcoin, &secp)
             .unwrap();
         assert_eq!(desc.to_string(), String::from("[91ef223d/86'/0'/0']xpub6CjhhJyrYK83TKQq797CMiNzc4bpoJiYRBeb7iQ99T6dXrEgvg24hDw3ZKDJLNMyiy9Sbwqaw8TtCdaE4xXhnYwy7ptpNVfEAKUCcz8PMtP/0/*"));
 
         // Wpkh
         let desc: DescriptorPublicKey = seed
-            .to_descriptor(Purpose::WPKH, Some(2345), true, Network::Testnet)
+            .to_descriptor(Purpose::WPKH, Some(2345), true, Network::Testnet, &secp)
             .unwrap();
         assert_eq!(desc.to_string(), String::from("[91ef223d/84'/1'/2345']tpubDCgYuiX1p1eecECkhNc2bLSktmSDoMTj5J3v184ErUXqHTywQ7X5afv51UGfDVSaYzDWvdHhVyJ6UK8fM27EwGByWdczEERfAA9j2nzHUAj/1/*"));
     }
 
     #[test]
     fn test_seed_to_typed_descriptor() {
+        let secp = Secp256k1::new();
         let mnemonic = Mnemonic::from_str("range special tuna oblige own drama trend render harsh army outdoor bulb brisk sing analyst own fork senior stove flash fire bulk umbrella vast").unwrap();
         let seed = Seed::from_mnemonic(mnemonic);
 
         // Tr
         let desc: Descriptor<DescriptorPublicKey> = seed
-            .to_typed_descriptor(Purpose::TR, None, false, Network::Bitcoin)
+            .to_typed_descriptor(Purpose::TR, None, false, Network::Bitcoin, &secp)
             .unwrap();
         assert_eq!(desc.to_string(), String::from("tr([91ef223d/86'/0'/0']xpub6CjhhJyrYK83TKQq797CMiNzc4bpoJiYRBeb7iQ99T6dXrEgvg24hDw3ZKDJLNMyiy9Sbwqaw8TtCdaE4xXhnYwy7ptpNVfEAKUCcz8PMtP/0/*)#qkangwzf"));
 
         // Wpkh
         let desc: Descriptor<DescriptorPublicKey> = seed
-            .to_typed_descriptor(Purpose::WPKH, Some(2345), true, Network::Testnet)
+            .to_typed_descriptor(Purpose::WPKH, Some(2345), true, Network::Testnet, &secp)
             .unwrap();
         assert_eq!(desc.to_string(), String::from("wpkh([91ef223d/84'/1'/2345']tpubDCgYuiX1p1eecECkhNc2bLSktmSDoMTj5J3v184ErUXqHTywQ7X5afv51UGfDVSaYzDWvdHhVyJ6UK8fM27EwGByWdczEERfAA9j2nzHUAj/1/*)#tj43jnd8"));
     }

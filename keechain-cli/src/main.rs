@@ -8,6 +8,7 @@ use clap::Parser;
 use console::Term;
 use keechain_core::bips::bip39::Mnemonic;
 use keechain_core::bitcoin::psbt::PartiallySignedTransaction;
+use keechain_core::bitcoin::secp256k1::Secp256k1;
 use keechain_core::bitcoin::Network;
 use keechain_core::types::{BitcoinCore, Descriptors, Electrum, KeeChain, Psbt, Wasabi};
 use keechain_core::util::dir;
@@ -24,6 +25,7 @@ fn main() -> Result<()> {
     env_logger::init();
 
     let args = Cli::parse();
+    let secp = Secp256k1::new();
     let network: Network = args.network.into();
     let keychain_path: PathBuf = keechain_common::keychains()?;
 
@@ -74,7 +76,7 @@ fn main() -> Result<()> {
         Command::Identity { name } => {
             let path = dir::get_keychain_file(keychain_path, name)?;
             let keechain = KeeChain::open(path, io::get_password)?;
-            let fingerprint = keechain.keychain.identity(network)?;
+            let fingerprint = keechain.keychain.identity(network, &secp)?;
             println!("Fingerprint: {fingerprint}");
             Ok(())
         }
@@ -83,7 +85,7 @@ fn main() -> Result<()> {
                 let path = dir::get_keychain_file(keychain_path, name)?;
                 let keechain = KeeChain::open(path, io::get_password)?;
                 let descriptors =
-                    Descriptors::new(keechain.keychain.seed(), network, Some(account))?;
+                    Descriptors::new(keechain.keychain.seed(), network, Some(account), &secp)?;
                 println!("Extenrals:");
                 for desc in descriptors.external().iter() {
                     println!("- {desc}");
@@ -98,7 +100,7 @@ fn main() -> Result<()> {
                 let path = dir::get_keychain_file(keychain_path, name)?;
                 let keechain = KeeChain::open(path, io::get_password)?;
                 let descriptors =
-                    BitcoinCore::new(keechain.keychain.seed(), network, Some(account))?;
+                    BitcoinCore::new(keechain.keychain.seed(), network, Some(account), &secp)?;
                 println!("{}", descriptors.to_string());
                 Ok(())
             }
@@ -114,6 +116,7 @@ fn main() -> Result<()> {
                     network,
                     script.into(),
                     Some(account),
+                    &secp,
                 )?;
                 let path = electrum_json_wallet.save_to_file(keechain_common::home())?;
                 println!("Electrum file exported to {}", path.display());
@@ -122,7 +125,7 @@ fn main() -> Result<()> {
             ExportTypes::Wasabi { name } => {
                 let path = dir::get_keychain_file(keychain_path, name)?;
                 let keechain = KeeChain::open(path, io::get_password)?;
-                let wasabi_json_wallet = Wasabi::new(keechain.keychain.seed(), network)?;
+                let wasabi_json_wallet = Wasabi::new(keechain.keychain.seed(), network, &secp)?;
                 let path = wasabi_json_wallet.save_to_file(keechain_common::home())?;
                 println!("Wasabi file exported to {}", path.display());
                 Ok(())
@@ -148,8 +151,10 @@ fn main() -> Result<()> {
             let mut psbt: PartiallySignedTransaction =
                 PartiallySignedTransaction::from_file(&file)?;
             let finalized = match descriptor {
-                Some(descriptor) => psbt.sign_with_descriptor(seed, descriptor, false, network)?,
-                None => psbt.sign(seed, network)?,
+                Some(descriptor) => {
+                    psbt.sign_with_descriptor(seed, descriptor, false, network, &secp)?
+                }
+                None => psbt.sign(seed, network, &secp)?,
             };
             println!("Signed.");
             let mut renamed_file: PathBuf = file;
@@ -170,9 +175,10 @@ fn main() -> Result<()> {
             } => {
                 let path = dir::get_keychain_file(keychain_path, name)?;
                 let keechain = KeeChain::open(path, io::get_password)?;
-                let mnemonic: Mnemonic = keechain
-                    .keychain
-                    .deterministic_entropy(word_count.into(), index)?;
+                let mnemonic: Mnemonic =
+                    keechain
+                        .keychain
+                        .deterministic_entropy(word_count.into(), index, &secp)?;
                 println!("Mnemonic: {mnemonic}");
                 Ok(())
             }
@@ -180,7 +186,7 @@ fn main() -> Result<()> {
                 DangerCommand::ViewSecrets { name } => {
                     let path = dir::get_keychain_file(keychain_path, name)?;
                     let keechain = KeeChain::open(path, io::get_password)?;
-                    let secrets = keechain.keychain.secrets(network)?;
+                    let secrets = keechain.keychain.secrets(network, &secp)?;
                     util::print_secrets(secrets);
                     Ok(())
                 }

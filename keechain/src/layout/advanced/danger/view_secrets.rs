@@ -6,7 +6,7 @@ use keechain_core::types::Secrets;
 
 use crate::component::{Button, Error, Heading, InputField, MnemonicViewer, ReadOnlyField, View};
 use crate::theme::color::ORANGE;
-use crate::{AppState, Menu, Stage};
+use crate::{AppState, Menu, Stage, SECP256K1};
 
 #[derive(Default)]
 pub struct ViewSecretsState {
@@ -72,7 +72,7 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                             .check_password(app.layouts.view_secrets.password.clone())
                             .unwrap_or_default()
                         {
-                            match keechain.keychain.secrets(app.network) {
+                            match keechain.keychain.secrets(app.network, &SECP256K1) {
                                 Ok(secrets) => app.layouts.view_secrets.secrets = Some(secrets),
                                 Err(e) => app.layouts.view_secrets.error = Some(e.to_string()),
                             }

@@ -4,6 +4,7 @@
 use core::fmt;
 
 use bitcoin::hashes::Hash;
+use bitcoin::secp256k1::{Secp256k1, Signing};
 use bitcoin::Network;
 use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
@@ -15,8 +16,7 @@ use crate::bips::bip85::{self, Bip85};
 use crate::crypto::aes::{self, Aes256Encryption};
 use crate::crypto::hash;
 use crate::types::{Index, Secrets, Seed, WordCount};
-use crate::util;
-use crate::Result;
+use crate::{util, Result};
 
 #[derive(Debug)]
 pub enum Error {
@@ -126,28 +126,42 @@ impl Keychain {
         self.seed.clone()
     }
 
-    pub fn identity(&self, network: Network) -> Result<Fingerprint, Error> {
-        Ok(self.seed.fingerprint(network)?)
+    pub fn identity<C>(&self, network: Network, secp: &Secp256k1<C>) -> Result<Fingerprint, Error>
+    where
+        C: Signing,
+    {
+        Ok(self.seed.fingerprint(network, secp)?)
     }
 
-    pub fn deterministic_entropy(
+    pub fn deterministic_entropy<C>(
         &self,
         word_count: WordCount,
         index: Index,
-    ) -> Result<Mnemonic, Error> {
-        Ok(self.seed.derive_bip85_mnemonic(word_count, index)?)
+        secp: &Secp256k1<C>,
+    ) -> Result<Mnemonic, Error>
+    where
+        C: Signing,
+    {
+        Ok(self.seed.derive_bip85_mnemonic(word_count, index, secp)?)
     }
 
-    pub fn descriptors(
+    pub fn descriptors<C>(
         &self,
         network: Network,
         account: Option<u32>,
-    ) -> Result<Descriptors, Error> {
-        Ok(Descriptors::new(self.seed(), network, account)?)
+        secp: &Secp256k1<C>,
+    ) -> Result<Descriptors, Error>
+    where
+        C: Signing,
+    {
+        Ok(Descriptors::new(self.seed(), network, account, secp)?)
     }
 
-    pub fn secrets(&self, network: Network) -> Result<Secrets, Error> {
-        Ok(Secrets::new(self.seed(), network)?)
+    pub fn secrets<C>(&self, network: Network, secp: &Secp256k1<C>) -> Result<Secrets, Error>
+    where
+        C: Signing,
+    {
+        Ok(Secrets::new(self.seed(), network, secp)?)
     }
 
     pub fn add_passphrase<S>(&mut self, passphrase: S)

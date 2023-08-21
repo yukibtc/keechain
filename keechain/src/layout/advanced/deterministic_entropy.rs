@@ -9,7 +9,7 @@ use keechain_core::types::{Index, WordCount};
 
 use crate::component::{Button, Error, Heading, InputField, MnemonicViewer, View};
 use crate::theme::color::ORANGE;
-use crate::{AppState, Menu, Stage};
+use crate::{AppState, Menu, Stage, SECP256K1};
 
 const WORD_COUNT_OPTIONS: [WordCount; 3] = [WordCount::W12, WordCount::W18, WordCount::W24];
 
@@ -96,6 +96,7 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                         Ok(index) => match keechain.keychain.deterministic_entropy(
                             app.layouts.deterministic_entropy.word_count,
                             index,
+                            &SECP256K1,
                         ) {
                             Ok(mnemonic) => {
                                 app.layouts.deterministic_entropy.error = None;

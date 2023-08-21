@@ -6,8 +6,8 @@ use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+use bitcoin::secp256k1::{Secp256k1, Signing};
 use bitcoin::Network;
-
 use serde::{Deserialize, Serialize};
 
 use crate::bips::bip32::{
@@ -15,7 +15,6 @@ use crate::bips::bip32::{
 };
 use crate::slips::slip132::{self, ToSlip132};
 use crate::types::Seed;
-use crate::SECP256K1;
 
 #[derive(Debug)]
 pub enum Error {
@@ -115,22 +114,26 @@ pub struct Electrum {
 }
 
 impl Electrum {
-    pub fn new(
+    pub fn new<C>(
         seed: Seed,
         network: Network,
         script: ElectrumSupportedScripts,
         account: Option<u32>,
-    ) -> Result<Self, Error> {
+        secp: &Secp256k1<C>,
+    ) -> Result<Self, Error>
+    where
+        C: Signing,
+    {
         let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
         let path: DerivationPath = bip32::account_extended_path(script.as_u32(), network, account)?;
-        let xpriv: ExtendedPrivKey = root.derive_priv(&SECP256K1, &path)?;
-        let pubkey: ExtendedPubKey = ExtendedPubKey::from_priv(&SECP256K1, &xpriv);
+        let xpriv: ExtendedPrivKey = root.derive_priv(secp, &path)?;
+        let pubkey: ExtendedPubKey = ExtendedPubKey::from_priv(secp, &xpriv);
 
         Ok(Self {
             keystore: ElectrumKeystore {
                 xpub: pubkey.to_slip132(&path)?,
                 fingerprint: pubkey.fingerprint(),
-                root_fingerprint: root.fingerprint(&SECP256K1),
+                root_fingerprint: root.fingerprint(secp),
                 keystore_type: String::from("bip32"),
                 derivation: path,
             },
