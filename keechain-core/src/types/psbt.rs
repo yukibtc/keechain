@@ -39,10 +39,6 @@ pub enum Error {
     InvalidDerivationPath,
     NothingToSign,
     PsbtNotSigned,
-    /// Negative fee
-    NegativeFee,
-    /// Integer overflow in fee calculation
-    FeeOverflow,
 }
 
 impl std::error::Error for Error {}
@@ -64,8 +60,6 @@ impl fmt::Display for Error {
             Self::InvalidDerivationPath => write!(f, "Invalid derivation path"),
             Self::NothingToSign => write!(f, "Nothing to sign here"),
             Self::PsbtNotSigned => write!(f, "PSBT not signed"),
-            Self::NegativeFee => write!(f, "Negative fee"),
-            Self::FeeOverflow => write!(f, "Fee overflow"),
         }
     }
 }
@@ -206,18 +200,6 @@ pub trait Psbt: Sized {
     fn as_bytes(&self) -> Result<Vec<u8>, Error> {
         Ok(base64::decode(self.as_base64())?)
     }
-
-    /// Calculates transaction fee.
-    ///
-    /// 'Fee' being the amount that will be paid for mining a transaction with the current inputs
-    /// and outputs i.e., the difference in value of the total inputs and the total outputs.
-    ///
-    /// ## Errors
-    ///
-    /// - [`Error::MissingUtxo`] when UTXO information for any input is not present or is invalid.
-    /// - [`Error::NegativeFee`] if calculated value is negative.
-    /// - [`Error::FeeOverflow`] if an integer overflow occurs.
-    fn fee(&self) -> Result<u64, Error>;
 }
 
 impl Psbt for PartiallySignedTransaction {
@@ -345,28 +327,6 @@ impl Psbt for PartiallySignedTransaction {
 
     fn as_base64(&self) -> String {
         self.to_string()
-    }
-
-    /// Calculates transaction fee.
-    ///
-    /// 'Fee' being the amount that will be paid for mining a transaction with the current inputs
-    /// and outputs i.e., the difference in value of the total inputs and the total outputs.
-    ///
-    /// ## Errors
-    ///
-    /// - [`Error::MissingUtxo`] when UTXO information for any input is not present or is invalid.
-    /// - [`Error::NegativeFee`] if calculated value is negative.
-    /// - [`Error::FeeOverflow`] if an integer overflow occurs.
-    fn fee(&self) -> Result<u64, Error> {
-        let mut inputs: u64 = 0;
-        for utxo in self.iter_funding_utxos() {
-            inputs = inputs.checked_add(utxo?.value).ok_or(Error::FeeOverflow)?;
-        }
-        let mut outputs: u64 = 0;
-        for out in &self.unsigned_tx.output {
-            outputs = outputs.checked_add(out.value).ok_or(Error::FeeOverflow)?;
-        }
-        inputs.checked_sub(outputs).ok_or(Error::NegativeFee)
     }
 }
 
