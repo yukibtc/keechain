@@ -1,16 +1,15 @@
 [package]
 name = "keechain"
-version.workspace = true
+version = "0.1.0"
 edition = "2021"
-description.workspace = true
+description = "Bitcoin PSBT signer, descriptor exporter and more for offline devices."
 authors = ["Yuki Kishimoto <yukikishimoto@protonmain.com>"]
-homepage.workspace = true
-repository.workspace = true
-license.workspace = true
+homepage = "https://github.com/yukibtc/keechain"
+repository = "https://github.com/yukibtc/keechain.git"
+license = "MIT"
 readme = "../README.md"
-keywords.workspace = true
+keywords = ["bitcoin", "signer", "psbt", "offline"]
 categories = ["gui"]
-rust-version.workspace = true
 
 [dependencies]
 eframe = "0.21"
@@ -19,4 +18,4 @@ image = { version = "0.24", default-features = false, features = ["png"] }
 keechain-common = { version = "0.1", path = "../keechain-common" }
 keechain-core = { version = "0.1", path = "../keechain-core" }
 rfd = "0.11"
-once_cell = "1"
+once_cell = "1.18"

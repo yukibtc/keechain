@@ -1,16 +1,15 @@
 [package]
 name = "keechain-cli"
-version.workspace = true
+version = "0.1.0"
 edition = "2021"
-description.workspace = true
+description = "Bitcoin PSBT signer, descriptor exporter and more for offline devices."
 authors = ["Yuki Kishimoto <yukikishimoto@protonmain.com>"]
-homepage.workspace = true
-repository.workspace = true
-license.workspace = true
+homepage = "https://github.com/yukibtc/keechain"
+repository = "https://github.com/yukibtc/keechain.git"
+license = "MIT"
 readme = "../README.md"
-keywords.workspace = true
+keywords = ["bitcoin", "signer", "psbt", "offline"]
 categories = ["command-line-utilities"]
-rust-version.workspace = true
 
 [dependencies]
 clap = { version = "4.1", features = ["derive"] }

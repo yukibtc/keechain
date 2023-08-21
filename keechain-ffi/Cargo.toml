@@ -1,11 +1,8 @@
 [package]
 name = "keechain-ffi"
-version.workspace = true
+version = "0.1.0"
 edition = "2021"
 description = "Keechain Core FFI."
-homepage.workspace = true
-repository.workspace = true
-license.workspace = true
 
 [lib]
 name = "keechain_ffi"

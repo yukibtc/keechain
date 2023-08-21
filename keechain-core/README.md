@@ -6,7 +6,7 @@ KeeChain Core library.
 
 ## Minimum Supported Rust Version (MSRV)
 
-These crates are built with the Rust language version `2021` and require a minimum compiler version of `1.65.0`
+These crates are built with the Rust language version `2021` and require a minimum compiler version of `1.60.0`
 
 ## State
 

@@ -1,15 +1,10 @@
 [package]
 name = "keechain-common"
-version.workspace = true
+version = "0.1.0"
 edition = "2021"
 description = "KeeChain Common library."
 authors = ["Yuki Kishimoto <yukikishimoto@protonmain.com>"]
-homepage.workspace = true
-repository.workspace = true
-license.workspace = true
 readme = "README.md"
-keywords.workspace = true
-rust-version.workspace = true
 
 [dependencies]
 dirs = "4.0"
