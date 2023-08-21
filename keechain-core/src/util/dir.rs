@@ -1,6 +1,7 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use core::fmt;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -8,12 +9,27 @@ use std::path::{Path, PathBuf};
 pub const KEECHAIN_EXTENSION: &str = "keechain";
 pub(crate) const KEECHAIN_DOT_EXTENSION: &str = ".keechain";
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum Error {
-    #[error(transparent)]
-    IO(#[from] std::io::Error),
-    #[error("Impossible to get file name")]
+    IO(std::io::Error),
     FailedToGetFileName,
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::IO(e) => write!(f, "IO: {e}"),
+            Self::FailedToGetFileName => write!(f, "Impossible to get file name"),
+        }
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(e: std::io::Error) -> Self {
+        Self::IO(e)
+    }
 }
 
 pub fn get_keychains_list<P>(path: P) -> Result<Vec<String>, Error>

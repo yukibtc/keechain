@@ -5,21 +5,45 @@
 //!
 //! <https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki>
 
+use core::fmt;
+
 use bip39::Mnemonic;
 use bitcoin::hashes::hmac::{Hmac, HmacEngine};
 use bitcoin::hashes::{sha512, Hash, HashEngine};
+use bitcoin::util::bip32;
 use bitcoin::Network;
 
 use super::bip32::{Bip32, ChildNumber, DerivationPath, ExtendedPrivKey};
 use crate::types::{Index, WordCount};
 use crate::SECP256K1;
 
-#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
-    #[error(transparent)]
-    BIP32(#[from] bitcoin::util::bip32::Error),
-    #[error(transparent)]
-    BIP39(#[from] bip39::Error),
+    BIP32(bip32::Error),
+    BIP39(bip39::Error),
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::BIP32(e) => write!(f, "BIP32: {e}"),
+            Self::BIP39(e) => write!(f, "BIP39: {e}"),
+        }
+    }
+}
+
+impl From<bip32::Error> for Error {
+    fn from(e: bip32::Error) -> Self {
+        Self::BIP32(e)
+    }
+}
+
+impl From<bip39::Error> for Error {
+    fn from(e: bip39::Error) -> Self {
+        Self::BIP39(e)
+    }
 }
 
 pub trait FromBip85: Sized {

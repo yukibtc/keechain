@@ -1,7 +1,8 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use std::fmt;
+use core::fmt;
+use std::num::ParseIntError;
 use std::str::FromStr;
 
 use bip39::Mnemonic;
@@ -68,12 +69,27 @@ impl fmt::Display for WordCount {
     }
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum IndexError {
-    #[error("Invalid index")]
+    ParseInt(ParseIntError),
     InvalidIndex,
-    #[error(transparent)]
-    ParseInt(#[from] std::num::ParseIntError),
+}
+
+impl std::error::Error for IndexError {}
+
+impl fmt::Display for IndexError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ParseInt(e) => write!(f, "Parse Int: {e}"),
+            Self::InvalidIndex => write!(f, "Invalid index"),
+        }
+    }
+}
+
+impl From<ParseIntError> for IndexError {
+    fn from(e: ParseIntError) -> Self {
+        Self::ParseInt(e)
+    }
 }
 
 #[derive(Clone, Copy, Default)]

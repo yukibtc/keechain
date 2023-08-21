@@ -1,15 +1,28 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
-#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+use core::fmt;
+
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     /// An invalid character was found
-    #[error("Invalid character {} at position {}", c, index)]
     InvalidHexCharacter { c: char, index: usize },
     /// A hex string's length needs to be even, as two digits correspond to
     /// one byte.
-    #[error("Odd number of digits")]
     OddLength,
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidHexCharacter { c, index } => {
+                write!(f, "Invalid character {c} at position {index}")
+            }
+            Self::OddLength => write!(f, "Odd number of digits"),
+        }
+    }
 }
 
 pub fn encode<T>(data: T) -> String

@@ -1,6 +1,7 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use core::fmt;
 use std::collections::HashMap;
 use std::str::FromStr;
 
@@ -13,22 +14,51 @@ use crate::bips::bip32::{
 };
 use crate::SECP256K1;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum Error {
-    #[error(transparent)]
-    BIP32(#[from] bitcoin::util::bip32::Error),
-    #[error(transparent)]
-    Miniscript(#[from] bdk::miniscript::Error),
-    #[error(transparent)]
-    DescriptorKeyParse(#[from] DescriptorKeyParseError),
-    #[error("Unsupported derivation path")]
+    BIP32(bip32::Error),
+    Miniscript(bdk::miniscript::Error),
+    DescriptorKeyParse(DescriptorKeyParseError),
     UnsupportedDerivationPath,
-    #[error("Invalid derivation path: purpose not provided")]
     PurposePathNotFound,
-    #[error("Invalid derivation path: invalid coin or not provided")]
     CoinPathNotFound,
-    #[error("Descriptor not found")]
     DescriptorNotFound,
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::BIP32(e) => write!(f, "BIP32: {e}"),
+            Self::Miniscript(e) => write!(f, "Miniscript: {e}"),
+            Self::DescriptorKeyParse(e) => write!(f, "Descriptor Key parse: {e}"),
+            Self::UnsupportedDerivationPath => write!(f, "Unsupported derivation path"),
+            Self::PurposePathNotFound => write!(f, "Invalid derivation path: purpose not provided"),
+            Self::CoinPathNotFound => {
+                write!(f, "Invalid derivation path: invalid coin or not provided")
+            }
+            Self::DescriptorNotFound => write!(f, "Descriptor not found"),
+        }
+    }
+}
+
+impl From<bip32::Error> for Error {
+    fn from(e: bip32::Error) -> Self {
+        Self::BIP32(e)
+    }
+}
+
+impl From<bdk::miniscript::Error> for Error {
+    fn from(e: bdk::miniscript::Error) -> Self {
+        Self::Miniscript(e)
+    }
+}
+
+impl From<DescriptorKeyParseError> for Error {
+    fn from(e: DescriptorKeyParseError) -> Self {
+        Self::DescriptorKeyParse(e)
+    }
 }
 
 #[derive(Debug, Clone)]

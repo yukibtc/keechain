@@ -1,6 +1,8 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use core::fmt;
+
 use bdk::miniscript::descriptor::{Descriptor, DescriptorPublicKey};
 use bitcoin::Network;
 use serde::Serialize;
@@ -8,10 +10,25 @@ use serde_json::json;
 
 use super::{Descriptors, Seed};
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum Error {
-    #[error(transparent)]
-    Descriptor(#[from] super::descriptors::Error),
+    Descriptor(super::descriptors::Error),
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Descriptor(e) => write!(f, "Descriptor: {e}"),
+        }
+    }
+}
+
+impl From<super::descriptors::Error> for Error {
+    fn from(e: super::descriptors::Error) -> Self {
+        Self::Descriptor(e)
+    }
 }
 
 #[derive(Debug, Serialize)]

@@ -18,20 +18,61 @@ use crate::types::{Index, Secrets, Seed, WordCount};
 use crate::util;
 use crate::Result;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum Error {
-    #[error(transparent)]
-    Aes(#[from] aes::Error),
-    #[error(transparent)]
-    Json(#[from] serde_json::Error),
-    #[error(transparent)]
-    BIP32(#[from] bip32::Error),
-    #[error(transparent)]
-    BIP85(#[from] bip85::Error),
-    #[error(transparent)]
-    Descriptors(#[from] super::descriptors::Error),
-    #[error("Impossible to decrypt file: invalid password or content")]
+    Aes(aes::Error),
+    Json(serde_json::Error),
+    BIP32(bip32::Error),
+    BIP85(bip85::Error),
+    Descriptors(super::descriptors::Error),
     DecryptionFailed,
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Aes(e) => write!(f, "Aes: {e}"),
+            Self::Json(e) => write!(f, "Json: {e}"),
+            Self::BIP32(e) => write!(f, "BIP32: {e}"),
+            Self::BIP85(e) => write!(f, "BIP85: {e}"),
+            Self::Descriptors(e) => write!(f, "Descriptors: {e}"),
+            Self::DecryptionFailed => {
+                write!(f, "Impossible to decrypt file: invalid password or content")
+            }
+        }
+    }
+}
+
+impl From<aes::Error> for Error {
+    fn from(e: aes::Error) -> Self {
+        Self::Aes(e)
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(e: serde_json::Error) -> Self {
+        Self::Json(e)
+    }
+}
+
+impl From<bip32::Error> for Error {
+    fn from(e: bip32::Error) -> Self {
+        Self::BIP32(e)
+    }
+}
+
+impl From<bip85::Error> for Error {
+    fn from(e: bip85::Error) -> Self {
+        Self::BIP85(e)
+    }
+}
+
+impl From<super::descriptors::Error> for Error {
+    fn from(e: super::descriptors::Error) -> Self {
+        Self::Descriptors(e)
+    }
 }
 
 #[derive(Deserialize)]

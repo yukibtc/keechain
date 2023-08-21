@@ -3,7 +3,7 @@
 
 //! PSBT
 
-use core::fmt::Debug;
+use core::fmt::{self, Debug};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -18,47 +18,110 @@ use bitcoin::psbt::{self, PartiallySignedTransaction, PsbtParseError};
 use bitcoin::{Network, PrivateKey};
 
 use super::descriptors;
-use crate::bips::bip32::{Bip32, ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
+use crate::bips::bip32::{self, Bip32, ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
 use crate::types::{Descriptors, Purpose, Seed};
 use crate::util::base64;
 use crate::SECP256K1;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum Error {
-    #[error(transparent)]
-    IO(#[from] std::io::Error),
-    #[error(transparent)]
-    Base64(#[from] base64::DecodeError),
-    #[error(transparent)]
-    BIP32(#[from] bitcoin::util::bip32::Error),
-    #[error(transparent)]
-    Psbt(#[from] psbt::Error),
-    #[error(transparent)]
-    PsbtParse(#[from] PsbtParseError),
-    #[error(transparent)]
-    DescriptorParse(#[from] DescriptorKeyParseError),
-    #[error(transparent)]
-    Descriptor(#[from] descriptors::Error),
-    #[error(transparent)]
-    BdkDescriptor(#[from] bdk::descriptor::DescriptorError),
-    #[error(transparent)]
-    BDK(#[from] bdk::Error),
-    #[error("File not found")]
+    IO(std::io::Error),
+    Base64(base64::DecodeError),
+    BIP32(bip32::Error),
+    Psbt(psbt::Error),
+    PsbtParse(PsbtParseError),
+    Descriptors(descriptors::Error),
+    DescriptorParse(DescriptorKeyParseError),
+    Bdk(bdk::Error),
+    BdkDescriptor(bdk::descriptor::DescriptorError),
     FileNotFound,
-    #[error("Unsupported derivation path")]
     UnsupportedDerivationPath,
-    #[error("Invalid derivation path")]
     InvalidDerivationPath,
-    #[error("Nothing to sign here")]
     NothingToSign,
-    #[error("PSBT not signed")]
     PsbtNotSigned,
     /// Negative fee
-    #[error("negative fee")]
     NegativeFee,
     /// Integer overflow in fee calculation
-    #[error("fee overflow")]
     FeeOverflow,
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::IO(e) => write!(f, "IO: {e}"),
+            Self::Base64(e) => write!(f, "Base64: {e}"),
+            Self::BIP32(e) => write!(f, "BIP32: {e}"),
+            Self::Psbt(e) => write!(f, "Psbt: {e}"),
+            Self::PsbtParse(e) => write!(f, "Psbt parse: {e}"),
+            Self::Descriptors(e) => write!(f, "Descriptors: {e}"),
+            Self::DescriptorParse(e) => write!(f, "Descriptor parse: {e}"),
+            Self::Bdk(e) => write!(f, "Bdk: {e}"),
+            Self::BdkDescriptor(e) => write!(f, "Bdk bescriptor: {e}"),
+            Self::FileNotFound => write!(f, "File not found"),
+            Self::UnsupportedDerivationPath => write!(f, "Unsupported derivation path"),
+            Self::InvalidDerivationPath => write!(f, "Invalid derivation path"),
+            Self::NothingToSign => write!(f, "Nothing to sign here"),
+            Self::PsbtNotSigned => write!(f, "PSBT not signed"),
+            Self::NegativeFee => write!(f, "Negative fee"),
+            Self::FeeOverflow => write!(f, "Fee overflow"),
+        }
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(e: std::io::Error) -> Self {
+        Self::IO(e)
+    }
+}
+
+impl From<base64::DecodeError> for Error {
+    fn from(e: base64::DecodeError) -> Self {
+        Self::Base64(e)
+    }
+}
+
+impl From<bip32::Error> for Error {
+    fn from(e: bip32::Error) -> Self {
+        Self::BIP32(e)
+    }
+}
+
+impl From<psbt::Error> for Error {
+    fn from(e: psbt::Error) -> Self {
+        Self::Psbt(e)
+    }
+}
+
+impl From<PsbtParseError> for Error {
+    fn from(e: PsbtParseError) -> Self {
+        Self::PsbtParse(e)
+    }
+}
+
+impl From<descriptors::Error> for Error {
+    fn from(e: descriptors::Error) -> Self {
+        Self::Descriptors(e)
+    }
+}
+
+impl From<DescriptorKeyParseError> for Error {
+    fn from(e: DescriptorKeyParseError) -> Self {
+        Self::DescriptorParse(e)
+    }
+}
+
+impl From<bdk::Error> for Error {
+    fn from(e: bdk::Error) -> Self {
+        Self::Bdk(e)
+    }
+}
+
+impl From<bdk::descriptor::DescriptorError> for Error {
+    fn from(e: bdk::descriptor::DescriptorError) -> Self {
+        Self::BdkDescriptor(e)
+    }
 }
 
 pub trait Psbt: Sized {

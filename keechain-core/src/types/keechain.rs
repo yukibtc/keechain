@@ -19,28 +19,70 @@ use crate::Result;
 
 const KEECHAIN_FILE_VERSION: u8 = 1;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum Error {
-    #[error(transparent)]
-    IO(#[from] std::io::Error),
-    #[error(transparent)]
-    Json(#[from] serde_json::Error),
-    #[error(transparent)]
-    Base64(#[from] base64::DecodeError),
-    #[error(transparent)]
-    BIP39(#[from] bip39::Error),
-    #[error(transparent)]
-    Keychain(#[from] keychain::Error),
-    #[error("RwLock: {0}")]
+    IO(std::io::Error),
+    Json(serde_json::Error),
+    Base64(base64::DecodeError),
+    BIP39(bip39::Error),
+    Keychain(keychain::Error),
     RwLock(String),
-    #[error("File not found")]
-    FileNotFound,
-    #[error("There is already a file with the same name! Please, choose another name")]
-    FileAlreadyExists,
-    #[error("Invalid password")]
-    InvalidPassword,
-    #[error("{0}")]
     Generic(String),
+    FileNotFound,
+    FileAlreadyExists,
+    InvalidPassword,
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::IO(e) => write!(f, "IO: {e}"),
+            Self::Json(e) => write!(f, "Json: {e}"),
+            Self::Base64(e) => write!(f, "Base64: {e}"),
+            Self::BIP39(e) => write!(f, "BIP39: {e}"),
+            Self::Keychain(e) => write!(f, "Keychain: {e}"),
+            Self::RwLock(e) => write!(f, "RwLock: {e}"),
+            Self::Generic(e) => write!(f, "Generic: {e}"),
+            Self::FileNotFound => write!(f, "File not found"),
+            Self::FileAlreadyExists => write!(
+                f,
+                "There is already a file with the same name! Please, choose another name"
+            ),
+            Self::InvalidPassword => write!(f, "Invalid password"),
+        }
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(e: std::io::Error) -> Self {
+        Self::IO(e)
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(e: serde_json::Error) -> Self {
+        Self::Json(e)
+    }
+}
+
+impl From<base64::DecodeError> for Error {
+    fn from(e: base64::DecodeError) -> Self {
+        Self::Base64(e)
+    }
+}
+
+impl From<bip39::Error> for Error {
+    fn from(e: bip39::Error) -> Self {
+        Self::BIP39(e)
+    }
+}
+
+impl From<keychain::Error> for Error {
+    fn from(e: keychain::Error) -> Self {
+        Self::Keychain(e)
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]

@@ -1762,7 +1762,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sysinfo",
- "thiserror",
 ]
 
 [[package]]

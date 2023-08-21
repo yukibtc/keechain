@@ -1,19 +1,42 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+use core::fmt;
+
 use bitcoin::util::base58;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPubKey};
 
 use crate::util::hex;
 
-#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
-    #[error(transparent)]
-    Base58(#[from] bitcoin::util::base58::Error),
-    #[error(transparent)]
-    Hex(#[from] hex::Error),
-    #[error("Unsupported derivation path")]
+    Base58(base58::Error),
+    Hex(hex::Error),
     UnsupportedDerivationPath,
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Base58(e) => write!(f, "Base58: {e}"),
+            Self::Hex(e) => write!(f, "Hex: {e}"),
+            Self::UnsupportedDerivationPath => write!(f, "Unsupported derivation path"),
+        }
+    }
+}
+
+impl From<base58::Error> for Error {
+    fn from(e: base58::Error) -> Self {
+        Self::Base58(e)
+    }
+}
+
+impl From<hex::Error> for Error {
+    fn from(e: hex::Error) -> Self {
+        Self::Hex(e)
+    }
 }
 
 pub trait ToSlip132 {

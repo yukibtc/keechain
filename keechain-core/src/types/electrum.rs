@@ -17,16 +17,49 @@ use crate::slips::slip132::{self, ToSlip132};
 use crate::types::Seed;
 use crate::SECP256K1;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum Error {
-    #[error(transparent)]
-    IO(#[from] std::io::Error),
-    #[error(transparent)]
-    BIP32(#[from] bitcoin::util::bip32::Error),
-    #[error(transparent)]
-    SLIP32(#[from] slip132::Error),
-    #[error(transparent)]
-    Json(#[from] serde_json::Error),
+    IO(std::io::Error),
+    BIP32(bip32::Error),
+    SLIP32(slip132::Error),
+    Json(serde_json::Error),
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::IO(e) => write!(f, "IO: {e}"),
+            Self::BIP32(e) => write!(f, "BIP32: {e}"),
+            Self::SLIP32(e) => write!(f, "SLIP32: {e}"),
+            Self::Json(e) => write!(f, "Json: {e}"),
+        }
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(e: std::io::Error) -> Self {
+        Self::IO(e)
+    }
+}
+
+impl From<slip132::Error> for Error {
+    fn from(e: slip132::Error) -> Self {
+        Self::SLIP32(e)
+    }
+}
+
+impl From<bip32::Error> for Error {
+    fn from(e: bip32::Error) -> Self {
+        Self::BIP32(e)
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(e: serde_json::Error) -> Self {
+        Self::Json(e)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
