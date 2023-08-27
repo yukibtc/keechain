@@ -6,7 +6,7 @@ description = "Keechain Core FFI."
 
 [lib]
 name = "keechain_ffi"
-crate-type = ["cdylib", "staticlib"]
+crate-type = ["lib", "cdylib", "staticlib"]
 
 [[bin]]
 name = "uniffi-bindgen"
