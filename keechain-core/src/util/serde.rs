@@ -9,8 +9,7 @@ pub fn serialize<T>(data: T) -> Result<Vec<u8>, Error>
 where
     T: Serialize,
 {
-    let data = serde_json::to_string(&data)?;
-    Ok(data.into_bytes())
+    serde_json::to_vec(&data)
 }
 
 pub fn deserialize<T>(data: Vec<u8>) -> Result<T, Error>

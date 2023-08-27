@@ -7,21 +7,25 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 
+use bdk::bitcoin::hashes::Hash;
 use serde::{Deserialize, Serialize};
 
 use super::keychain::{self, Keychain};
 use crate::bips::bip39::{self, Mnemonic};
-use crate::crypto::aes::Aes256Encryption;
+use crate::crypto::aes;
+use crate::crypto::{self, hash, MultiEncryption};
 use crate::types::WordCount;
 use crate::util::dir::{KEECHAIN_DOT_EXTENSION, KEECHAIN_EXTENSION};
 use crate::util::{self, base64};
 use crate::Result;
 
-const KEECHAIN_FILE_VERSION: u8 = 1;
+const KEECHAIN_FILE_VERSION: u8 = 2;
 
 #[derive(Debug)]
 pub enum Error {
     IO(std::io::Error),
+    Crypto(crypto::Error),
+    Aes(aes::Error),
     Json(serde_json::Error),
     Base64(base64::DecodeError),
     BIP39(bip39::Error),
@@ -31,6 +35,7 @@ pub enum Error {
     FileNotFound,
     FileAlreadyExists,
     InvalidPassword,
+    UnknownVersion(u8),
 }
 
 impl std::error::Error for Error {}
@@ -39,6 +44,8 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::IO(e) => write!(f, "IO: {e}"),
+            Self::Crypto(e) => write!(f, "Crypto: {e}"),
+            Self::Aes(e) => write!(f, "Aes: {e}"),
             Self::Json(e) => write!(f, "Json: {e}"),
             Self::Base64(e) => write!(f, "Base64: {e}"),
             Self::BIP39(e) => write!(f, "BIP39: {e}"),
@@ -51,6 +58,7 @@ impl fmt::Display for Error {
                 "There is already a file with the same name! Please, choose another name"
             ),
             Self::InvalidPassword => write!(f, "Invalid password"),
+            Self::UnknownVersion(v) => write!(f, "Unknown keechain file version: {v}"),
         }
     }
 }
@@ -58,6 +66,18 @@ impl fmt::Display for Error {
 impl From<std::io::Error> for Error {
     fn from(e: std::io::Error) -> Self {
         Self::IO(e)
+    }
+}
+
+impl From<crypto::Error> for Error {
+    fn from(e: crypto::Error) -> Self {
+        Self::Crypto(e)
+    }
+}
+
+impl From<aes::Error> for Error {
+    fn from(e: aes::Error) -> Self {
+        Self::Aes(e)
     }
 }
 
@@ -151,15 +171,34 @@ impl KeeChain {
         let password: String = get_password().map_err(|e| Error::Generic(e.to_string()))?;
 
         let keechain_raw_file: KeeChainRaw = util::serde::deserialize(content)?;
-        let content: Vec<u8> = base64::decode(keechain_raw_file.keychain)?; // TODO: remove this and bump keechain version file
+        let keychain_unencrypted: String = keechain_raw_file.keychain;
 
-        Ok(Self::new(
+        // Check keechain file version
+        let keychain: Keychain = match keechain_raw_file.version {
+            1 => {
+                let content: Vec<u8> = base64::decode(keychain_unencrypted)?;
+                let key: [u8; 32] = hash::sha256(&password).to_byte_array();
+                let data: Vec<u8> = aes::decrypt(key, content)?;
+                util::serde::deserialize(data)?
+            }
+            2 => Keychain::decrypt(&password, keychain_unencrypted.as_bytes())?,
+            v => return Err(Error::UnknownVersion(v)),
+        };
+
+        let keechain = Self::new(
             keychain_file,
-            password.clone(),
-            keechain_raw_file.version,
+            password,
+            KEECHAIN_FILE_VERSION,
             keechain_raw_file.encryption_key_type,
-            Keychain::decrypt(password, &content)?,
-        ))
+            keychain,
+        );
+
+        // Migrate
+        if keechain_raw_file.version < KEECHAIN_FILE_VERSION {
+            keechain.save()?;
+        }
+
+        Ok(keechain)
     }
 
     pub fn generate<P, PSW, E>(
@@ -253,11 +292,10 @@ impl KeeChain {
             .password
             .read()
             .map_err(|e| Error::RwLock(e.to_string()))?;
-        let keychain: String = self.keychain.encrypt(password.clone())?;
         let raw = KeeChainRaw {
             version: self.version,
             encryption_key_type: self.encryption_key_type.clone(),
-            keychain: base64::encode(keychain), // TODO: remove this and bump keechain version file
+            keychain: self.keychain.encrypt(password.clone())?,
         };
         let data: Vec<u8> = util::serde::serialize(raw)?;
         let file = self.file.read().map_err(|e| Error::RwLock(e.to_string()))?;

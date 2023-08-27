@@ -3,7 +3,6 @@
 
 use core::fmt;
 
-use bdk::bitcoin::hashes::Hash;
 use bdk::bitcoin::secp256k1::{Secp256k1, Signing};
 use bdk::bitcoin::Network;
 use serde::de::Deserializer;
@@ -13,19 +12,15 @@ use super::Descriptors;
 use crate::bips::bip32::{self, Bip32, Fingerprint};
 use crate::bips::bip39::Mnemonic;
 use crate::bips::bip85::{self, Bip85};
-use crate::crypto::aes::{self, Aes256Encryption};
-use crate::crypto::hash;
+use crate::crypto::MultiEncryption;
 use crate::types::{Index, Secrets, Seed, WordCount};
-use crate::{util, Result};
+use crate::Result;
 
 #[derive(Debug)]
 pub enum Error {
-    Aes(aes::Error),
-    Json(serde_json::Error),
     BIP32(bip32::Error),
     BIP85(bip85::Error),
     Descriptors(super::descriptors::Error),
-    DecryptionFailed,
 }
 
 impl std::error::Error for Error {}
@@ -33,27 +28,10 @@ impl std::error::Error for Error {}
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Aes(e) => write!(f, "Aes: {e}"),
-            Self::Json(e) => write!(f, "Json: {e}"),
             Self::BIP32(e) => write!(f, "BIP32: {e}"),
             Self::BIP85(e) => write!(f, "BIP85: {e}"),
             Self::Descriptors(e) => write!(f, "Descriptors: {e}"),
-            Self::DecryptionFailed => {
-                write!(f, "Impossible to decrypt file: invalid password or content")
-            }
         }
-    }
-}
-
-impl From<aes::Error> for Error {
-    fn from(e: aes::Error) -> Self {
-        Self::Aes(e)
-    }
-}
-
-impl From<serde_json::Error> for Error {
-    fn from(e: serde_json::Error) -> Self {
-        Self::Json(e)
     }
 }
 
@@ -200,26 +178,4 @@ impl Keychain {
     }
 }
 
-impl Aes256Encryption for Keychain {
-    type Err = Error;
-    fn encrypt<K>(&self, key: K) -> Result<String, Self::Err>
-    where
-        K: AsRef<[u8]>,
-    {
-        let serialized: Vec<u8> = util::serde::serialize(self)?;
-        let key: [u8; 32] = hash::sha256(key).to_byte_array();
-        Ok(aes::encrypt(key, serialized))
-    }
-
-    fn decrypt<K>(key: K, content: &[u8]) -> Result<Self, Self::Err>
-    where
-        K: AsRef<[u8]>,
-    {
-        let key: [u8; 32] = hash::sha256(key).to_byte_array();
-        match aes::decrypt(key, content) {
-            Ok(data) => Ok(util::serde::deserialize(data)?),
-            Err(aes::Error::WrongBlockMode) => Err(Error::DecryptionFailed),
-            Err(e) => Err(Error::Aes(e)),
-        }
-    }
-}
+impl MultiEncryption for Keychain {}

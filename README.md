@@ -27,7 +27,7 @@ Obviously, anyone else can use and test `keechain`!
     - Optional: dice roll 🎲
 * Restore mnemonic (BIP39)
 * Apply and, optionally, save passphrases (BIP39)
-* Keychain encryption with AES-256
+* Keychain encryption with AES-256 and XChaCha20Poly1305: `XChaCha20Poly1305(AES256CBC(keychain))`
 * Export:
     - Descriptors
     - Bitcoin Core descriptors (same as above but already formatted to be inserted into the console using the `importdescriptors` command)
