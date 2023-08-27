@@ -45,7 +45,7 @@ jobs:
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
     - name: Install GUI dependencies
-      if: ${{ contains(matrix.build-args, '-p keechain --') }}
+      if: ${{ matrix.build-args == '-p keechain' }}
       run: sudo apt update && sudo apt install -y build-essential libclang-dev libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
     - name: Set default toolchain
       run: rustup default ${{ matrix.rust.version }}
