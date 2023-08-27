@@ -67,6 +67,7 @@ where
     Ok(result)
 }
 
+#[deprecated]
 pub trait Aes256Encryption: Sized {
     type Err;
 
