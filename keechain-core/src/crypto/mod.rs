@@ -18,7 +18,6 @@ pub enum Error {
     Aes(aes::Error),
     ChaCha20Poly1305(chacha20::Error),
     Json(serde_json::Error),
-    DecryptionFailed,
 }
 
 impl fmt::Display for Error {
@@ -27,9 +26,6 @@ impl fmt::Display for Error {
             Self::Aes(e) => write!(f, "Aes: {e}"),
             Self::ChaCha20Poly1305(e) => write!(f, "ChaCha20Poly1305: {e}"),
             Self::Json(e) => write!(f, "Json: {e}"),
-            Self::DecryptionFailed => {
-                write!(f, "Impossible to decrypt file: invalid password or content")
-            }
         }
     }
 }
@@ -75,10 +71,7 @@ pub trait MultiEncryption: Sized + Serialize + DeserializeOwned {
     {
         let key: [u8; 32] = Self::hash_key(key);
         let content: Vec<u8> = chacha20::decrypt(key, content)?;
-        match aes::decrypt(key, content) {
-            Ok(data) => Ok(util::serde::deserialize(data)?),
-            Err(aes::Error::WrongBlockMode) => Err(Error::DecryptionFailed),
-            Err(e) => Err(Error::Aes(e)),
-        }
+        let data: Vec<u8> = aes::decrypt(key, content)?;
+        Ok(util::serde::deserialize(data)?)
     }
 }

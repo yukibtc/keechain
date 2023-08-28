@@ -33,6 +33,7 @@ pub enum Error {
     RwLock(String),
     Generic(String),
     FileNotFound,
+    DecryptionFailed,
     FileAlreadyExists,
     InvalidPassword,
     UnknownVersion(u8),
@@ -57,6 +58,9 @@ impl fmt::Display for Error {
                 f,
                 "There is already a file with the same name! Please, choose another name"
             ),
+            Self::DecryptionFailed => {
+                write!(f, "Impossible to decrypt file: invalid password or content")
+            }
             Self::InvalidPassword => write!(f, "Invalid password"),
             Self::UnknownVersion(v) => write!(f, "Unknown keechain file version: {v}"),
         }
@@ -178,10 +182,12 @@ impl KeeChain {
             1 => {
                 let content: Vec<u8> = base64::decode(keychain_unencrypted)?;
                 let key: [u8; 32] = hash::sha256(&password).to_byte_array();
-                let data: Vec<u8> = aes::decrypt(key, content)?;
+                let data: Vec<u8> =
+                    aes::decrypt(key, content).map_err(|_| Error::DecryptionFailed)?;
                 util::serde::deserialize(data)?
             }
-            2 => Keychain::decrypt(&password, keychain_unencrypted.as_bytes())?,
+            2 => Keychain::decrypt(&password, keychain_unencrypted.as_bytes())
+                .map_err(|_| Error::DecryptionFailed)?,
             v => return Err(Error::UnknownVersion(v)),
         };
 
