@@ -15,7 +15,7 @@ use crate::bips::bip39::{self, Mnemonic};
 use crate::crypto::aes;
 use crate::crypto::{self, hash, MultiEncryption};
 use crate::types::WordCount;
-use crate::util::dir::{KEECHAIN_DOT_EXTENSION, KEECHAIN_EXTENSION};
+use crate::util::dir::{self, KEECHAIN_DOT_EXTENSION, KEECHAIN_EXTENSION};
 use crate::util::{self, base64};
 use crate::Result;
 
@@ -26,12 +26,14 @@ pub enum Error {
     IO(std::io::Error),
     Crypto(crypto::Error),
     Aes(aes::Error),
+    Dir(dir::Error),
     Json(serde_json::Error),
     Base64(base64::DecodeError),
     BIP39(bip39::Error),
     Keychain(keychain::Error),
     RwLock(String),
     Generic(String),
+    InvalidName,
     FileNotFound,
     DecryptionFailed,
     FileAlreadyExists,
@@ -47,12 +49,14 @@ impl fmt::Display for Error {
             Self::IO(e) => write!(f, "IO: {e}"),
             Self::Crypto(e) => write!(f, "Crypto: {e}"),
             Self::Aes(e) => write!(f, "Aes: {e}"),
+            Self::Dir(e) => write!(f, "Dir: {e}"),
             Self::Json(e) => write!(f, "Json: {e}"),
             Self::Base64(e) => write!(f, "Base64: {e}"),
             Self::BIP39(e) => write!(f, "BIP39: {e}"),
             Self::Keychain(e) => write!(f, "Keychain: {e}"),
             Self::RwLock(e) => write!(f, "RwLock: {e}"),
             Self::Generic(e) => write!(f, "Generic: {e}"),
+            Self::InvalidName => write!(f, "Invalid name"),
             Self::FileNotFound => write!(f, "File not found"),
             Self::FileAlreadyExists => write!(
                 f,
@@ -82,6 +86,12 @@ impl From<crypto::Error> for Error {
 impl From<aes::Error> for Error {
     fn from(e: aes::Error) -> Self {
         Self::Aes(e)
+    }
+}
+
+impl From<dir::Error> for Error {
+    fn from(e: dir::Error) -> Self {
+        Self::Dir(e)
     }
 }
 
@@ -158,12 +168,18 @@ impl KeeChain {
         }
     }
 
-    pub fn open<P, PSW>(path: P, get_password: PSW) -> Result<Self, Error>
+    pub fn open<P, S, PSW>(base_path: P, name: S, get_password: PSW) -> Result<Self, Error>
     where
         P: AsRef<Path>,
+        S: Into<String>,
         PSW: FnOnce() -> Result<String>,
     {
-        let keychain_file: PathBuf = path.as_ref().to_path_buf();
+        let name: String = name.into();
+        if name.is_empty() {
+            return Err(Error::InvalidName);
+        }
+
+        let keychain_file: PathBuf = dir::get_keychain_file(base_path, name)?;
         if !keychain_file.exists() {
             return Err(Error::FileNotFound);
         }
@@ -207,18 +223,25 @@ impl KeeChain {
         Ok(keechain)
     }
 
-    pub fn generate<P, PSW, E>(
-        path: P,
+    pub fn generate<P, S, PSW, E>(
+        base_path: P,
+        name: S,
         get_password: PSW,
         word_count: WordCount,
         get_custom_entropy: E,
     ) -> Result<Self, Error>
     where
         P: AsRef<Path>,
+        S: Into<String>,
         PSW: FnOnce() -> Result<String>,
         E: FnOnce() -> Result<Option<Vec<u8>>>,
     {
-        let keychain_file: PathBuf = path.as_ref().to_path_buf();
+        let name: String = name.into();
+        if name.is_empty() {
+            return Err(Error::InvalidName);
+        }
+
+        let keychain_file: PathBuf = dir::get_keychain_file(base_path, name)?;
         if keychain_file.exists() {
             return Err(Error::FileAlreadyExists);
         }
@@ -246,13 +269,24 @@ impl KeeChain {
         Ok(keechain)
     }
 
-    pub fn restore<P, PSW, M>(path: P, get_password: PSW, get_mnemonic: M) -> Result<Self, Error>
+    pub fn restore<P, S, PSW, M>(
+        base_path: P,
+        name: S,
+        get_password: PSW,
+        get_mnemonic: M,
+    ) -> Result<Self, Error>
     where
         P: AsRef<Path>,
         PSW: FnOnce() -> Result<String>,
+        S: Into<String>,
         M: FnOnce() -> Result<Mnemonic>,
     {
-        let keychain_file: PathBuf = path.as_ref().to_path_buf();
+        let name: String = name.into();
+        if name.is_empty() {
+            return Err(Error::InvalidName);
+        }
+
+        let keychain_file: PathBuf = dir::get_keychain_file(base_path, name)?;
         if keychain_file.exists() {
             return Err(Error::FileAlreadyExists);
         }

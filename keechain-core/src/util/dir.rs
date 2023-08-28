@@ -53,7 +53,7 @@ where
     Ok(names)
 }
 
-pub fn get_keychain_file<P, S>(path: P, name: S) -> Result<PathBuf, Error>
+pub(crate) fn get_keychain_file<P, S>(path: P, name: S) -> Result<PathBuf, Error>
 where
     P: AsRef<Path>,
     S: Into<String>,

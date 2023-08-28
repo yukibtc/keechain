@@ -119,18 +119,16 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
         }
 
         if is_ready && (ui.input(|i| i.key_pressed(Key::Enter)) || button.clicked()) {
-            match dir::get_keychain_file::<&Path, String>(
-                KEYCHAINS_PATH.as_ref(),
+            match KeeChain::open(
+                KEYCHAINS_PATH.as_path(),
                 app.layouts.start.name.clone(),
+                || Ok(app.layouts.start.password.clone()),
             ) {
-                Ok(path) => match KeeChain::open(path, || Ok(app.layouts.start.password.clone())) {
-                    Ok(keechain) => {
-                        app.layouts.start.clear();
-                        app.set_keechain(Some(keechain));
-                        app.set_stage(Stage::Menu(Menu::Main));
-                    }
-                    Err(e) => app.layouts.start.error = Some(e.to_string()),
-                },
+                Ok(keechain) => {
+                    app.layouts.start.clear();
+                    app.set_keechain(Some(keechain));
+                    app.set_stage(Stage::Menu(Menu::Main));
+                }
                 Err(e) => app.layouts.start.error = Some(e.to_string()),
             }
         }

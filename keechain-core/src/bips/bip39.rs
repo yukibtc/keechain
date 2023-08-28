@@ -19,12 +19,12 @@ pub fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
     let mut h = HmacEngine::<sha512::Hash>::new(b"keechain-entropy");
 
     // TRNG & CSPRNG
-    let mut os_random = [0u8; 32];
+    let mut os_random: [u8; 32] = [0u8; 32];
     OsRng.fill_bytes(&mut os_random);
     h.input(&os_random);
 
     let mut chacha = ChaCha20Rng::from_entropy();
-    let mut chacha_random = [0u8; 32];
+    let mut chacha_random: [u8; 32] = [0u8; 32];
     chacha.fill_bytes(&mut chacha_random);
     h.input(&chacha_random);
 
