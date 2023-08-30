@@ -48,7 +48,7 @@ impl From<serde_json::Error> for Error {
     }
 }
 
-pub trait MultiEncryption: Sized + Serialize + DeserializeOwned {
+pub(crate) trait MultiEncryption: Sized + Serialize + DeserializeOwned {
     fn hash_key<K>(key: K) -> [u8; 32]
     where
         K: AsRef<[u8]>,
