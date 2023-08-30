@@ -1,6 +1,8 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+//! AES-256 CBC
+
 use core::fmt;
 
 use aes::cipher::block_padding::Pkcs7;
@@ -36,6 +38,7 @@ impl fmt::Display for Error {
     }
 }
 
+/// Encrypt with AES-256 CBC
 pub fn encrypt<T>(key: [u8; 32], content: T) -> String
 where
     T: AsRef<[u8]>,
@@ -46,6 +49,7 @@ where
     format!("{}?iv={}", base64::encode(result), base64::encode(iv))
 }
 
+/// Decrypt with AES-256 CBC
 pub fn decrypt<T>(key: [u8; 32], content: T) -> Result<Vec<u8>, Error>
 where
     T: AsRef<[u8]>,
