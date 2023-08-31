@@ -11,13 +11,15 @@ pub mod aes;
 pub mod chacha20;
 pub mod hash;
 
-use crate::util;
+use crate::util::{self, base64};
 
 #[derive(Debug)]
 pub enum Error {
     Aes(aes::Error),
     ChaCha20Poly1305(chacha20::Error),
     Json(serde_json::Error),
+    /// Error while decoding from base64
+    Base64Decode,
 }
 
 impl fmt::Display for Error {
@@ -26,6 +28,7 @@ impl fmt::Display for Error {
             Self::Aes(e) => write!(f, "Aes: {e}"),
             Self::ChaCha20Poly1305(e) => write!(f, "ChaCha20Poly1305: {e}"),
             Self::Json(e) => write!(f, "Json: {e}"),
+            Self::Base64Decode => write!(f, "Error while decoding from base64"),
         }
     }
 }
@@ -62,7 +65,9 @@ pub(crate) trait MultiEncryption: Sized + Serialize + DeserializeOwned {
     {
         let serialized: Vec<u8> = util::serde::serialize(self)?;
         let key: [u8; 32] = Self::hash_key(key);
-        Ok(chacha20::encrypt(key, aes::encrypt(key, serialized))?)
+        let first_round = aes::encrypt(key, serialized);
+        let second_round: Vec<u8> = chacha20::encrypt(key, first_round)?;
+        Ok(base64::encode(second_round))
     }
 
     fn decrypt<K>(key: K, content: &[u8]) -> Result<Self, Error>
@@ -70,8 +75,9 @@ pub(crate) trait MultiEncryption: Sized + Serialize + DeserializeOwned {
         K: AsRef<[u8]>,
     {
         let key: [u8; 32] = Self::hash_key(key);
-        let content: Vec<u8> = chacha20::decrypt(key, content)?;
-        let data: Vec<u8> = aes::decrypt(key, content)?;
-        Ok(util::serde::deserialize(data)?)
+        let payload: Vec<u8> = base64::decode(content).map_err(|_| Error::Base64Decode)?;
+        let first_round: Vec<u8> = chacha20::decrypt(key, payload)?;
+        let second_round: Vec<u8> = aes::decrypt(key, first_round)?;
+        Ok(util::serde::deserialize(second_round)?)
     }
 }
