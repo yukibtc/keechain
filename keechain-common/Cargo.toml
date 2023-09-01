@@ -7,4 +7,4 @@ authors = ["Yuki Kishimoto <yukikishimoto@protonmain.com>"]
 readme = "README.md"
 
 [dependencies]
-dirs = "4.0"
+dirs = "5.0"
