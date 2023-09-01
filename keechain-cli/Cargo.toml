@@ -12,7 +12,7 @@ keywords = ["bitcoin", "signer", "psbt", "offline"]
 categories = ["command-line-utilities"]
 
 [dependencies]
-clap = { version = "4.1", features = ["derive"] }
+clap = { version = "4.4", features = ["derive"] }
 console = "0.15.4"
 dialoguer = "0.10.2"
 keechain-common = { version = "0.1", path = "../keechain-common" }
