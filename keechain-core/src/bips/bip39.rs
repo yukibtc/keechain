@@ -33,7 +33,7 @@ pub fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
         let system_info: System = System::new_all();
 
         // Dynamic events
-        let dynamic_events: Vec<u8> = vec![
+        let dynamic_events: Vec<u8> = [
             system_info.boot_time().to_be_bytes().to_vec(),
             system_info.total_memory().to_be_bytes().to_vec(),
             system_info.free_memory().to_be_bytes().to_vec(),
@@ -49,7 +49,7 @@ pub fn entropy(word_count: WordCount, custom: Option<Vec<u8>>) -> Vec<u8> {
         h.input(&dynamic_events);
 
         // Static events
-        let static_events: Vec<u8> = vec![
+        let static_events: Vec<u8> = [
             system_info
                 .host_name()
                 .unwrap_or_else(|| rand::random::<u128>().to_string())
