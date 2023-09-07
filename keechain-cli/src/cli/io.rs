@@ -16,11 +16,12 @@ pub fn get_password() -> Result<String> {
     Ok(Password::new().with_prompt("Password").interact()?)
 }
 
-pub fn get_password_with_confirmation() -> Result<String> {
-    Ok(Password::new()
-        .with_prompt("New password")
-        .with_confirmation("Confirm password", "Passwords mismatching")
-        .interact()?)
+pub fn get_new_password() -> Result<String> {
+    Ok(Password::new().with_prompt("New password").interact()?)
+}
+
+pub fn get_confirmation_password() -> Result<String> {
+    Ok(Password::new().with_prompt("Confirm password").interact()?)
 }
 
 pub fn ask<S>(prompt: S) -> Result<bool>

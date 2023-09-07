@@ -36,7 +36,8 @@ fn main() -> Result<()> {
             let keechain = KeeChain::generate(
                 keychain_path,
                 name,
-                io::get_password_with_confirmation,
+                io::get_password,
+                io::get_confirmation_password,
                 word_count.into(),
                 || {
                     if dice_roll {
@@ -61,7 +62,8 @@ fn main() -> Result<()> {
             KeeChain::restore(
                 keychain_path,
                 name,
-                io::get_password_with_confirmation,
+                io::get_password,
+                io::get_confirmation_password,
                 || Ok(Mnemonic::from_str(&io::get_input("Seed")?)?),
             )?;
             Ok(())
@@ -200,7 +202,11 @@ fn main() -> Result<()> {
             }
             SettingCommand::ChangePassword { name } => {
                 let keechain = KeeChain::open(keychain_path, name, io::get_password)?;
-                Ok(keechain.change_password(io::get_password_with_confirmation)?)
+                Ok(keechain.change_password(
+                    io::get_password,
+                    io::get_new_password,
+                    io::get_confirmation_password,
+                )?)
             }
         },
     }

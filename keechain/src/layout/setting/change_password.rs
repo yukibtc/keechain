@@ -68,35 +68,23 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
             .render(ui);
 
         if is_ready && (ui.input(|i| i.key_pressed(Key::Enter)) || button.clicked()) {
-            if app.layouts.change_password.new_password
-                != app.layouts.change_password.confirm_new_password
-            {
-                app.layouts.change_password.error = Some("Passwords not match".to_string());
-            } else {
-                match app.keechain.as_ref() {
-                    Some(keechain) => {
-                        if keechain
-                            .check_password(app.layouts.change_password.current_password.clone())
-                            .unwrap_or_default()
-                        {
-                            match keechain.change_password(|| {
-                                Ok(app.layouts.change_password.new_password.clone())
-                            }) {
-                                Ok(_) => {
-                                    app.layouts.change_password.clear();
-                                    app.stage = Stage::Menu(Menu::Setting);
-                                }
-                                Err(e) => app.layouts.change_password.error = Some(e.to_string()),
-                            }
-                        } else {
-                            app.layouts.change_password.error =
-                                Some("Current password is wrong".to_string())
+            match app.keechain.as_ref() {
+                Some(keechain) => {
+                    match keechain.change_password(
+                        || Ok(app.layouts.change_password.current_password.clone()),
+                        || Ok(app.layouts.change_password.new_password.clone()),
+                        || Ok(app.layouts.change_password.confirm_new_password.clone()),
+                    ) {
+                        Ok(_) => {
+                            app.layouts.change_password.clear();
+                            app.stage = Stage::Menu(Menu::Setting);
                         }
+                        Err(e) => app.layouts.change_password.error = Some(e.to_string()),
                     }
-                    None => {
-                        app.layouts.change_password.error =
-                            Some("Impossible to get keechain".to_string())
-                    }
+                }
+                None => {
+                    app.layouts.change_password.error =
+                        Some("Impossible to get keechain".to_string())
                 }
             }
         }

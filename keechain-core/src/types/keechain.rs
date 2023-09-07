@@ -38,6 +38,8 @@ pub enum Error {
     DecryptionFailed,
     FileAlreadyExists,
     InvalidPassword,
+    PasswordNotMatch,
+    CurrentPasswordNotMatch,
     UnknownVersion(u8),
 }
 
@@ -66,6 +68,8 @@ impl fmt::Display for Error {
                 write!(f, "Impossible to decrypt file: invalid password or content")
             }
             Self::InvalidPassword => write!(f, "Invalid password"),
+            Self::PasswordNotMatch => write!(f, "Password not match"),
+            Self::CurrentPasswordNotMatch => write!(f, "Current password not match"),
             Self::UnknownVersion(v) => write!(f, "Unknown keechain file version: {v}"),
         }
     }
@@ -223,10 +227,11 @@ impl KeeChain {
         Ok(keechain)
     }
 
-    pub fn generate<P, S, PSW, E>(
+    pub fn generate<P, S, PSW, CPSW, E>(
         base_path: P,
         name: S,
         get_password: PSW,
+        get_confirm_password: CPSW,
         word_count: WordCount,
         get_custom_entropy: E,
     ) -> Result<Self, Error>
@@ -234,6 +239,7 @@ impl KeeChain {
         P: AsRef<Path>,
         S: Into<String>,
         PSW: FnOnce() -> Result<String>,
+        CPSW: FnOnce() -> Result<String>,
         E: FnOnce() -> Result<Option<Vec<u8>>>,
     {
         let name: String = name.into();
@@ -249,6 +255,16 @@ impl KeeChain {
         let password: String = get_password().map_err(|e| Error::Generic(e.to_string()))?;
         if password.is_empty() {
             return Err(Error::InvalidPassword);
+        }
+
+        let confirm_password: String =
+            get_confirm_password().map_err(|e| Error::Generic(e.to_string()))?;
+        if confirm_password.is_empty() {
+            return Err(Error::InvalidPassword);
+        }
+
+        if password != confirm_password {
+            return Err(Error::PasswordNotMatch);
         }
 
         let custom_entropy: Option<Vec<u8>> =
@@ -269,15 +285,17 @@ impl KeeChain {
         Ok(keechain)
     }
 
-    pub fn restore<P, S, PSW, M>(
+    pub fn restore<P, S, PSW, CPSW, M>(
         base_path: P,
         name: S,
         get_password: PSW,
+        get_confirm_password: CPSW,
         get_mnemonic: M,
     ) -> Result<Self, Error>
     where
         P: AsRef<Path>,
         PSW: FnOnce() -> Result<String>,
+        CPSW: FnOnce() -> Result<String>,
         S: Into<String>,
         M: FnOnce() -> Result<Mnemonic>,
     {
@@ -294,6 +312,16 @@ impl KeeChain {
         let password: String = get_password().map_err(|e| Error::Generic(e.to_string()))?;
         if password.is_empty() {
             return Err(Error::InvalidPassword);
+        }
+
+        let confirm_password: String =
+            get_confirm_password().map_err(|e| Error::Generic(e.to_string()))?;
+        if confirm_password.is_empty() {
+            return Err(Error::InvalidPassword);
+        }
+
+        if password != confirm_password {
+            return Err(Error::PasswordNotMatch);
         }
 
         let mnemonic: Mnemonic = get_mnemonic().map_err(|e| Error::Generic(e.to_string()))?;
@@ -380,19 +408,38 @@ impl KeeChain {
         }
     }
 
-    pub fn change_password<NPSW>(&self, get_new_password: NPSW) -> Result<(), Error>
+    pub fn change_password<PSW, NPSW, NCPSW>(
+        &self,
+        get_old_password: PSW,
+        get_new_password: NPSW,
+        get_new_confirm_password: NCPSW,
+    ) -> Result<(), Error>
     where
+        PSW: FnOnce() -> Result<String>,
         NPSW: FnOnce() -> Result<String>,
+        NCPSW: FnOnce() -> Result<String>,
     {
-        let mut password = self
-            .password
-            .write()
-            .map_err(|e| Error::RwLock(e.to_string()))?;
+        let old_password: String = get_old_password().map_err(|e| Error::Generic(e.to_string()))?;
         let new_password: String = get_new_password().map_err(|e| Error::Generic(e.to_string()))?;
+        let new_confirm_password: String =
+            get_new_confirm_password().map_err(|e| Error::Generic(e.to_string()))?;
+
+        if !self.check_password(old_password)? {
+            return Err(Error::CurrentPasswordNotMatch);
+        }
 
         if new_password.is_empty() {
             return Err(Error::InvalidPassword);
         }
+
+        if new_password != new_confirm_password {
+            return Err(Error::PasswordNotMatch);
+        }
+
+        let mut password = self
+            .password
+            .write()
+            .map_err(|e| Error::RwLock(e.to_string()))?;
 
         if *password != new_password {
             // Set password

@@ -86,25 +86,22 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
         }
 
         if is_ready && (ui.input(|i| i.key_pressed(Key::Enter)) || button.clicked()) {
-            if app.layouts.restore.password != app.layouts.restore.confirm_password {
-                app.layouts.restore.error = Some("Passwords not match".to_string());
-            } else {
-                match Mnemonic::from_str(&app.layouts.restore.mnemonic) {
-                    Ok(mnemonic) => match KeeChain::restore(
-                        KEYCHAINS_PATH.as_path(),
-                        app.layouts.restore.name.clone(),
-                        || Ok(app.layouts.restore.password.clone()),
-                        || Ok(mnemonic),
-                    ) {
-                        Ok(keechain) => {
-                            app.layouts.restore.clear();
-                            app.set_keechain(Some(keechain));
-                            app.set_stage(Stage::Menu(Menu::Main));
-                        }
-                        Err(e) => app.layouts.restore.error = Some(e.to_string()),
-                    },
+            match Mnemonic::from_str(&app.layouts.restore.mnemonic) {
+                Ok(mnemonic) => match KeeChain::restore(
+                    KEYCHAINS_PATH.as_path(),
+                    app.layouts.restore.name.clone(),
+                    || Ok(app.layouts.restore.password.clone()),
+                    || Ok(app.layouts.restore.confirm_password.clone()),
+                    || Ok(mnemonic),
+                ) {
+                    Ok(keechain) => {
+                        app.layouts.restore.clear();
+                        app.set_keechain(Some(keechain));
+                        app.set_stage(Stage::Menu(Menu::Main));
+                    }
                     Err(e) => app.layouts.restore.error = Some(e.to_string()),
-                }
+                },
+                Err(e) => app.layouts.restore.error = Some(e.to_string()),
             }
         }
     });

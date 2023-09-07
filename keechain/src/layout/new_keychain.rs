@@ -111,21 +111,18 @@ fn generate_layout(app: &mut AppState, ui: &mut Ui) {
     }
 
     if is_ready && (ui.input(|i| i.key_pressed(Key::Enter)) || button.clicked()) {
-        if app.layouts.new_keychain.password != app.layouts.new_keychain.confirm_password {
-            app.layouts.new_keychain.error = Some("Passwords not match".to_string());
-        } else {
-            match KeeChain::generate(
-                KEYCHAINS_PATH.as_path(),
-                app.layouts.new_keychain.name.clone(),
-                || Ok(app.layouts.new_keychain.password.clone()),
-                app.layouts.new_keychain.word_count,
-                || Ok(None),
-            ) {
-                Ok(keechain) => {
-                    app.layouts.new_keychain.keechain = Some(keechain);
-                }
-                Err(e) => app.layouts.new_keychain.error = Some(e.to_string()),
+        match KeeChain::generate(
+            KEYCHAINS_PATH.as_path(),
+            app.layouts.new_keychain.name.clone(),
+            || Ok(app.layouts.new_keychain.password.clone()),
+            || Ok(app.layouts.new_keychain.confirm_password.clone()),
+            app.layouts.new_keychain.word_count,
+            || Ok(None),
+        ) {
+            Ok(keechain) => {
+                app.layouts.new_keychain.keechain = Some(keechain);
             }
+            Err(e) => app.layouts.new_keychain.error = Some(e.to_string()),
         }
     }
 }
