@@ -7,6 +7,7 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 
+use bdk::bitcoin::hashes::sha256::Hash as Sha256Hash;
 use bdk::bitcoin::hashes::Hash;
 use serde::{Deserialize, Serialize};
 
@@ -139,7 +140,7 @@ struct KeeChainRaw {
 #[derive(Clone)]
 pub struct KeeChain {
     file: Arc<RwLock<PathBuf>>,
-    password: Arc<RwLock<String>>,
+    password_hash: Arc<RwLock<Sha256Hash>>,
     version: u8,
     encryption_key_type: EncryptionKeyType,
     pub keychain: Keychain,
@@ -163,9 +164,10 @@ impl KeeChain {
         P: AsRef<Path>,
         S: Into<String>,
     {
+        let password: String = password.into();
         Self {
             file: Arc::new(RwLock::new(file.as_ref().to_path_buf())),
-            password: Arc::new(RwLock::new(password.into())),
+            password_hash: Arc::new(RwLock::new(Sha256Hash::hash(password.as_bytes()))),
             version,
             encryption_key_type,
             keychain,
@@ -213,7 +215,7 @@ impl KeeChain {
 
         let keechain = Self::new(
             keychain_file,
-            password,
+            &password,
             KEECHAIN_FILE_VERSION,
             keechain_raw_file.encryption_key_type,
             keychain,
@@ -221,7 +223,7 @@ impl KeeChain {
 
         // Migrate
         if keechain_raw_file.version < KEECHAIN_FILE_VERSION {
-            keechain.save()?;
+            keechain.save(password)?;
         }
 
         Ok(keechain)
@@ -274,13 +276,13 @@ impl KeeChain {
 
         let keechain = Self::new(
             keychain_file,
-            password,
+            &password,
             KEECHAIN_FILE_VERSION,
             EncryptionKeyType::Password,
             Keychain::new(mnemonic, Vec::new()),
         );
 
-        keechain.save()?;
+        keechain.save(password)?;
 
         Ok(keechain)
     }
@@ -328,13 +330,13 @@ impl KeeChain {
 
         let keechain = Self::new(
             keychain_file,
-            password,
+            &password,
             KEECHAIN_FILE_VERSION,
             EncryptionKeyType::Password,
             Keychain::new(mnemonic, Vec::new()),
         );
 
-        keechain.save()?;
+        keechain.save(password)?;
 
         Ok(keechain)
     }
@@ -355,36 +357,41 @@ impl KeeChain {
         Some(file_name.replace(KEECHAIN_DOT_EXTENSION, ""))
     }
 
-    pub fn save(&self) -> Result<(), Error> {
-        let password = self
-            .password
-            .read()
-            .map_err(|e| Error::RwLock(e.to_string()))?;
-        let raw = KeeChainRaw {
-            version: self.version,
-            encryption_key_type: self.encryption_key_type.clone(),
-            keychain: self.keychain.encrypt(password.clone())?,
-        };
-        let data: Vec<u8> = util::serde::serialize(raw)?;
-        let file = self.file.read().map_err(|e| Error::RwLock(e.to_string()))?;
-        let mut file: File = File::options()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(file.as_path())?;
-        file.write_all(&data)?;
-        Ok(())
+    pub fn save<S>(&self, password: S) -> Result<(), Error>
+    where
+        S: Into<String>,
+    {
+        let password: String = password.into();
+        if self.check_password(&password)? {
+            let raw = KeeChainRaw {
+                version: self.version,
+                encryption_key_type: self.encryption_key_type.clone(),
+                keychain: self.keychain.encrypt(password)?,
+            };
+            let data: Vec<u8> = util::serde::serialize(raw)?;
+            let file = self.file.read().map_err(|e| Error::RwLock(e.to_string()))?;
+            let mut file: File = File::options()
+                .create(true)
+                .write(true)
+                .truncate(true)
+                .open(file.as_path())?;
+            file.write_all(&data)?;
+            Ok(())
+        } else {
+            Err(Error::InvalidPassword)
+        }
     }
 
     pub fn check_password<S>(&self, password: S) -> Result<bool, Error>
     where
         S: Into<String>,
     {
+        let password: String = password.into();
         Ok(*self
-            .password
+            .password_hash
             .read()
             .map_err(|e| Error::RwLock(e.to_string()))?
-            == password.into())
+            == Sha256Hash::hash(password.as_bytes()))
     }
 
     pub fn rename<S>(&self, new_name: S) -> Result<(), Error>
@@ -436,20 +443,22 @@ impl KeeChain {
             return Err(Error::PasswordNotMatch);
         }
 
-        let mut password = self
-            .password
+        let mut password_hash = self
+            .password_hash
             .write()
             .map_err(|e| Error::RwLock(e.to_string()))?;
 
-        if *password != new_password {
+        let new_password_hash = Sha256Hash::hash(new_password.as_bytes());
+
+        if *password_hash != new_password_hash {
             // Set password
-            *password = new_password;
+            *password_hash = new_password_hash;
 
             // Drop the RwLock
-            drop(password);
+            drop(password_hash);
 
             // Re-save the file
-            self.save()?;
+            self.save(new_password)?;
         }
 
         Ok(())

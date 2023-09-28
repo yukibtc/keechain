@@ -11,6 +11,7 @@ use crate::{AppState, Menu, Stage};
 #[derive(Default)]
 pub struct PassphraseState {
     passphrase: String,
+    password: String,
     save: bool,
     show_saved: bool,
     error: Option<String>,
@@ -19,6 +20,7 @@ pub struct PassphraseState {
 impl PassphraseState {
     pub fn clear(&mut self) {
         self.passphrase = String::new();
+        self.password = String::new();
         self.save = false;
         self.show_saved = false;
         self.error = None;
@@ -61,6 +63,15 @@ pub fn apply_new_layout(app: &mut AppState, ui: &mut Ui) {
             "Save passphrase to keychain",
         );
     });
+
+    if app.layouts.passphrase.save {
+        ui.add_space(7.0);
+
+        InputField::new("Password")
+            .placeholder("Password")
+            .is_password()
+            .render(ui, &mut app.layouts.passphrase.password);
+    }
 
     ui.add_space(15.0);
 
@@ -106,7 +117,7 @@ pub fn apply_new_layout(app: &mut AppState, ui: &mut Ui) {
                     keechain
                         .keychain
                         .add_passphrase(app.layouts.passphrase.passphrase.clone());
-                    if let Err(e) = keechain.save() {
+                    if let Err(e) = keechain.save(app.layouts.passphrase.password.clone()) {
                         app.layouts.passphrase.error = Some(e.to_string());
                     } else {
                         keechain
