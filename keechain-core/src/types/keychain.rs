@@ -73,6 +73,13 @@ impl fmt::Debug for Keychain {
     }
 }
 
+impl Drop for Keychain {
+    fn drop(&mut self) {
+        self.mnemonic = Mnemonic::from_entropy(b"00000000000000000000000000000000").unwrap();
+        self.passphrases = Vec::new();
+    }
+}
+
 impl<'de> Deserialize<'de> for Keychain {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where

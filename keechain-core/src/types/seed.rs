@@ -24,6 +24,13 @@ impl fmt::Debug for Seed {
     }
 }
 
+impl Drop for Seed {
+    fn drop(&mut self) {
+        self.mnemonic = Mnemonic::from_entropy(b"00000000000000000000000000000000").unwrap();
+        self.passphrase = None;
+    }
+}
+
 impl Seed {
     pub fn new<S>(mnemonic: Mnemonic, passphrase: Option<S>) -> Self
     where
