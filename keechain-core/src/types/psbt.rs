@@ -146,28 +146,20 @@ pub trait Psbt: Sized {
     where
         C: Signing,
     {
-        self.sign_custom(seed, None, Vec::new(), false, network, secp)
+        self.sign_custom(seed, None, Vec::new(), network, secp)
     }
 
     fn sign_with_descriptor<C>(
         &mut self,
         seed: &Seed,
         descriptor: Descriptor<String>,
-        use_tr_internal_key: bool,
         network: Network,
         secp: &Secp256k1<C>,
     ) -> Result<bool, Error>
     where
         C: Signing,
     {
-        self.sign_custom(
-            seed,
-            Some(descriptor),
-            Vec::new(),
-            use_tr_internal_key,
-            network,
-            secp,
-        )
+        self.sign_custom(seed, Some(descriptor), Vec::new(), network, secp)
     }
 
     fn sign_custom<C>(
@@ -175,7 +167,6 @@ pub trait Psbt: Sized {
         seed: &Seed,
         descriptor: Option<Descriptor<String>>,
         custom_signers: Vec<SignerWrapper<PrivateKey>>,
-        use_tr_internal_key: bool,
         network: Network,
         secp: &Secp256k1<C>,
     ) -> Result<bool, Error>
@@ -215,118 +206,152 @@ impl Psbt for PartiallySignedTransaction {
         seed: &Seed,
         descriptor: Option<Descriptor<String>>,
         custom_signers: Vec<SignerWrapper<PrivateKey>>,
-        use_tr_internal_key: bool,
         network: Network,
         secp: &Secp256k1<C>,
     ) -> Result<bool, Error>
     where
         C: Signing,
     {
-        let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
-        let root_fingerprint: Fingerprint = root.fingerprint(secp);
-
-        let mut paths: Vec<DerivationPath> = Vec::new();
-
-        for input in self.inputs.iter() {
-            for (fingerprint, path) in input.bip32_derivation.values() {
-                if fingerprint.eq(&root_fingerprint) {
-                    paths.push(path.clone());
-                }
-            }
-
-            for (_, (fingerprint, path)) in input.tap_key_origins.values() {
-                if fingerprint.eq(&root_fingerprint) {
-                    paths.push(path.clone());
-                }
-            }
-        }
-
-        if paths.is_empty() && custom_signers.is_empty() {
-            return Err(Error::NothingToSign);
-        }
-
-        let descriptor: String = match descriptor {
-            Some(desc) => desc.to_string(),
-            None => {
-                let mut first_path = paths.first().ok_or(Error::NothingToSign)?.into_iter();
-                let purpose: Purpose = match first_path.next() {
-                    Some(ChildNumber::Hardened { index: 44 }) => Purpose::PKH,
-                    Some(ChildNumber::Hardened { index: 49 }) => Purpose::SHWPKH,
-                    Some(ChildNumber::Hardened { index: 84 }) => Purpose::WPKH,
-                    Some(ChildNumber::Hardened { index: 86 }) => Purpose::TR,
-                    _ => return Err(Error::UnsupportedDerivationPath),
-                };
-                let _net = first_path.next();
-                let account = first_path.next().ok_or(Error::InvalidDerivationPath)?;
-                let account = if let ChildNumber::Hardened { index } = account {
-                    *index
-                } else {
-                    return Err(Error::InvalidDerivationPath);
-                };
-                let change = first_path.next().ok_or(Error::InvalidDerivationPath)?;
-                let change = if let ChildNumber::Normal { index } = change {
-                    match index {
-                        0 => false,
-                        1 => true,
-                        _ => return Err(Error::InvalidDerivationPath),
-                    }
-                } else {
-                    return Err(Error::InvalidDerivationPath);
-                };
-
-                let descriptors = Descriptors::new(seed.clone(), network, Some(account), secp)?;
-                let descriptor = descriptors.get_by_purpose(purpose, change)?;
-                descriptor.to_string()
-            }
-        };
-
-        let mut wallet = Wallet::new_no_persist(&descriptor, None, network)?;
-
-        let base_psbt = self.clone();
-        let mut counter: usize = 0;
-
-        for path in paths.into_iter() {
-            let child_priv: ExtendedPrivKey = root.derive_priv(secp, &path)?;
-            let private_key: PrivateKey = PrivateKey::new(child_priv.private_key, network);
-            let signer_ctx: SignerContext = match path.into_iter().next() {
-                Some(ChildNumber::Hardened { index: 44 }) => SignerContext::Legacy,
-                Some(ChildNumber::Hardened { index: 49 }) => SignerContext::Segwitv0,
-                Some(ChildNumber::Hardened { index: 84 }) => SignerContext::Segwitv0,
-                Some(ChildNumber::Hardened { index: 86 }) => SignerContext::Tap {
-                    is_internal_key: use_tr_internal_key,
-                },
-                _ => return Err(Error::UnsupportedDerivationPath),
-            };
-
-            let signer = SignerWrapper::new(private_key, signer_ctx);
-            wallet.add_signer(
-                KeychainKind::External,
-                SignerOrdering(counter),
-                Arc::new(signer),
-            );
-            counter += 1;
-        }
-
-        for signer in custom_signers.into_iter() {
-            wallet.add_signer(
-                KeychainKind::External,
-                SignerOrdering(counter),
-                Arc::new(signer),
-            );
-            counter += 1;
-        }
-
-        let finalized = wallet.sign(self, SignOptions::default())?;
-
-        if base_psbt != *self {
-            Ok(finalized)
-        } else {
-            Err(Error::PsbtNotSigned)
+        match sign_psbt(
+            self,
+            seed,
+            descriptor.clone(),
+            custom_signers.clone(),
+            false,
+            network,
+            secp,
+        ) {
+            Ok(finalized) => Ok(finalized),
+            Err(Error::PsbtNotSigned) => sign_psbt(
+                self,
+                seed,
+                descriptor,
+                custom_signers.clone(),
+                true,
+                network,
+                secp,
+            ),
+            Err(e) => Err(e),
         }
     }
 
     fn as_base64(&self) -> String {
         self.to_string()
+    }
+}
+
+fn sign_psbt<C>(
+    psbt: &mut PartiallySignedTransaction,
+    seed: &Seed,
+    descriptor: Option<Descriptor<String>>,
+    custom_signers: Vec<SignerWrapper<PrivateKey>>,
+    use_tr_internal_key: bool,
+    network: Network,
+    secp: &Secp256k1<C>,
+) -> Result<bool, Error>
+where
+    C: Signing,
+{
+    let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
+    let root_fingerprint: Fingerprint = root.fingerprint(secp);
+
+    let mut paths: Vec<DerivationPath> = Vec::new();
+
+    for input in psbt.inputs.iter() {
+        for (fingerprint, path) in input.bip32_derivation.values() {
+            if fingerprint.eq(&root_fingerprint) {
+                paths.push(path.clone());
+            }
+        }
+
+        for (_, (fingerprint, path)) in input.tap_key_origins.values() {
+            if fingerprint.eq(&root_fingerprint) {
+                paths.push(path.clone());
+            }
+        }
+    }
+
+    if paths.is_empty() && custom_signers.is_empty() {
+        return Err(Error::NothingToSign);
+    }
+
+    let descriptor: String = match descriptor {
+        Some(desc) => desc.to_string(),
+        None => {
+            let mut first_path = paths.first().ok_or(Error::NothingToSign)?.into_iter();
+            let purpose: Purpose = match first_path.next() {
+                Some(ChildNumber::Hardened { index: 44 }) => Purpose::PKH,
+                Some(ChildNumber::Hardened { index: 49 }) => Purpose::SHWPKH,
+                Some(ChildNumber::Hardened { index: 84 }) => Purpose::WPKH,
+                Some(ChildNumber::Hardened { index: 86 }) => Purpose::TR,
+                _ => return Err(Error::UnsupportedDerivationPath),
+            };
+            let _net = first_path.next();
+            let account = first_path.next().ok_or(Error::InvalidDerivationPath)?;
+            let account = if let ChildNumber::Hardened { index } = account {
+                *index
+            } else {
+                return Err(Error::InvalidDerivationPath);
+            };
+            let change = first_path.next().ok_or(Error::InvalidDerivationPath)?;
+            let change = if let ChildNumber::Normal { index } = change {
+                match index {
+                    0 => false,
+                    1 => true,
+                    _ => return Err(Error::InvalidDerivationPath),
+                }
+            } else {
+                return Err(Error::InvalidDerivationPath);
+            };
+
+            let descriptors = Descriptors::new(seed.clone(), network, Some(account), secp)?;
+            let descriptor = descriptors.get_by_purpose(purpose, change)?;
+            descriptor.to_string()
+        }
+    };
+
+    let mut wallet: Wallet = Wallet::new_no_persist(&descriptor, None, network)?;
+
+    let base_psbt: PartiallySignedTransaction = psbt.clone();
+    let mut counter: usize = 0;
+
+    for path in paths.into_iter() {
+        let child_priv: ExtendedPrivKey = root.derive_priv(secp, &path)?;
+        let private_key: PrivateKey = PrivateKey::new(child_priv.private_key, network);
+        let signer_ctx: SignerContext = match path.into_iter().next() {
+            Some(ChildNumber::Hardened { index: 44 }) => SignerContext::Legacy,
+            Some(ChildNumber::Hardened { index: 49 }) => SignerContext::Segwitv0,
+            Some(ChildNumber::Hardened { index: 84 }) => SignerContext::Segwitv0,
+            Some(ChildNumber::Hardened { index: 86 }) => SignerContext::Tap {
+                is_internal_key: use_tr_internal_key,
+            },
+            _ => return Err(Error::UnsupportedDerivationPath),
+        };
+
+        let signer: SignerWrapper<PrivateKey> = SignerWrapper::new(private_key, signer_ctx);
+        wallet.add_signer(
+            KeychainKind::External,
+            SignerOrdering(counter),
+            Arc::new(signer),
+        );
+        counter += 1;
+    }
+
+    for signer in custom_signers.into_iter() {
+        wallet.add_signer(
+            KeychainKind::External,
+            SignerOrdering(counter),
+            Arc::new(signer),
+        );
+        counter += 1;
+    }
+
+    let finalized: bool = wallet.sign(psbt, SignOptions::default())?;
+
+    if base_psbt != *psbt {
+        Ok(finalized)
+    } else {
+        Err(Error::PsbtNotSigned)
     }
 }
 
@@ -360,8 +385,34 @@ mod tests {
         let seed = Seed::new::<&str>(mnemonic, None);
         let mut psbt = PartiallySignedTransaction::from_base64("cHNidP8BAIABAAAAAQiqsV3pVy3i3mOXb44eSY6YXfyBJJquLJUFOQgKxqogAQAAAAD9////ApcWAAAAAAAAGXapFFnK2lAxTIKeGfWneG+O4NSYf0KdiKysDAAAAAAAACJRIDah9WL9RrG8cBtYLPY/dqsOd9+Ysh7+hNnInepPfCUoKTclAAABASvmIwAAAAAAACJRIIFkFWTG5s8O4M/FVct0eYcA0ayNYYMfdUK3VDHm3PNNIhXAAMzzAr/xU1CxCRn2xLf6Vk7deJJ1P2IphMFQkGwGZNwjIFSh53RXgXULuDjlB82aLiF9LkqzhtrTHbwF5MJP9JNyrMAhFlSh53RXgXULuDjlB82aLiF9LkqzhtrTHbwF5MJP9JNyOQETYY0ojn8xo/xlOd4vxPBtGqXOW/RgxpD1azdzLllueXNW5FdWAACAAQAAgBv6C4AAAAAAAAAAACEWAMzzAr/xU1CxCRn2xLf6Vk7deJJ1P2IphMFQkGwGZNwZAJv0NUtWAACAAQAAgBv6C4AAAAAAAAAAAAEXIADM8wK/8VNQsQkZ9sS3+lZO3XiSdT9iKYTBUJBsBmTcARggE2GNKI5/MaP8ZTneL8TwbRqlzlv0YMaQ9Ws3cy5ZbnkAAAEFIMyrxjur6FZA49b3vxbW2gGoFCVIDqhp4WQ8eJq6uV9EAQYlAMAiIFQ0gIXoLoC1Uk+d9i2t+6KirZ4znJISAZS7NkP7DSBbrCEHzKvGO6voVkDj1ve/FtbaAagUJUgOqGnhZDx4mrq5X0QZAJv0NUtWAACAAQAAgBv6C4AAAAAAAQAAACEHVDSAhegugLVST532La37oqKtnjOckhIBlLs2Q/sNIFs5ARpaIl7upiRp2Mj47BtMoV8ZSitR752q1zy5u5ZgWQ7Lc1bkV1YAAIABAACAG/oLgAAAAAABAAAAAA==").unwrap();
         let finalized = psbt
-            .sign_custom(&seed, Some(descriptor), Vec::new(), true, NETWORK, &secp)
+            .sign_custom(&seed, Some(descriptor), Vec::new(), NETWORK, &secp)
             .unwrap();
         assert!(finalized);
+    }
+
+    #[test]
+    fn test_sign_1_of_3_multisig_psbts() {
+        let secp = Secp256k1::new();
+
+        let psbts = vec![
+            "cHNidP8BAIABAAAAAV99U31xYmIep1eqgtcrfuJIPHXRiBb1IMuX60hvNJy2AAAAAAD9////AtAHAAAAAAAAGXapFFnK2lAxTIKeGfWneG+O4NSYf0KdiKwxBQAAAAAAACJRIDE9g5pAa6WK7b/WGB6d0UWm5sgRkpLbPXpEibVUak7UgnUmAAABASusDQAAAAAAACJRICK656hMN3zHJuk41jFs0WBQqdlgQ/s52uwFKYBeagmXQhXAoACiV/jMFp+5qEHyj6dKGhBc6EafJBIRflxcaOg0qnscpeCx4QADGCRE8cxyP5HcxLzHJ0MHZ2s30d9tqOVQ2SMg8qdWUHEN+X0aiCaXdIBdjXqe3LqXRr4IXLPJj5gVTcKswEIVwKAAolf4zBafuahB8o+nShoQXOhGnyQSEX5cXGjoNKp7ICjlYEcXIlhI/QV4YGkPK4gpLau7Xh3Yq1khzP2Ua3wjIGXP3zZdbF12HUHTp03M1NOgWN0BllPEUjt9fgKLGVC1rMAhFmXP3zZdbF12HUHTp03M1NOgWN0BllPEUjt9fgKLGVC1OQEcpeCx4QADGCRE8cxyP5HcxLzHJ0MHZ2s30d9tqOVQ2TuK4ptWAACAAQAAgBv6C4AAAAAAAQAAACEWoACiV/jMFp+5qEHyj6dKGhBc6EafJBIRflxcaOg0qnsZAFy0kqVWAACAAQAAgBv6C4AAAAAAAQAAACEW8qdWUHEN+X0aiCaXdIBdjXqe3LqXRr4IXLPJj5gVTcI5ASAo5WBHFyJYSP0FeGBpDyuIKS2ru14d2KtZIcz9lGt8dv28olYAAIABAACAG/oLgAAAAAABAAAAARcgoACiV/jMFp+5qEHyj6dKGhBc6EafJBIRflxcaOg0qnsBGCBZXR37ccEb/NtmcktzgQNn2tAegCzWdjDKwg82j7h+twAAAQUgI96QaBnrHSbOH9tzer5xHVtMsbzh4fPPTyHnttKY+vkBBkoBwCIgQixWhD3FgiFyBWG6XMj442r0/t9K7yyPVK0ihnCVwPGsAcAiICmwzSbKSecHGPX0+qEaDCHYaGGJ7nOkIebFYhPObwEQrCEHI96QaBnrHSbOH9tzer5xHVtMsbzh4fPPTyHnttKY+vkZAFy0kqVWAACAAQAAgBv6C4AAAAAAAwAAACEHKbDNJspJ5wcY9fT6oRoMIdhoYYnuc6Qh5sViE85vARA5AatoqKahbbDRXXhxDvHbKsd/f7TYIBckq99TdqWhFNj7dv28olYAAIABAACAG/oLgAAAAAADAAAAIQdCLFaEPcWCIXIFYbpcyPjjavT+30rvLI9UrSKGcJXA8TkBEEOKfu0YTZpH6RCgonLGkXQNkcmxPZXVV1oWg6xeyTY7iuKbVgAAgAEAAIAb+guAAAAAAAMAAAAA",
+            "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",
+            "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",
+        ];
+        let descriptor: Descriptor<String> = Descriptor::from_str("tr([5cb492a5/86'/1'/784923']tpubDD56LAR1MR7X5EeZYMpvivk2Lh3HMo4vdDNQ8jAv4oBjLPEddQwxaxNypvrHbMk2qTxAj44YLzqHrzwy5LDNmVyYZBesm6aShhmhYrA8veT/0/*,{pk([76fdbca2/86'/1'/784923']tpubDCDepsNyAPWySAgXx1Por6sHpSWzxsTB9XJp5erEN7NumgdZMhhmycJGMQ1cHZwx66KyZr6psjttDDQ7mV4uJGV2DvB9Mri1nTVmpquvTDR/0/*),pk([3b8ae29b/86'/1'/784923']tpubDDpkQsJQTpHi2bH5Cg7L1pThUxeEStcn9ZsQ53XHkW8Fs81h71XobqpwYf2Jb8ECmW1mUUJxQhZstmwFUg5wQ6EVzH5HmF3cpHcyxjvF1Ep/0/*)})#yxpuntg3").unwrap();
+        let mnemonic = Mnemonic::from_str(
+            "message scissors typical gravity patrol lunch about bacon person focus cry uncover",
+        )
+        .unwrap();
+        let seed = Seed::from_mnemonic(mnemonic);
+
+        for (index, psbt_str) in psbts.into_iter().enumerate() {
+            dbg!(index);
+            let mut psbt = PartiallySignedTransaction::from_base64(psbt_str).unwrap();
+            let finalized = psbt
+                .sign_with_descriptor(&seed, descriptor.clone(), Network::Testnet, &secp)
+                .unwrap();
+            assert!(finalized);
+        }
     }
 }

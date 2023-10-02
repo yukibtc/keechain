@@ -31,7 +31,7 @@ where
         psbt.sign_with_seed(seed, network, &SECP256K1)?
     } else {
         let descriptor = Descriptor::from_str(&descriptor)?;
-        psbt.sign_with_descriptor(seed, descriptor, false, network, &SECP256K1)?
+        psbt.sign_with_descriptor(seed, descriptor, network, &SECP256K1)?
     };
     let mut psbt_file: PathBuf = psbt_file.to_path_buf();
     dir::rename_psbt(&mut psbt_file, finalized)?;
