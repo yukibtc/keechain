@@ -15,7 +15,7 @@ default = ["sysinfo"]
 
 [dependencies]
 aes = "0.8"
-bdk = { git = "https://github.com/bitcoindevkit/bdk", rev = "2867e88b64b4a8cf7136cc562ec61c077737a087", default-features = false, features = ["std"] }
+bdk = { git = "https://github.com/bitcoindevkit/bdk", rev = "417963f16882945423b8a8b6b33a507f8d4888a3", default-features = false, features = ["std"] }
 bip39 = "2.0"
 cbc = { version = "0.1", features = ["alloc"] }
 chacha20poly1305 = "0.10"
