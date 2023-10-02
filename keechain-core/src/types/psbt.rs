@@ -222,15 +222,9 @@ impl Psbt for PartiallySignedTransaction {
             secp,
         ) {
             Ok(finalized) => Ok(finalized),
-            Err(Error::PsbtNotSigned) => sign_psbt(
-                self,
-                seed,
-                descriptor,
-                custom_signers.clone(),
-                true,
-                network,
-                secp,
-            ),
+            Err(Error::PsbtNotSigned) => {
+                sign_psbt(self, seed, descriptor, custom_signers, true, network, secp)
+            }
             Err(e) => Err(e),
         }
     }
