@@ -10,7 +10,7 @@ use keechain_core::types::KeeChain;
 
 use crate::component::{Button, Heading, InputField, View};
 use crate::theme::color::ORANGE;
-use crate::{AppState, Menu, Stage, KEYCHAINS_PATH};
+use crate::{AppState, Menu, Stage, KEYCHAINS_PATH, SECP256K1};
 
 #[derive(Default)]
 pub struct RestoreState {
@@ -93,6 +93,8 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                     || Ok(app.layouts.restore.password.clone()),
                     || Ok(app.layouts.restore.confirm_password.clone()),
                     || Ok(mnemonic),
+                    app.network,
+                    &SECP256K1,
                 ) {
                     Ok(keechain) => {
                         app.layouts.restore.clear();

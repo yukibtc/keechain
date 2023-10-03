@@ -15,7 +15,7 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
         Heading::new("Export").render(ui);
 
         if let Some(keechain) = &app.keechain {
-            Identity::new(keechain.keychain.seed(), app.network).render(ui);
+            Identity::new(keechain.identity(), keechain.passphrase()).render(ui);
             ui.add_space(15.0);
         }
 

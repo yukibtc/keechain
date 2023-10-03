@@ -51,10 +51,7 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
         if is_ready && (ui.input(|i| i.key_pressed(Key::Enter)) || button.clicked()) {
             match app.keechain.as_ref() {
                 Some(keechain) => {
-                    if keechain
-                        .check_password(app.layouts.wipe_keychain.password.clone())
-                        .unwrap_or_default()
-                    {
+                    if keechain.check_password(app.layouts.wipe_keychain.password.clone()) {
                         match keechain.wipe() {
                             Ok(_) => {
                                 app.layouts.wipe_keychain.clear();

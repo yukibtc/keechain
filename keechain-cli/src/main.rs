@@ -10,9 +10,8 @@ use keechain_core::bips::bip39::Mnemonic;
 use keechain_core::bitcoin::psbt::PartiallySignedTransaction;
 use keechain_core::bitcoin::secp256k1::Secp256k1;
 use keechain_core::bitcoin::Network;
-use keechain_core::types::{BitcoinCore, Descriptors, Electrum, KeeChain, Psbt, Wasabi};
 use keechain_core::util::dir;
-use keechain_core::Result;
+use keechain_core::{BitcoinCore, Electrum, KeeChain, PsbtUtility, Result, Wasabi};
 
 mod cli;
 mod types;
@@ -33,10 +32,11 @@ fn main() -> Result<()> {
             word_count,
             dice_roll,
         } => {
+            let password: String = io::get_password()?;
             let keechain = KeeChain::generate(
                 keychain_path,
                 name,
-                io::get_password,
+                || Ok(password.clone()),
                 io::get_confirmation_password,
                 word_count.into(),
                 || {
@@ -49,11 +49,13 @@ fn main() -> Result<()> {
                         Ok(None)
                     }
                 },
+                network,
+                &secp,
             )?;
 
             println!("\n!!! WRITE DOWN YOUT SEED PHRASE !!!");
             println!("\n################################################################\n");
-            println!("{}", keechain.keychain.seed.mnemonic());
+            println!("{}", keechain.keychain(password)?.seed.mnemonic());
             println!("\n################################################################\n");
 
             Ok(())
@@ -65,6 +67,8 @@ fn main() -> Result<()> {
                 io::get_password,
                 io::get_confirmation_password,
                 || Ok(Mnemonic::from_str(&io::get_input("Seed")?)?),
+                network,
+                &secp,
             )?;
             Ok(())
         }
@@ -76,16 +80,20 @@ fn main() -> Result<()> {
             Ok(())
         }
         Command::Identity { name } => {
-            let keechain = KeeChain::open(keychain_path, name, io::get_password)?;
-            let fingerprint = keechain.keychain.identity(network, &secp)?;
+            let keechain = KeeChain::open(keychain_path, name, io::get_password, network, &secp)?;
+            let fingerprint = keechain.identity();
             println!("Fingerprint: {fingerprint}");
             Ok(())
         }
         Command::Export { export_type } => match export_type {
             ExportTypes::Descriptors { name, account } => {
-                let keechain = KeeChain::open(keychain_path, name, io::get_password)?;
+                let password: String = io::get_password()?;
+                let keechain =
+                    KeeChain::open(keychain_path, name, || Ok(password.clone()), network, &secp)?;
                 let descriptors =
-                    Descriptors::new(keechain.keychain.seed(), network, Some(account), &secp)?;
+                    keechain
+                        .keychain(password)?
+                        .descriptors(network, Some(account), &secp)?;
                 println!("Extenrals:");
                 for desc in descriptors.external().iter() {
                     println!("- {desc}");
@@ -97,9 +105,11 @@ fn main() -> Result<()> {
                 Ok(())
             }
             ExportTypes::BitcoinCore { name, account } => {
-                let keechain = KeeChain::open(keychain_path, name, io::get_password)?;
+                let password: String = io::get_password()?;
+                let keechain =
+                    KeeChain::open(keychain_path, name, || Ok(password.clone()), network, &secp)?;
                 let descriptors =
-                    BitcoinCore::new(keechain.keychain.seed(), network, Some(account), &secp)?;
+                    BitcoinCore::new(&keechain.seed(password)?, network, Some(account), &secp)?;
                 println!("{}", descriptors.to_string());
                 Ok(())
             }
@@ -108,9 +118,11 @@ fn main() -> Result<()> {
                 script,
                 account,
             } => {
-                let keechain = KeeChain::open(keychain_path, name, io::get_password)?;
+                let password: String = io::get_password()?;
+                let keechain =
+                    KeeChain::open(keychain_path, name, || Ok(password.clone()), network, &secp)?;
                 let electrum_json_wallet = Electrum::new(
-                    keechain.keychain.seed(),
+                    &keechain.seed(password)?,
                     network,
                     script.into(),
                     Some(account),
@@ -121,8 +133,10 @@ fn main() -> Result<()> {
                 Ok(())
             }
             ExportTypes::Wasabi { name } => {
-                let keechain = KeeChain::open(keychain_path, name, io::get_password)?;
-                let wasabi_json_wallet = Wasabi::new(keechain.keychain.seed(), network, &secp)?;
+                let password: String = io::get_password()?;
+                let keechain =
+                    KeeChain::open(keychain_path, name, || Ok(password.clone()), network, &secp)?;
+                let wasabi_json_wallet = Wasabi::new(&keechain.seed(password)?, network, &secp)?;
                 let path = wasabi_json_wallet.save_to_file(keechain_common::home())?;
                 println!("Wasabi file exported to {}", path.display());
                 Ok(())
@@ -142,8 +156,10 @@ fn main() -> Result<()> {
             file,
             descriptor,
         } => {
-            let keechain = KeeChain::open(keychain_path, name, io::get_password)?;
-            let seed = &keechain.keychain.seed();
+            let password: String = io::get_password()?;
+            let keechain =
+                KeeChain::open(keychain_path, name, || Ok(password.clone()), network, &secp)?;
+            let seed = &keechain.seed(password)?;
             let mut psbt: PartiallySignedTransaction =
                 PartiallySignedTransaction::from_file(&file)?;
             let finalized = match descriptor {
@@ -167,24 +183,34 @@ fn main() -> Result<()> {
                 word_count,
                 index,
             } => {
-                let keechain = KeeChain::open(keychain_path, name, io::get_password)?;
-                let mnemonic: Mnemonic =
-                    keechain
-                        .keychain
-                        .deterministic_entropy(word_count.into(), index, &secp)?;
+                let password: String = io::get_password()?;
+                let keechain =
+                    KeeChain::open(keychain_path, name, || Ok(password.clone()), network, &secp)?;
+                let mnemonic: Mnemonic = keechain.keychain(password)?.deterministic_entropy(
+                    word_count.into(),
+                    index,
+                    &secp,
+                )?;
                 println!("Mnemonic: {mnemonic}");
                 Ok(())
             }
             AdvancedCommand::Danger { command } => match command {
                 DangerCommand::ViewSecrets { name } => {
-                    let keechain = KeeChain::open(keychain_path, name, io::get_password)?;
-                    let secrets = keechain.keychain.secrets(network, &secp)?;
+                    let password: String = io::get_password()?;
+                    let keechain = KeeChain::open(
+                        keychain_path,
+                        name,
+                        || Ok(password.clone()),
+                        network,
+                        &secp,
+                    )?;
+                    let secrets = keechain.keychain(password)?.secrets(network, &secp)?;
                     util::print_secrets(secrets);
                     Ok(())
                 }
                 DangerCommand::Wipe { name } => {
                     if io::ask("Are you really sure? This action is permanent!")? && io::ask("Again, are you really sure? THIS ACTION IS PERMANENT AND YOU MAY LOSE ALL YOUR FUNDS!")? {
-                        let keechain = KeeChain::open(keychain_path, name, io::get_password)?;
+                        let keechain = KeeChain::open(keychain_path, name, io::get_password, network, &secp)?;
                         keechain.wipe()?;
                     } else {
                         println!("Aborted.");
@@ -195,11 +221,13 @@ fn main() -> Result<()> {
         },
         Command::Setting { command } => match command {
             SettingCommand::Rename { name, new_name } => {
-                let keechain = KeeChain::open(keychain_path, name, io::get_password)?;
+                let mut keechain =
+                    KeeChain::open(keychain_path, name, io::get_password, network, &secp)?;
                 Ok(keechain.rename(new_name)?)
             }
             SettingCommand::ChangePassword { name } => {
-                let keechain = KeeChain::open(keychain_path, name, io::get_password)?;
+                let mut keechain =
+                    KeeChain::open(keychain_path, name, io::get_password, network, &secp)?;
                 Ok(keechain.change_password(
                     io::get_password,
                     io::get_new_password,

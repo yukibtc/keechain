@@ -10,6 +10,18 @@ pub trait Bip32 {
 
     fn to_bip32_root_key(&self, network: Network) -> Result<ExtendedPrivKey, Self::Err>;
 
+    fn to_bip32_root_pubkey<C>(
+        &self,
+        network: Network,
+        secp: &Secp256k1<C>,
+    ) -> Result<ExtendedPubKey, Self::Err>
+    where
+        C: Signing,
+    {
+        let root: ExtendedPrivKey = self.to_bip32_root_key(network)?;
+        Ok(ExtendedPubKey::from_priv(secp, &root))
+    }
+
     fn fingerprint<C>(
         &self,
         network: Network,

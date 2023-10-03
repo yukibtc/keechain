@@ -18,10 +18,10 @@ use bdk::miniscript::Descriptor;
 use bdk::signer::{SignerContext, SignerOrdering, SignerWrapper};
 use bdk::{KeychainKind, SignOptions, Wallet};
 
-use super::descriptors;
 use crate::bips::bip32::{self, Bip32, ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
-use crate::types::{Descriptors, Purpose, Seed};
+use crate::types::{Purpose, Seed};
 use crate::util::base64;
+use crate::{descriptors, Descriptors};
 
 #[derive(Debug)]
 pub enum Error {
@@ -118,7 +118,7 @@ impl From<bdk::descriptor::DescriptorError> for Error {
     }
 }
 
-pub trait Psbt: Sized {
+pub trait PsbtUtility: Sized {
     fn from_base64<S>(psbt: S) -> Result<Self, Error>
     where
         S: Into<String>;
@@ -193,7 +193,7 @@ pub trait Psbt: Sized {
     }
 }
 
-impl Psbt for PartiallySignedTransaction {
+impl PsbtUtility for PartiallySignedTransaction {
     fn from_base64<S>(psbt: S) -> Result<Self, Error>
     where
         S: Into<String>,
@@ -298,7 +298,7 @@ where
                 return Err(Error::InvalidDerivationPath);
             };
 
-            let descriptors = Descriptors::new(seed.clone(), network, Some(account), secp)?;
+            let descriptors = Descriptors::new(seed, network, Some(account), secp)?;
             let descriptor = descriptors.get_by_purpose(purpose, change)?;
             descriptor.to_string()
         }

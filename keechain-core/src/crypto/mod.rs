@@ -25,8 +25,8 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Aes(e) => write!(f, "Aes: {e}"),
-            Self::ChaCha20Poly1305(e) => write!(f, "ChaCha20Poly1305: {e}"),
+            Self::Aes(e) => write!(f, "{e}"),
+            Self::ChaCha20Poly1305(e) => write!(f, "{e}"),
             Self::Json(e) => write!(f, "Json: {e}"),
             Self::Base64Decode => write!(f, "Error while decoding from base64"),
         }

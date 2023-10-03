@@ -9,23 +9,13 @@ use bdk::bitcoin::secp256k1::{Secp256k1, Signing};
 use bdk::bitcoin::Network;
 use bip39::Mnemonic;
 
-pub mod bitcoin_core;
-pub mod descriptors;
-pub mod electrum;
 pub mod keechain;
 pub mod keychain;
-pub mod psbt;
 pub mod seed;
-pub mod wasabi;
 
-pub use self::bitcoin_core::BitcoinCore;
-pub use self::descriptors::Descriptors;
-pub use self::electrum::{Electrum, ElectrumSupportedScripts};
 pub use self::keechain::KeeChain;
-pub use self::keychain::Keychain;
-pub use self::psbt::Psbt;
+pub use self::keychain::{EncryptedKeychain, Keychain};
 pub use self::seed::Seed;
-pub use self::wasabi::Wasabi;
 use crate::bips::bip32::{self, Bip32, ExtendedPrivKey, Fingerprint};
 use crate::util::hex;
 
@@ -151,7 +141,7 @@ impl fmt::Debug for Secrets {
 }
 
 impl Secrets {
-    pub fn new<C>(seed: Seed, network: Network, secp: &Secp256k1<C>) -> Result<Self, bip32::Error>
+    pub fn new<C>(seed: &Seed, network: Network, secp: &Secp256k1<C>) -> Result<Self, bip32::Error>
     where
         C: Signing,
     {

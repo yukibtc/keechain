@@ -33,7 +33,7 @@ impl Keychain {
     }
 
     pub fn seed(&self) -> Arc<Seed> {
-        Arc::new(self.inner.seed().into())
+        Arc::new(self.inner.seed().clone().into())
     }
 
     /* pub fn identity(&self, network: Network) -> Result<Fingerprint, Error> {

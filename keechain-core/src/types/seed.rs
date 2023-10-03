@@ -7,9 +7,9 @@ use bdk::bitcoin::Network;
 use bip39::Mnemonic;
 use serde::{Deserialize, Serialize};
 
-use super::descriptors::ToDescriptor;
 use crate::bips::bip32::{self, Bip32, ExtendedPrivKey};
 use crate::bips::bip85::Bip85;
+use crate::descriptors::ToDescriptor;
 use crate::util::hex;
 
 #[derive(Clone, Eq, PartialEq, Serialize, Deserialize)]

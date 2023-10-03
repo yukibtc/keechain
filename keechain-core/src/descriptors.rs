@@ -9,10 +9,10 @@ use bdk::bitcoin::secp256k1::{Secp256k1, Signing};
 use bdk::bitcoin::Network;
 use bdk::miniscript::descriptor::{Descriptor, DescriptorKeyParseError, DescriptorPublicKey};
 
-use super::{Purpose, Seed};
 use crate::bips::bip32::{
     self, Bip32, ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
 };
+use crate::types::{Purpose, Seed};
 
 #[derive(Debug)]
 pub enum Error {
@@ -69,7 +69,7 @@ pub struct Descriptors {
 
 impl Descriptors {
     pub fn new<C>(
-        seed: Seed,
+        seed: &Seed,
         network: Network,
         account: Option<u32>,
         secp: &Secp256k1<C>,

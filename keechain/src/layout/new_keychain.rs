@@ -2,11 +2,12 @@
 // Distributed under the MIT software license
 
 use eframe::egui::{Align, ComboBox, Key, Layout, Ui};
+use keechain_core::bips::bip39::Mnemonic;
 use keechain_core::types::{KeeChain, WordCount};
 
 use crate::component::{Button, Error, Heading, InputField, MnemonicViewer, View};
 use crate::theme::color::ORANGE;
-use crate::{AppState, Menu, Stage, KEYCHAINS_PATH};
+use crate::{AppState, Menu, Stage, KEYCHAINS_PATH, SECP256K1};
 
 const WORD_COUNT_OPTIONS: [WordCount; 3] = [WordCount::W12, WordCount::W18, WordCount::W24];
 
@@ -17,6 +18,7 @@ pub struct NewKeychainState {
     confirm_password: String,
     word_count: WordCount,
     keechain: Option<KeeChain>,
+    mnemonic: Option<Mnemonic>,
     confirm_saved_mnemonic: bool,
     error: Option<String>,
 }
@@ -28,6 +30,7 @@ impl NewKeychainState {
         self.confirm_password = String::new();
         self.word_count = WordCount::default();
         self.keechain = None;
+        self.mnemonic = None;
         self.confirm_saved_mnemonic = false;
         self.error = None;
     }
@@ -38,7 +41,7 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
         Heading::new("Generate keychain").render(ui);
 
         if let Some(keechain) = app.layouts.new_keychain.keechain.clone() {
-            show_mnemonic_layout(app, keechain, ui);
+            show_mnemonic_layout(app, keechain, app.layouts.new_keychain.mnemonic.clone(), ui);
         } else {
             generate_layout(app, ui);
         }
@@ -118,6 +121,8 @@ fn generate_layout(app: &mut AppState, ui: &mut Ui) {
             || Ok(app.layouts.new_keychain.confirm_password.clone()),
             app.layouts.new_keychain.word_count,
             || Ok(None),
+            app.network,
+            &SECP256K1,
         ) {
             Ok(keechain) => {
                 app.layouts.new_keychain.keechain = Some(keechain);
@@ -127,8 +132,15 @@ fn generate_layout(app: &mut AppState, ui: &mut Ui) {
     }
 }
 
-fn show_mnemonic_layout(app: &mut AppState, keechain: KeeChain, ui: &mut Ui) {
-    MnemonicViewer::new(keechain.keychain.seed.mnemonic()).render(ui);
+fn show_mnemonic_layout(
+    app: &mut AppState,
+    keechain: KeeChain,
+    mnemonic: Option<Mnemonic>,
+    ui: &mut Ui,
+) {
+    if let Some(mnemonic) = mnemonic {
+        MnemonicViewer::new(mnemonic).render(ui);
+    }
 
     ui.add_space(7.0);
 

@@ -28,12 +28,9 @@ impl std::error::Error for Error {}
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidContentFormat => write!(f, "Invalid content format"),
-            Self::Base64Decode => write!(f, "Error while decoding from base64"),
-            Self::WrongBlockMode => write!(
-                f,
-                "Wrong encryption block mode. The content must be encrypted using CBC mode!"
-            ),
+            Self::InvalidContentFormat => write!(f, "invalid content format"),
+            Self::Base64Decode => write!(f, "error while decoding from base64"),
+            Self::WrongBlockMode => write!(f, "invalid password or block mode"),
         }
     }
 }
@@ -115,7 +112,7 @@ mod tests {
             Error::Base64Decode
         );
 
-        //Content encrypted with aes256 using GCM mode
+        // Content encrypted with aes256 using GCM mode
         assert_eq!(
             decrypt(
                 key,

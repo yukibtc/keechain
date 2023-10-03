@@ -3,7 +3,7 @@
 
 use clap::ValueEnum;
 use keechain_core::bitcoin::Network;
-use keechain_core::types::{ElectrumSupportedScripts, WordCount};
+use keechain_core::{ElectrumSupportedScripts, WordCount};
 
 #[derive(Debug, Clone, ValueEnum)]
 pub enum CliNetwork {

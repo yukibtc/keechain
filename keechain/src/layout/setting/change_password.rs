@@ -68,7 +68,7 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
             .render(ui);
 
         if is_ready && (ui.input(|i| i.key_pressed(Key::Enter)) || button.clicked()) {
-            match app.keechain.as_ref() {
+            match app.keechain.as_mut() {
                 Some(keechain) => {
                     match keechain.change_password(
                         || Ok(app.layouts.change_password.current_password.clone()),

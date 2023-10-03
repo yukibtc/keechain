@@ -15,6 +15,7 @@ const WORD_COUNT_OPTIONS: [WordCount; 3] = [WordCount::W12, WordCount::W18, Word
 
 #[derive(Default)]
 pub struct DeterministicEntropyState {
+    password: String,
     word_count: WordCount,
     index: String,
     mnemonic: Option<Mnemonic>,
@@ -23,6 +24,7 @@ pub struct DeterministicEntropyState {
 
 impl DeterministicEntropyState {
     pub fn clear(&mut self) {
+        self.password.clear();
         self.word_count = WordCount::W24;
         self.index = String::new();
         self.mnemonic = None;
@@ -37,6 +39,13 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
 
     View::show(ui, |ui| {
         Heading::new("Deterministic entropy (BIP85)").render(ui);
+
+        InputField::new("Password")
+            .placeholder("Password")
+            .is_password()
+            .render(ui, &mut app.layouts.deterministic_entropy.password);
+
+        ui.add_space(7.0);
 
         ui.with_layout(Layout::top_down(Align::Min), |ui| {
             ui.add_space(1.0);
@@ -93,7 +102,8 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
             match app.keechain.as_mut() {
                 Some(keechain) => {
                     match Index::from_str(app.layouts.deterministic_entropy.index.as_str()) {
-                        Ok(index) => match keechain.keychain.deterministic_entropy(
+                        Ok(index) => match keechain.deterministic_entropy(
+                            app.layouts.deterministic_entropy.password.clone(),
                             app.layouts.deterministic_entropy.word_count,
                             index,
                             &SECP256K1,

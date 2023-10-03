@@ -13,6 +13,7 @@ pub enum Error {
     ChaCha20Poly1305(chacha20poly1305::Error),
     /// Not found in payload
     NotFound(String),
+    DecryptionFailed,
 }
 
 impl std::error::Error for Error {}
@@ -22,6 +23,9 @@ impl fmt::Display for Error {
         match self {
             Self::ChaCha20Poly1305(e) => write!(f, "ChaCha20Poly1305: {e}"),
             Self::NotFound(value) => write!(f, "{value} not found in payload"),
+            Self::DecryptionFailed => {
+                write!(f, "invalid password or content")
+            }
         }
     }
 }
@@ -74,7 +78,9 @@ where
     let cipher = XChaCha20Poly1305::new(&key.into());
 
     // Decrypt
-    Ok(cipher.decrypt(nonce.into(), ciphertext.as_ref())?)
+    cipher
+        .decrypt(nonce.into(), ciphertext.as_ref())
+        .map_err(|_| Error::DecryptionFailed)
 }
 
 #[cfg(test)]

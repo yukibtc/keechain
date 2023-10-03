@@ -9,11 +9,11 @@ use bdk::miniscript::descriptor::{Descriptor, DescriptorPublicKey};
 use serde::Serialize;
 use serde_json::json;
 
-use super::{Descriptors, Seed};
+use crate::{descriptors, Descriptors, Seed};
 
 #[derive(Debug)]
 pub enum Error {
-    Descriptor(super::descriptors::Error),
+    Descriptor(descriptors::Error),
 }
 
 impl std::error::Error for Error {}
@@ -26,8 +26,8 @@ impl fmt::Display for Error {
     }
 }
 
-impl From<super::descriptors::Error> for Error {
-    fn from(e: super::descriptors::Error) -> Self {
+impl From<descriptors::Error> for Error {
+    fn from(e: descriptors::Error) -> Self {
         Self::Descriptor(e)
     }
 }
@@ -56,7 +56,7 @@ pub struct BitcoinCore(Vec<BitcoinCoreDescriptor>);
 
 impl BitcoinCore {
     pub fn new<C>(
-        seed: Seed,
+        seed: &Seed,
         network: Network,
         account: Option<u32>,
         secp: &Secp256k1<C>,

@@ -68,16 +68,12 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
             if is_ready && (ui.input(|i| i.key_pressed(Key::Enter)) || button.clicked()) {
                 match app.keechain.as_ref() {
                     Some(keechain) => {
-                        if keechain
-                            .check_password(app.layouts.view_secrets.password.clone())
-                            .unwrap_or_default()
-                        {
-                            match keechain.keychain.secrets(app.network, &SECP256K1) {
+                        match keechain.keychain(app.layouts.view_secrets.password.clone()) {
+                            Ok(keychain) => match keychain.secrets(app.network, &SECP256K1) {
                                 Ok(secrets) => app.layouts.view_secrets.secrets = Some(secrets),
                                 Err(e) => app.layouts.view_secrets.error = Some(e.to_string()),
-                            }
-                        } else {
-                            app.layouts.view_secrets.error = Some("Wrong password".to_string())
+                            },
+                            Err(e) => app.layouts.view_secrets.error = Some(e.to_string()),
                         }
                     }
                     None => {

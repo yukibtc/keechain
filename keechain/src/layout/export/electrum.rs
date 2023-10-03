@@ -6,20 +6,21 @@ use std::str::FromStr;
 
 use eframe::egui::{Align, ComboBox, Layout, RichText, Ui};
 use keechain_core::bitcoin::Network;
-use keechain_core::types::{Electrum, ElectrumSupportedScripts, Index, Seed};
-use keechain_core::Result;
+use keechain_core::{Electrum, ElectrumSupportedScripts, Index, KeeChain, Result};
 
 use crate::component::{Button, Error, Heading, Identity, InputField, View};
 use crate::theme::color::{DARK_GREEN, ORANGE};
 use crate::{AppState, Menu, Stage, SECP256K1};
 
 fn export_electrum(
-    seed: Seed,
+    keechain: &KeeChain,
+    password: String,
     network: Network,
     script: ElectrumSupportedScripts,
     account: Option<u32>,
 ) -> Result<PathBuf> {
-    let electrum_json_wallet = Electrum::new(seed, network, script, account, &SECP256K1)?;
+    let seed = keechain.seed(password)?;
+    let electrum_json_wallet = Electrum::new(&seed, network, script, account, &SECP256K1)?;
     let home_dir: PathBuf = keechain_common::home();
     Ok(electrum_json_wallet.save_to_file(home_dir)?)
 }
@@ -35,6 +36,7 @@ const WALLET_TYPES: [(ElectrumSupportedScripts, &str); 3] = [
 
 #[derive(Default)]
 pub struct ExportElectrumState {
+    password: String,
     script: ElectrumSupportedScripts,
     account: String,
     result: Option<String>,
@@ -43,8 +45,9 @@ pub struct ExportElectrumState {
 
 impl ExportElectrumState {
     pub fn clear(&mut self) {
+        self.password.clear();
         self.script = ElectrumSupportedScripts::default();
-        self.account = String::new();
+        self.account.clear();
         self.result = None;
         self.error = None;
     }
@@ -59,9 +62,16 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
         Heading::new("Export Electrum").render(ui);
 
         if let Some(keechain) = &app.keechain {
-            Identity::new(keechain.keychain.seed(), app.network).render(ui);
+            Identity::new(keechain.identity(), keechain.passphrase()).render(ui);
             ui.add_space(15.0);
         }
+
+        InputField::new("Password")
+            .placeholder("Password")
+            .is_password()
+            .render(ui, &mut app.layouts.export_electrum.password);
+
+        ui.add_space(7.0);
 
         ui.with_layout(Layout::top_down(Align::Min), |ui| {
             ui.add_space(1.0);
@@ -119,7 +129,8 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                     match Index::from_str(app.layouts.export_electrum.account.as_str()) {
                         Ok(index) => {
                             match export_electrum(
-                                keechain.keychain.seed(),
+                                keechain,
+                                app.layouts.export_electrum.password.clone(),
                                 app.network,
                                 app.layouts.export_electrum.script,
                                 Some(index.as_u32()),

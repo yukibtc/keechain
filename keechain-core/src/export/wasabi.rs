@@ -61,7 +61,7 @@ pub struct Wasabi {
 }
 
 impl Wasabi {
-    pub fn new<C>(seed: Seed, network: Network, secp: &Secp256k1<C>) -> Result<Self, Error>
+    pub fn new<C>(seed: &Seed, network: Network, secp: &Secp256k1<C>) -> Result<Self, Error>
     where
         C: Signing,
     {

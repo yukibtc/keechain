@@ -115,7 +115,7 @@ pub struct Electrum {
 
 impl Electrum {
     pub fn new<C>(
-        seed: Seed,
+        seed: &Seed,
         network: Network,
         script: ElectrumSupportedScripts,
         account: Option<u32>,

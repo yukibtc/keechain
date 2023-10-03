@@ -11,7 +11,7 @@ use keechain_core::util::dir;
 
 use crate::component::{Button, Error, InputField, View};
 use crate::theme::color::ORANGE;
-use crate::{AppState, Menu, Stage, KEYCHAINS_PATH};
+use crate::{AppState, Menu, Stage, KEYCHAINS_PATH, SECP256K1};
 
 const LOGO: &[u8] = include_bytes!("../../assets/logo.png");
 
@@ -123,6 +123,8 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                 KEYCHAINS_PATH.as_path(),
                 app.layouts.start.name.clone(),
                 || Ok(app.layouts.start.password.clone()),
+                app.network,
+                &SECP256K1,
             ) {
                 Ok(keechain) => {
                     app.layouts.start.clear();

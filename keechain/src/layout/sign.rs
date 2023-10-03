@@ -8,8 +8,8 @@ use eframe::egui::{RichText, Ui};
 use keechain_core::bdk::miniscript::Descriptor;
 use keechain_core::bitcoin::psbt::PartiallySignedTransaction;
 use keechain_core::bitcoin::Network;
-use keechain_core::types::{Psbt, Seed};
 use keechain_core::util::dir;
+use keechain_core::{KeeChain, PsbtUtility, Seed};
 use rfd::FileDialog;
 
 use crate::component::{Button, Error, Heading, Identity, InputField, View};
@@ -17,7 +17,8 @@ use crate::theme::color::{DARK_GREEN, DARK_RED, ORANGE};
 use crate::{AppState, Menu, Stage, SECP256K1};
 
 pub fn sign_file_from_seed<P>(
-    seed: &Seed,
+    keechain: &KeeChain,
+    password: String,
     descriptor: String,
     network: Network,
     path: P,
@@ -25,13 +26,14 @@ pub fn sign_file_from_seed<P>(
 where
     P: AsRef<Path>,
 {
+    let seed: Seed = keechain.keychain(password.clone())?.seed();
     let psbt_file = path.as_ref();
     let mut psbt: PartiallySignedTransaction = PartiallySignedTransaction::from_file(psbt_file)?;
     let finalized: bool = if descriptor.is_empty() {
-        psbt.sign_with_seed(seed, network, &SECP256K1)?
+        psbt.sign_with_seed(&seed, network, &SECP256K1)?
     } else {
         let descriptor = Descriptor::from_str(&descriptor)?;
-        psbt.sign_with_descriptor(seed, descriptor, network, &SECP256K1)?
+        psbt.sign_with_descriptor(&seed, descriptor, network, &SECP256K1)?
     };
     let mut psbt_file: PathBuf = psbt_file.to_path_buf();
     dir::rename_psbt(&mut psbt_file, finalized)?;
@@ -47,6 +49,7 @@ pub struct PsbtFile {
 
 #[derive(Default)]
 pub struct SignState {
+    password: String,
     descriptor: String,
     custom_descriptor: bool,
     psbt_file: Option<PsbtFile>,
@@ -56,6 +59,7 @@ pub struct SignState {
 
 impl SignState {
     pub fn clear(&mut self) {
+        self.password = String::new();
         self.descriptor = String::new();
         self.custom_descriptor = false;
         self.psbt_file = None;
@@ -69,7 +73,7 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
         View::show(ui, |ui| {
             Heading::new("Sign").render(ui);
 
-            Identity::new(keechain.keychain.seed(), app.network).render(ui);
+            Identity::new(keechain.identity(), keechain.passphrase()).render(ui);
             ui.add_space(15.0);
 
             if let Some(error) = &app.layouts.sign.error {
@@ -88,7 +92,7 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                 if button.clicked() {
                     if let Some(path) = FileDialog::new().add_filter("psbt", &["psbt"]).pick_file()
                     {
-                        match Psbt::from_file(path.clone()) {
+                        match PartiallySignedTransaction::from_file(path.clone()) {
                             Ok(psbt) => {
                                 app.layouts.sign.error = None;
                                 app.layouts.sign.psbt_file = Some(PsbtFile { psbt, path });
@@ -117,7 +121,8 @@ pub fn update(app: &mut AppState, ui: &mut Ui) {
                         .clicked()
                     {
                         match sign_file_from_seed(
-                            &keechain.keychain.seed(),
+                            keechain,
+                            app.layouts.sign.password.clone(),
                             app.layouts.sign.descriptor.clone(),
                             app.network,
                             psbt_file.path.clone(),
