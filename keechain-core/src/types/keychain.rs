@@ -8,6 +8,7 @@ use bdk::bitcoin::secp256k1::{Secp256k1, Signing};
 use bdk::bitcoin::Network;
 use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use crate::bips::bip32::{self, Bip32, ExtendedPubKey, Fingerprint};
 use crate::bips::bip39::Mnemonic;
@@ -157,17 +158,16 @@ impl EncryptedKeychain {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
 struct KeychainIntermediate {
     mnemonic: Mnemonic,
     passphrases: Vec<String>,
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Zeroize, ZeroizeOnDrop)]
 pub struct Keychain {
     mnemonic: Mnemonic,
     passphrases: Vec<String>,
-    #[serde(skip_serializing)]
     pub seed: Seed,
 }
 
@@ -184,10 +184,16 @@ impl Deref for Keychain {
     }
 }
 
-impl Drop for Keychain {
-    fn drop(&mut self) {
-        self.mnemonic = Mnemonic::from_entropy(b"00000000000000000000000000000000").unwrap();
-        self.passphrases = Vec::new();
+impl Serialize for Keychain {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let intermediate = KeychainIntermediate {
+            mnemonic: self.mnemonic.clone(),
+            passphrases: self.passphrases.clone(),
+        };
+        intermediate.serialize(serializer)
     }
 }
 
@@ -197,7 +203,10 @@ impl<'de> Deserialize<'de> for Keychain {
         D: Deserializer<'de>,
     {
         let intermediate = KeychainIntermediate::deserialize(deserializer)?;
-        Ok(Self::new(intermediate.mnemonic, intermediate.passphrases))
+        Ok(Self::new(
+            intermediate.mnemonic.clone(),
+            intermediate.passphrases.clone(),
+        ))
     }
 }
 

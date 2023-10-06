@@ -16,12 +16,13 @@ default = ["sysinfo"]
 [dependencies]
 aes = "0.8"
 bdk = { git = "https://github.com/bitcoindevkit/bdk", rev = "417963f16882945423b8a8b6b33a507f8d4888a3", default-features = false, features = ["std"] }
-bip39 = "2.0"
+bip39 = { version = "2.0", default-features = false, features = ["std", "zeroize"] }
 cbc = { version = "0.1", features = ["alloc"] }
 chacha20poly1305 = "0.10"
 rand_chacha = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+zeroize = { version = "1.5", features = ["derive"] } # bip39 uses version 1.5
 
 [target.'cfg(not(target_vendor = "apple"))'.dependencies]
 sysinfo = { version = "0.28", optional = true }

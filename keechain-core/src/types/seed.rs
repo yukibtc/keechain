@@ -6,13 +6,14 @@ use core::fmt;
 use bdk::bitcoin::Network;
 use bip39::Mnemonic;
 use serde::{Deserialize, Serialize};
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use crate::bips::bip32::{self, Bip32, ExtendedPrivKey};
 use crate::bips::bip85::Bip85;
 use crate::descriptors::ToDescriptor;
 use crate::util::hex;
 
-#[derive(Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
 pub struct Seed {
     mnemonic: Mnemonic,
     passphrase: Option<String>,
@@ -21,13 +22,6 @@ pub struct Seed {
 impl fmt::Debug for Seed {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "<sensitive>")
-    }
-}
-
-impl Drop for Seed {
-    fn drop(&mut self) {
-        self.mnemonic = Mnemonic::from_entropy(b"00000000000000000000000000000000").unwrap();
-        self.passphrase = None;
     }
 }
 
