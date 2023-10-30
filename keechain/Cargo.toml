@@ -17,5 +17,5 @@ egui_extras = { version = "0.21", features = ["image"] }
 image = { version = "0.24", default-features = false, features = ["png"] }
 keechain-common = { version = "0.1", path = "../keechain-common" }
 keechain-core = { version = "0.1", path = "../keechain-core" }
-rfd = "0.11"
+rfd = "0.12"
 once_cell = "1.18"
