@@ -2,17 +2,20 @@
 // Distributed under the MIT software license
 
 //! BIP48
+//!
+//! <https://github.com/bitcoin/bips/blob/master/bip-0048.mediawiki>
 
 use bdk::bitcoin::bip32::{ChildNumber, DerivationPath, Error};
 use bdk::bitcoin::Network;
 
 use super::bip32;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum ScriptType {
     P2SHWSH = 1,
     P2WSH = 2,
+    P2TR = 3,
 }
 
 impl ScriptType {
@@ -120,6 +123,36 @@ mod tests {
         assert_eq!(
             get_path(Network::Testnet, None, ScriptType::P2SHWSH, true, Some(5))?.to_string(),
             "m/48'/1'/0'/1'/1/5".to_string()
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_p2tr_path() -> Result<()> {
+        assert_eq!(
+            get_path(Network::Bitcoin, None, ScriptType::P2TR, false, None)?.to_string(),
+            "m/48'/0'/0'/3'/0/0".to_string()
+        );
+
+        assert_eq!(
+            get_path(Network::Bitcoin, None, ScriptType::P2TR, false, Some(1))?.to_string(),
+            "m/48'/0'/0'/3'/0/1".to_string()
+        );
+
+        assert_eq!(
+            get_path(Network::Bitcoin, None, ScriptType::P2TR, true, None)?.to_string(),
+            "m/48'/0'/0'/3'/1/0".to_string()
+        );
+
+        assert_eq!(
+            get_path(Network::Bitcoin, Some(1), ScriptType::P2TR, false, None)?.to_string(),
+            "m/48'/0'/1'/3'/0/0".to_string()
+        );
+
+        assert_eq!(
+            get_path(Network::Testnet, None, ScriptType::P2TR, true, Some(5))?.to_string(),
+            "m/48'/1'/0'/3'/1/5".to_string()
         );
 
         Ok(())
