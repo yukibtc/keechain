@@ -1,6 +1,10 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+//! BIP32
+//!
+//! <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>
+
 pub use bdk::bitcoin::bip32::*;
 use bdk::bitcoin::secp256k1::{Secp256k1, Signing};
 use bdk::bitcoin::Network;

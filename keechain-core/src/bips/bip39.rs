@@ -1,6 +1,10 @@
 // Copyright (c) 2022-2023 Yuki Kishimoto
 // Distributed under the MIT software license
 
+//! BIP39
+//!
+//! <https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki>
+
 use bdk::bitcoin::hashes::hmac::{Hmac, HmacEngine};
 use bdk::bitcoin::hashes::{sha512, Hash, HashEngine};
 #[cfg(all(feature = "sysinfo", not(target_vendor = "apple")))]
