@@ -159,8 +159,8 @@ where
         C: Signing,
     {
         let root: ExtendedPrivKey = self.to_bip32_root_key(network)?;
-        let root_fingerprint = root.fingerprint(secp);
-        let path = bip32::account_extended_path(purpose.as_u32(), network, account)?;
+        let root_fingerprint: Fingerprint = root.fingerprint(secp);
+        let path: DerivationPath = purpose.to_account_extended_path(network, account)?;
         let derived_private_key: ExtendedPrivKey = root.derive_priv(secp, &path)?;
         let derived_public_key: ExtendedPubKey =
             ExtendedPubKey::from_priv(secp, &derived_private_key);
@@ -180,8 +180,8 @@ where
         C: Signing,
     {
         let root: ExtendedPrivKey = self.to_bip32_root_key(network)?;
-        let root_fingerprint = root.fingerprint(secp);
-        let path = bip32::account_extended_path(purpose.as_u32(), network, account)?;
+        let root_fingerprint: Fingerprint = root.fingerprint(secp);
+        let path: DerivationPath = purpose.to_account_extended_path(network, account)?;
         let derived_private_key: ExtendedPrivKey = root.derive_priv(secp, &path)?;
         let derived_public_key: ExtendedPubKey =
             ExtendedPubKey::from_priv(secp, &derived_private_key);
@@ -214,11 +214,15 @@ pub fn descriptor(
     };
 
     let desc: String = format!(
-        "[{}/{:#}/{:#}/{:#}]{}/{}/*",
+        "[{}/{:#}/{:#}/{:#}{}]{}/{}/*",
         root_fingerprint,
         purpose,
         coin,
         account,
+        match iter_path.next() {
+            Some(script) => format!("/{script:#}"),
+            None => String::new(),
+        },
         pubkey,
         i32::from(change)
     );
@@ -246,6 +250,8 @@ pub fn typed_descriptor(
 mod test {
     use bip39::Mnemonic;
 
+    use crate::bips::bip48::ScriptType;
+
     use super::*;
 
     #[test]
@@ -265,6 +271,20 @@ mod test {
             .to_descriptor(Purpose::BIP84, Some(2345), true, Network::Testnet, &secp)
             .unwrap();
         assert_eq!(desc.to_string(), String::from("[91ef223d/84'/1'/2345']tpubDCgYuiX1p1eecECkhNc2bLSktmSDoMTj5J3v184ErUXqHTywQ7X5afv51UGfDVSaYzDWvdHhVyJ6UK8fM27EwGByWdczEERfAA9j2nzHUAj/1/*"));
+
+        // Tr
+        let desc: DescriptorPublicKey = seed
+            .to_descriptor(
+                Purpose::BIP48 {
+                    script: ScriptType::P2TR,
+                },
+                None,
+                false,
+                Network::Bitcoin,
+                &secp,
+            )
+            .unwrap();
+        assert_eq!(desc.to_string(), String::from("[91ef223d/48'/0'/0'/3']xpub6DaRkmkUCnzQNUYFxbZKDZTxmBaU2mwjHxxhaVd9f5twgMoiPz232PDqEfkKfqTnQeqnGZciVcmWnhTKUxUgp48R8FvCNYiwH4P8oCEk6B8/0/*"));
     }
 
     #[test]
