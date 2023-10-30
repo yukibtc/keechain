@@ -22,8 +22,6 @@ pub mod util;
 pub use self::descriptors::Descriptors;
 pub use self::export::{BitcoinCore, Electrum, ElectrumSupportedScripts, Wasabi};
 pub use self::psbt::PsbtUtility;
-pub use self::types::{
-    EncryptedKeychain, Index, KeeChain, Keychain, Purpose, Secrets, Seed, WordCount,
-};
+pub use self::types::{EncryptedKeychain, Index, KeeChain, Keychain, Secrets, Seed, WordCount};
 
 pub type Result<T, E = Box<dyn std::error::Error>> = std::result::Result<T, E>;

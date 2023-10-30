@@ -12,7 +12,8 @@ use bdk::miniscript::descriptor::{Descriptor, DescriptorKeyParseError, Descripto
 use crate::bips::bip32::{
     self, Bip32, ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
 };
-use crate::types::{Purpose, Seed};
+use crate::bips::bip43::Purpose;
+use crate::types::Seed;
 
 #[derive(Debug)]
 pub enum Error {
@@ -80,32 +81,24 @@ impl Descriptors {
         let root: ExtendedPrivKey = seed.to_bip32_root_key(network)?;
         let root_fingerprint = root.fingerprint(secp);
 
-        let paths: Vec<(Purpose, DerivationPath)> = vec![
-            (
-                Purpose::PKH,
-                bip32::account_extended_path(44, network, account)?,
-            ),
-            (
-                Purpose::SHWPKH,
-                bip32::account_extended_path(49, network, account)?,
-            ),
-            (
-                Purpose::WPKH,
-                bip32::account_extended_path(84, network, account)?,
-            ),
-            (
-                Purpose::TR,
-                bip32::account_extended_path(86, network, account)?,
-            ),
+        let purposes: Vec<Purpose> = vec![
+            Purpose::BIP44,
+            Purpose::BIP49,
+            Purpose::BIP84,
+            Purpose::BIP86,
         ];
 
-        let capacity: usize = paths.len();
+        let capacity: usize = purposes.len();
         let mut descriptors = Descriptors {
             external: HashMap::with_capacity(capacity),
             internal: HashMap::with_capacity(capacity),
         };
 
-        for (purpose, path) in paths.into_iter() {
+        for purpose in purposes.into_iter() {
+            // Compose derivation path
+            let path: DerivationPath = purpose.to_account_extended_path(network, account)?;
+
+            // Derive key
             let derived_private_key: ExtendedPrivKey = root.derive_priv(secp, &path)?;
             let derived_public_key: ExtendedPubKey =
                 ExtendedPubKey::from_priv(secp, &derived_private_key);
@@ -263,13 +256,13 @@ mod test {
 
         // Tr
         let desc: DescriptorPublicKey = seed
-            .to_descriptor(Purpose::TR, None, false, Network::Bitcoin, &secp)
+            .to_descriptor(Purpose::BIP86, None, false, Network::Bitcoin, &secp)
             .unwrap();
         assert_eq!(desc.to_string(), String::from("[91ef223d/86'/0'/0']xpub6CjhhJyrYK83TKQq797CMiNzc4bpoJiYRBeb7iQ99T6dXrEgvg24hDw3ZKDJLNMyiy9Sbwqaw8TtCdaE4xXhnYwy7ptpNVfEAKUCcz8PMtP/0/*"));
 
         // Wpkh
         let desc: DescriptorPublicKey = seed
-            .to_descriptor(Purpose::WPKH, Some(2345), true, Network::Testnet, &secp)
+            .to_descriptor(Purpose::BIP84, Some(2345), true, Network::Testnet, &secp)
             .unwrap();
         assert_eq!(desc.to_string(), String::from("[91ef223d/84'/1'/2345']tpubDCgYuiX1p1eecECkhNc2bLSktmSDoMTj5J3v184ErUXqHTywQ7X5afv51UGfDVSaYzDWvdHhVyJ6UK8fM27EwGByWdczEERfAA9j2nzHUAj/1/*"));
     }
@@ -282,13 +275,13 @@ mod test {
 
         // Tr
         let desc: Descriptor<DescriptorPublicKey> = seed
-            .to_typed_descriptor(Purpose::TR, None, false, Network::Bitcoin, &secp)
+            .to_typed_descriptor(Purpose::BIP86, None, false, Network::Bitcoin, &secp)
             .unwrap();
         assert_eq!(desc.to_string(), String::from("tr([91ef223d/86'/0'/0']xpub6CjhhJyrYK83TKQq797CMiNzc4bpoJiYRBeb7iQ99T6dXrEgvg24hDw3ZKDJLNMyiy9Sbwqaw8TtCdaE4xXhnYwy7ptpNVfEAKUCcz8PMtP/0/*)#qkangwzf"));
 
         // Wpkh
         let desc: Descriptor<DescriptorPublicKey> = seed
-            .to_typed_descriptor(Purpose::WPKH, Some(2345), true, Network::Testnet, &secp)
+            .to_typed_descriptor(Purpose::BIP84, Some(2345), true, Network::Testnet, &secp)
             .unwrap();
         assert_eq!(desc.to_string(), String::from("wpkh([91ef223d/84'/1'/2345']tpubDCgYuiX1p1eecECkhNc2bLSktmSDoMTj5J3v184ErUXqHTywQ7X5afv51UGfDVSaYzDWvdHhVyJ6UK8fM27EwGByWdczEERfAA9j2nzHUAj/1/*)#tj43jnd8"));
     }

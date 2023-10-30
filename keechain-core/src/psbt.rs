@@ -19,7 +19,8 @@ use bdk::signer::{SignerContext, SignerOrdering, SignerWrapper};
 use bdk::{KeychainKind, SignOptions, Wallet};
 
 use crate::bips::bip32::{self, Bip32, ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
-use crate::types::{Purpose, Seed};
+use crate::bips::bip44::{self, ExtendedPath};
+use crate::types::Seed;
 use crate::util::base64;
 use crate::{descriptors, Descriptors};
 
@@ -28,6 +29,7 @@ pub enum Error {
     IO(std::io::Error),
     Base64(base64::DecodeError),
     BIP32(bip32::Error),
+    BIP44(bip44::Error),
     Psbt(psbt::Error),
     PsbtParse(PsbtParseError),
     Descriptors(descriptors::Error),
@@ -49,6 +51,7 @@ impl fmt::Display for Error {
             Self::IO(e) => write!(f, "IO: {e}"),
             Self::Base64(e) => write!(f, "Base64: {e}"),
             Self::BIP32(e) => write!(f, "BIP32: {e}"),
+            Self::BIP44(e) => write!(f, "BIP44: {e}"),
             Self::Psbt(e) => write!(f, "Psbt: {e}"),
             Self::PsbtParse(e) => write!(f, "Psbt parse: {e}"),
             Self::Descriptors(e) => write!(f, "Descriptors: {e}"),
@@ -79,6 +82,12 @@ impl From<base64::DecodeError> for Error {
 impl From<bip32::Error> for Error {
     fn from(e: bip32::Error) -> Self {
         Self::BIP32(e)
+    }
+}
+
+impl From<bip44::Error> for Error {
+    fn from(e: bip44::Error) -> Self {
+        Self::BIP44(e)
     }
 }
 
@@ -272,34 +281,12 @@ where
     let descriptor: String = match descriptor {
         Some(desc) => desc.to_string(),
         None => {
-            let mut first_path = paths.first().ok_or(Error::NothingToSign)?.into_iter();
-            let purpose: Purpose = match first_path.next() {
-                Some(ChildNumber::Hardened { index: 44 }) => Purpose::PKH,
-                Some(ChildNumber::Hardened { index: 49 }) => Purpose::SHWPKH,
-                Some(ChildNumber::Hardened { index: 84 }) => Purpose::WPKH,
-                Some(ChildNumber::Hardened { index: 86 }) => Purpose::TR,
-                _ => return Err(Error::UnsupportedDerivationPath),
-            };
-            let _net = first_path.next();
-            let account = first_path.next().ok_or(Error::InvalidDerivationPath)?;
-            let account = if let ChildNumber::Hardened { index } = account {
-                *index
-            } else {
-                return Err(Error::InvalidDerivationPath);
-            };
-            let change = first_path.next().ok_or(Error::InvalidDerivationPath)?;
-            let change = if let ChildNumber::Normal { index } = change {
-                match index {
-                    0 => false,
-                    1 => true,
-                    _ => return Err(Error::InvalidDerivationPath),
-                }
-            } else {
-                return Err(Error::InvalidDerivationPath);
-            };
+            let path = paths.first().cloned().ok_or(Error::NothingToSign)?;
+            let extended_path = ExtendedPath::from_derivation_path(path.clone())?;
 
-            let descriptors = Descriptors::new(seed, network, Some(account), secp)?;
-            let descriptor = descriptors.get_by_purpose(purpose, change)?;
+            let descriptors = Descriptors::new(seed, network, Some(extended_path.account), secp)?;
+            let descriptor =
+                descriptors.get_by_purpose(extended_path.purpose, extended_path.change)?;
             descriptor.to_string()
         }
     };
