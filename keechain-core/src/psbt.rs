@@ -18,8 +18,10 @@ use bdk::miniscript::Descriptor;
 use bdk::signer::{SignerContext, SignerOrdering, SignerWrapper};
 use bdk::{KeychainKind, SignOptions, Wallet};
 
-use crate::bips::bip32::{self, Bip32, ChildNumber, DerivationPath, ExtendedPrivKey, Fingerprint};
+use crate::bips::bip32::{self, Bip32, DerivationPath, ExtendedPrivKey, Fingerprint};
+use crate::bips::bip43::Purpose;
 use crate::bips::bip44::{self, ExtendedPath};
+use crate::bips::bip48::ScriptType;
 use crate::types::Seed;
 use crate::util::base64;
 use crate::{descriptors, Descriptors};
@@ -37,7 +39,6 @@ pub enum Error {
     Bdk(bdk::Error),
     BdkDescriptor(bdk::descriptor::DescriptorError),
     FileNotFound,
-    UnsupportedDerivationPath,
     InvalidDerivationPath,
     NothingToSign,
     PsbtNotSigned,
@@ -59,7 +60,6 @@ impl fmt::Display for Error {
             Self::Bdk(e) => write!(f, "Bdk: {e}"),
             Self::BdkDescriptor(e) => write!(f, "Bdk bescriptor: {e}"),
             Self::FileNotFound => write!(f, "File not found"),
-            Self::UnsupportedDerivationPath => write!(f, "Unsupported derivation path"),
             Self::InvalidDerivationPath => write!(f, "Invalid derivation path"),
             Self::NothingToSign => write!(f, "Nothing to sign here"),
             Self::PsbtNotSigned => write!(f, "PSBT not signed"),
@@ -299,14 +299,19 @@ where
     for path in paths.into_iter() {
         let child_priv: ExtendedPrivKey = root.derive_priv(secp, path)?;
         let private_key: PrivateKey = PrivateKey::new(child_priv.private_key, network);
-        let signer_ctx: SignerContext = match path.into_iter().next() {
-            Some(ChildNumber::Hardened { index: 44 }) => SignerContext::Legacy,
-            Some(ChildNumber::Hardened { index: 49 }) => SignerContext::Segwitv0,
-            Some(ChildNumber::Hardened { index: 84 }) => SignerContext::Segwitv0,
-            Some(ChildNumber::Hardened { index: 86 }) => SignerContext::Tap {
+        let extended_path = ExtendedPath::from_derivation_path(path.clone())?;
+        let signer_ctx: SignerContext = match extended_path.purpose {
+            Purpose::BIP44 => SignerContext::Legacy,
+            Purpose::BIP48 { script } => match script {
+                ScriptType::P2SHWSH | ScriptType::P2WSH => SignerContext::Segwitv0,
+                ScriptType::P2TR => SignerContext::Tap {
+                    is_internal_key: false,
+                },
+            },
+            Purpose::BIP49 | Purpose::BIP84 => SignerContext::Segwitv0,
+            Purpose::BIP86 => SignerContext::Tap {
                 is_internal_key: use_tr_internal_key,
             },
-            _ => return Err(Error::UnsupportedDerivationPath),
         };
 
         let signer: SignerWrapper<PrivateKey> = SignerWrapper::new(private_key, signer_ctx);
