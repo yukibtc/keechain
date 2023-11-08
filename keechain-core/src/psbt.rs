@@ -281,8 +281,8 @@ where
     let descriptor: String = match descriptor {
         Some(desc) => desc.to_string(),
         None => {
-            let path = paths.first().cloned().ok_or(Error::NothingToSign)?;
-            let extended_path = ExtendedPath::from_derivation_path(path.clone())?;
+            let path = paths.first().ok_or(Error::NothingToSign)?;
+            let extended_path = ExtendedPath::from_derivation_path(path)?;
 
             let descriptors = Descriptors::new(seed, network, Some(extended_path.account), secp)?;
             let descriptor =
@@ -299,7 +299,7 @@ where
     for path in paths.into_iter() {
         let child_priv: ExtendedPrivKey = root.derive_priv(secp, path)?;
         let private_key: PrivateKey = PrivateKey::new(child_priv.private_key, network);
-        let extended_path = ExtendedPath::from_derivation_path(path.clone())?;
+        let extended_path = ExtendedPath::from_derivation_path(path)?;
         let signer_ctx: SignerContext = match extended_path.purpose {
             Purpose::BIP44 => SignerContext::Legacy,
             Purpose::BIP48 { script } => match script {

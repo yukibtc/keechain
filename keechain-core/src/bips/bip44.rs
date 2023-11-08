@@ -44,7 +44,7 @@ pub struct ExtendedPath {
 }
 
 impl ExtendedPath {
-    pub fn from_derivation_path(path: DerivationPath) -> Result<Self, Error> {
+    pub fn from_derivation_path(path: &DerivationPath) -> Result<Self, Error> {
         let mut path = path.into_iter();
         let purpose = path.next();
         let coin = path.next();
