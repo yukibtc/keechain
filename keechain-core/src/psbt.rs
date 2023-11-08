@@ -404,7 +404,7 @@ mod tests {
                 .sign_with_descriptor(&seed, descriptor.clone(), Network::Testnet, &secp)
                 .unwrap();
             assert!(finalized);
-            // TODO: psbt.finalize_mut(&secp).unwrap();
+            psbt.finalize_mut(&secp).unwrap();
         }
     }
 }
