@@ -20,7 +20,9 @@ pub mod types;
 pub mod util;
 
 pub use self::descriptors::Descriptors;
-pub use self::export::{BitcoinCore, Electrum, ElectrumSupportedScripts, Wasabi};
+pub use self::export::{
+    BitcoinCore, ColdcardGenericJson, Electrum, ElectrumSupportedScripts, Wasabi,
+};
 pub use self::psbt::PsbtUtility;
 pub use self::types::{EncryptedKeychain, Index, KeeChain, Keychain, Secrets, Seed, WordCount};
 
