@@ -4,6 +4,9 @@
 use core::fmt;
 use core::str::FromStr;
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::{self, Read};
+use std::path::Path;
 
 use bdk::bitcoin::address::{Address, NetworkUnchecked};
 use bdk::bitcoin::Network;
@@ -19,6 +22,7 @@ use crate::descriptors::{self, descriptor};
 
 #[derive(Debug)]
 pub enum Error {
+    IO(io::Error),
     Descriptors(descriptors::Error),
     Json(serde_json::Error),
     UnknownNetwork,
@@ -30,11 +34,18 @@ impl std::error::Error for Error {}
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::IO(e) => write!(f, "IO: {e}"),
             Self::Descriptors(e) => write!(f, "Descriptors: {e}"),
             Self::Json(e) => write!(f, "Json: {e}"),
             Self::UnknownNetwork => write!(f, "unknown network"),
             Self::PurposeNotFound => write!(f, "purpose not found"),
         }
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(e: io::Error) -> Self {
+        Self::IO(e)
     }
 }
 
@@ -86,6 +97,16 @@ impl ColdcardGenericJson {
         T: AsRef<[u8]>,
     {
         Ok(serde_json::from_slice(json.as_ref())?)
+    }
+
+    pub fn from_file<P>(path: P) -> Result<Self, Error>
+    where
+        P: AsRef<Path>,
+    {
+        let mut file: File = File::open(path)?;
+        let mut content: Vec<u8> = Vec::new();
+        file.read_to_end(&mut content)?;
+        Self::from_json(content)
     }
 
     pub fn network(&self) -> Network {
