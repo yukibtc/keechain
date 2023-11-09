@@ -19,6 +19,7 @@ pub mod slips;
 pub mod types;
 pub mod util;
 
+pub use self::bips::bip43::Purpose;
 pub use self::descriptors::Descriptors;
 pub use self::export::{
     BitcoinCore, ColdcardGenericJson, Electrum, ElectrumSupportedScripts, Wasabi,
