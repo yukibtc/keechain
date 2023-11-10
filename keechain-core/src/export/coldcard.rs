@@ -17,7 +17,6 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::bips::bip32::{DerivationPath, ExtendedPubKey, Fingerprint};
 use crate::bips::bip43::Purpose;
-use crate::bips::bip48::ScriptType;
 use crate::descriptors::{self, descriptor};
 
 #[derive(Debug)]
@@ -207,18 +206,7 @@ where
 {
     let mut map = serializer.serialize_map(Some(bips.len()))?;
     for (purpose, child) in bips.iter() {
-        let purpose: &str = match purpose {
-            Purpose::BIP44 => "bip44",
-            Purpose::BIP49 => "bip49",
-            Purpose::BIP84 => "bip84",
-            Purpose::BIP86 => "bip86",
-            Purpose::BIP48 { script } => match script {
-                ScriptType::P2SHWSH => "bip48_1",
-                ScriptType::P2WSH => "bip48_2",
-                ScriptType::P2TR => "bip48_3",
-            },
-        };
-        map.serialize_entry(purpose, child)?;
+        map.serialize_entry(&purpose.to_string(), child)?;
     }
     map.end()
 }
@@ -244,29 +232,12 @@ where
         {
             let mut bips = HashMap::new();
             while let Some(key) = map.next_key::<&str>()? {
-                let purpose: Option<Purpose> = match key {
-                    "bip44" => Some(Purpose::BIP44),
-                    "bip49" => Some(Purpose::BIP49),
-                    "bip84" => Some(Purpose::BIP84),
-                    "bip86" => Some(Purpose::BIP86),
-                    "bip48_1" => Some(Purpose::BIP48 {
-                        script: ScriptType::P2SHWSH,
-                    }),
-                    "bip48_2" => Some(Purpose::BIP48 {
-                        script: ScriptType::P2WSH,
-                    }),
-                    "bip48_3" => Some(Purpose::BIP48 {
-                        script: ScriptType::P2TR,
-                    }),
-                    _ => None,
-                };
-
-                match purpose {
-                    Some(purpose) => {
+                match Purpose::from_str(key) {
+                    Ok(purpose) => {
                         let child = map.next_value()?;
                         bips.insert(purpose, child);
                     }
-                    None => {
+                    Err(..) => {
                         map.next_value::<serde::de::IgnoredAny>()?;
                     }
                 };
@@ -281,6 +252,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::bips::bip48::ScriptType;
 
     #[test]
     fn test_generic_json_deserialization() {
