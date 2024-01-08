@@ -479,14 +479,13 @@ dependencies = [
 
 [[package]]
 name = "bdk"
-version = "1.0.0-alpha.2"
-source = "git+https://github.com/bitcoindevkit/bdk?rev=3fdab87ee7c02439b18a9e114ff588b282525402#3fdab87ee7c02439b18a9e114ff588b282525402"
+version = "1.0.0-alpha.3"
+source = "git+https://github.com/bitcoindevkit/bdk?rev=9efaead8f16a5a0bed18cea514cd94d6a9a0a582#9efaead8f16a5a0bed18cea514cd94d6a9a0a582"
 dependencies = [
  "bdk_chain",
  "bitcoin",
  "getrandom",
  "js-sys",
- "log",
  "miniscript",
  "rand",
  "serde",
@@ -495,8 +494,8 @@ dependencies = [
 
 [[package]]
 name = "bdk_chain"
-version = "0.6.0"
-source = "git+https://github.com/bitcoindevkit/bdk?rev=3fdab87ee7c02439b18a9e114ff588b282525402#3fdab87ee7c02439b18a9e114ff588b282525402"
+version = "0.7.0"
+source = "git+https://github.com/bitcoindevkit/bdk?rev=9efaead8f16a5a0bed18cea514cd94d6a9a0a582#9efaead8f16a5a0bed18cea514cd94d6a9a0a582"
 dependencies = [
  "bitcoin",
  "miniscript",
