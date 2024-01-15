@@ -12,7 +12,7 @@ keywords = ["bitcoin", "signer", "psbt", "offline"]
 categories = ["gui"]
 
 [dependencies]
-eframe = "0.21"
+eframe = "0.25"
 egui_extras = { version = "0.21", features = ["image"] }
 image = { version = "0.24", default-features = false, features = ["png"] }
 keechain-common = { version = "0.1", path = "../keechain-common" }
