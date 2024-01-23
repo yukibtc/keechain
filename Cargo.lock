@@ -479,8 +479,8 @@ dependencies = [
 
 [[package]]
 name = "bdk"
-version = "1.0.0-alpha.3"
-source = "git+https://github.com/bitcoindevkit/bdk?rev=9efaead8f16a5a0bed18cea514cd94d6a9a0a582#9efaead8f16a5a0bed18cea514cd94d6a9a0a582"
+version = "1.0.0-alpha.4"
+source = "git+https://github.com/yukibtc/bdk?rev=285ff46a49fe53e1f7996b83335442e2febcdeae#285ff46a49fe53e1f7996b83335442e2febcdeae"
 dependencies = [
  "bdk_chain",
  "bitcoin",
@@ -494,8 +494,8 @@ dependencies = [
 
 [[package]]
 name = "bdk_chain"
-version = "0.7.0"
-source = "git+https://github.com/bitcoindevkit/bdk?rev=9efaead8f16a5a0bed18cea514cd94d6a9a0a582#9efaead8f16a5a0bed18cea514cd94d6a9a0a582"
+version = "0.8.0"
+source = "git+https://github.com/yukibtc/bdk?rev=285ff46a49fe53e1f7996b83335442e2febcdeae#285ff46a49fe53e1f7996b83335442e2febcdeae"
 dependencies = [
  "bitcoin",
  "miniscript",
