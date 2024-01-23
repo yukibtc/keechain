@@ -8,7 +8,7 @@ homepage = "https://github.com/yukibtc/keechain"
 repository = "https://github.com/yukibtc/keechain.git"
 license = "MIT"
 keywords = ["bitcoin", "signer", "psbt", "offline"]
-rust-version = "1.60.0"
+rust-version = "1.63.0"
 
 [features]
 default = ["sysinfo"]
