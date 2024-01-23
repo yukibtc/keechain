@@ -8,14 +8,14 @@ homepage = "https://github.com/yukibtc/keechain"
 repository = "https://github.com/yukibtc/keechain.git"
 license = "MIT"
 keywords = ["bitcoin", "signer", "psbt", "offline"]
-rust-version = "1.60.0"
+rust-version = "1.63.0"
 
 [features]
 default = ["sysinfo"]
 
 [dependencies]
 aes = "0.8"
-bdk = { git = "https://github.com/bitcoindevkit/bdk", rev = "3fdab87ee7c02439b18a9e114ff588b282525402", default-features = false, features = ["std"] }
+bdk = { git = "https://github.com/yukibtc/bdk", rev = "285ff46a49fe53e1f7996b83335442e2febcdeae", default-features = false, features = ["std"] }
 bip39 = { version = "2.0", default-features = false, features = ["std", "zeroize"] }
 cbc = { version = "0.1", features = ["alloc"] }
 chacha20poly1305 = "0.10"

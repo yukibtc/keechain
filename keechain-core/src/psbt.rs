@@ -15,7 +15,7 @@ use bdk::bitcoin::secp256k1::{Secp256k1, Signing};
 use bdk::bitcoin::{Network, PrivateKey};
 use bdk::miniscript::descriptor::DescriptorKeyParseError;
 use bdk::miniscript::Descriptor;
-use bdk::signer::{SignerContext, SignerOrdering, SignerWrapper};
+use bdk::signer::{SignerContext, SignerError, SignerOrdering, SignerWrapper};
 use bdk::{KeychainKind, SignOptions, Wallet};
 
 use crate::bips::bip32::{self, Bip32, DerivationPath, ExtendedPrivKey, Fingerprint};
@@ -36,7 +36,7 @@ pub enum Error {
     PsbtParse(PsbtParseError),
     Descriptors(descriptors::Error),
     DescriptorParse(DescriptorKeyParseError),
-    Bdk(bdk::Error),
+    BdkSigner(SignerError),
     BdkDescriptor(bdk::descriptor::DescriptorError),
     FileNotFound,
     InvalidDerivationPath,
@@ -57,8 +57,8 @@ impl fmt::Display for Error {
             Self::PsbtParse(e) => write!(f, "Psbt parse: {e}"),
             Self::Descriptors(e) => write!(f, "Descriptors: {e}"),
             Self::DescriptorParse(e) => write!(f, "Descriptor parse: {e}"),
-            Self::Bdk(e) => write!(f, "Bdk: {e}"),
-            Self::BdkDescriptor(e) => write!(f, "Bdk bescriptor: {e}"),
+            Self::BdkSigner(e) => write!(f, "BDK Signer: {e}"),
+            Self::BdkDescriptor(e) => write!(f, "BDK descriptor: {e}"),
             Self::FileNotFound => write!(f, "File not found"),
             Self::InvalidDerivationPath => write!(f, "Invalid derivation path"),
             Self::NothingToSign => write!(f, "Nothing to sign here"),
@@ -115,9 +115,9 @@ impl From<DescriptorKeyParseError> for Error {
     }
 }
 
-impl From<bdk::Error> for Error {
-    fn from(e: bdk::Error) -> Self {
-        Self::Bdk(e)
+impl From<SignerError> for Error {
+    fn from(e: SignerError) -> Self {
+        Self::BdkSigner(e)
     }
 }
 
