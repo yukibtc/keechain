@@ -96,6 +96,11 @@ impl EncryptedKeychain {
         self.current_bip32_root_pubkey.fingerprint()
     }
 
+    /// Check if is using passphrase
+    pub fn has_passphrase(&self) -> bool {
+        self.passphrase.is_some()
+    }
+
     /// Current passphrase
     pub fn passphrase(&self) -> Option<String> {
         self.passphrase.clone()

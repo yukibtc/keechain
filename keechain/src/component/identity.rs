@@ -1,8 +1,10 @@
-// Copyright (c) 2022-2023 Yuki Kishimoto
+// Copyright (c) 2022-2024 Yuki Kishimoto
 // Distributed under the MIT software license
 
-use eframe::egui::{RichText, Ui};
-use keechain_core::bitcoin::bip32::Fingerprint;
+use iced::{widget::Column, Alignment, Length};
+use keechain_core::bips::bip32::Fingerprint;
+
+use super::Text;
 
 pub struct Identity {
     fingerprint: Fingerprint,
@@ -10,17 +12,25 @@ pub struct Identity {
 }
 
 impl Identity {
-    pub fn new(fingerprint: Fingerprint, passphrase: Option<String>) -> Self {
+    pub fn new(fingerprint: Fingerprint, passphrase: bool) -> Self {
         Self {
             fingerprint,
-            passphrase: passphrase.is_some(),
+            passphrase,
         }
     }
 
-    pub fn render(self, ui: &mut Ui) {
-        ui.group(|ui| {
-            ui.label(RichText::new(format!("Fingerprint: {}", self.fingerprint)).small());
-            ui.label(RichText::new(format!("Using a passphrase: {}", self.passphrase)).small());
-        });
+    pub fn view<'a, Message: Clone + 'static>(self) -> Column<'a, Message> {
+        Column::new()
+            .push(
+                Text::new(format!("Fingerprint: {}", self.fingerprint))
+                    .width(Length::Fill)
+                    .view(),
+            )
+            .push(
+                Text::new(format!("Passphrase: {}", self.passphrase))
+                    .width(Length::Fill)
+                    .view(),
+            )
+            .align_items(Alignment::Center)
     }
 }

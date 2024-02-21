@@ -1,32 +1,27 @@
-// Copyright (c) 2022-2023 Yuki Kishimoto
+// Copyright (c) 2022-2024 Yuki Kishimoto
 // Distributed under the MIT software license
+
+#![forbid(unsafe_code)]
+#![windows_subsystem = "windows"]
 
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use eframe::egui::{self, CentralPanel, Context};
-use eframe::epaint::FontFamily::Proportional;
-use eframe::epaint::{FontId, Vec2};
-use eframe::{App, Frame, NativeOptions, Theme};
-use egui::TextStyle::{Body, Button, Heading, Monospace, Small};
+use iced::{executor, font, Application, Command, Element, Pixels, Settings, Theme};
 use keechain_core::bitcoin::secp256k1::{rand, All, Secp256k1};
 use keechain_core::bitcoin::Network;
-use keechain_core::types::KeeChain;
-use keechain_core::Result;
 use once_cell::sync::Lazy;
 
+mod app;
 mod component;
-mod layout;
+mod constants;
+mod start;
 mod theme;
 
-use self::layout::{
-    ChangePasswordState, DeterministicEntropyState, ExportElectrumState, NewKeychainState,
-    PassphraseState, RenameKeychainState, RestoreState, SignState, StartState, ViewSecretsState,
-    WipeKeychainState,
+use self::constants::{APP_NAME, DEFAULT_FONT_SIZE};
+use self::theme::font::{
+    REGULAR, ROBOTO_MONO_BOLD_BYTES, ROBOTO_MONO_LIGHT_BYTES, ROBOTO_MONO_REGULAR_BYTES,
 };
-
-const MIN_WINDOWS_SIZE: Vec2 = egui::vec2(350.0, 530.0);
-const GENERIC_FONT_HEIGHT: f32 = 18.0;
 
 static SECP256K1: Lazy<Secp256k1<All>> = Lazy::new(|| {
     let mut ctx = Secp256k1::new();
@@ -34,162 +29,122 @@ static SECP256K1: Lazy<Secp256k1<All>> = Lazy::new(|| {
     ctx.randomize(&mut rng);
     ctx
 });
-static KEYCHAINS_PATH: Lazy<PathBuf> =
+static BASE_PATH: Lazy<PathBuf> =
     Lazy::new(|| keechain_common::keychains().expect("Can't get keychains path"));
 
-fn parse_network(args: Vec<String>) -> Result<Network> {
+fn parse_network(args: Vec<String>) -> Network {
     for (i, arg) in args.iter().enumerate() {
         if arg.contains("--") {
-            let network = Network::from_str(args[i].trim_start_matches("--"))?;
-            return Ok(network);
+            let network = Network::from_str(args[i].trim_start_matches("--")).unwrap();
+            return network;
         }
     }
-    Ok(Network::Bitcoin)
+    Network::Bitcoin
 }
 
-pub fn main() -> Result<()> {
-    let network: Network = parse_network(std::env::args().collect())?;
-    let options = NativeOptions {
-        fullscreen: false,
-        resizable: true,
-        always_on_top: false,
-        default_theme: Theme::Dark,
-        follow_system_theme: false,
-        initial_window_size: Some(MIN_WINDOWS_SIZE),
-        min_window_size: Some(MIN_WINDOWS_SIZE),
-        drag_and_drop_support: false,
-        ..Default::default()
-    };
-    let app = AppState::new(&network);
-    let app_name = format!(
-        "KeeChain{}",
-        if network.ne(&Network::Bitcoin) {
-            format!(" [{network}]")
-        } else {
-            String::new()
-        }
-    );
-    Ok(eframe::run_native(
-        &app_name,
-        options,
-        Box::new(|_cc| Box::new(app)),
-    )?)
+pub fn main() -> iced::Result {
+    let network: Network = parse_network(std::env::args().collect());
+    let mut settings = Settings::with_flags(network);
+    settings.id = Some(String::from("org.keechain.desktop"));
+    settings.window.min_size = Some((350, 560));
+    settings.window.size = (350, 560);
+    settings.antialiasing = false;
+    settings.default_text_size = Pixels::from(DEFAULT_FONT_SIZE as f32);
+    settings.default_font = REGULAR;
+
+    KeechainApp::run(settings)
 }
 
-#[derive(Clone)]
-pub enum ExportTypes {
-    Descriptors,
-    BitcoinCore,
-    Electrum,
+pub struct KeechainApp {
+    state: State,
+}
+pub enum State {
+    Start(start::Start),
+    App(Box<app::App>),
 }
 
-pub enum Command {
-    Passphrase,
-    Sign,
-    Export(ExportTypes),
-    RenameKeychain,
-    ChangePassword,
-    ViewSecrets,
-    WipeKeychain,
-    DeterministicEntropy,
+#[derive(Debug, Clone)]
+pub enum Message {
+    Start(Box<start::Message>),
+    App(Box<app::Message>),
+    FontLoaded(Result<(), font::Error>),
 }
 
-#[derive(Clone)]
-pub enum Menu {
-    Main,
-    Export,
-    Advanced,
-    Setting,
-    Danger,
-}
+impl Application for KeechainApp {
+    type Executor = executor::Default;
+    type Flags = Network;
+    type Message = Message;
+    type Theme = Theme;
 
-pub enum Stage {
-    Start,
-    NewKeychain,
-    RestoreKeychain,
-    Menu(Menu),
-    Command(Command),
-}
-
-impl Default for Stage {
-    fn default() -> Self {
-        Self::Start
-    }
-}
-
-#[derive(Default)]
-pub struct AppLayoutStates {
-    start: StartState,
-    new_keychain: NewKeychainState,
-    restore: RestoreState,
-    sign: SignState,
-    passphrase: PassphraseState,
-    rename_keychain: RenameKeychainState,
-    change_password: ChangePasswordState,
-    view_secrets: ViewSecretsState,
-    wipe_keychain: WipeKeychainState,
-    deterministic_entropy: DeterministicEntropyState,
-    export_electrum: ExportElectrumState,
-}
-
-pub struct AppState {
-    network: Network,
-    stage: Stage,
-    keechain: Option<KeeChain>,
-    layouts: AppLayoutStates,
-}
-
-impl AppState {
-    pub fn new(network: &Network) -> Self {
-        Self {
-            network: *network,
-            stage: Stage::default(),
-            keechain: None,
-            layouts: AppLayoutStates::default(),
-        }
-    }
-
-    fn set_stage(&mut self, stage: Stage) {
-        self.stage = stage;
-    }
-
-    fn set_keechain(&mut self, keechain: Option<KeeChain>) {
-        self.keechain = keechain;
-    }
-}
-
-impl App for AppState {
-    fn update(&mut self, ctx: &Context, frame: &mut Frame) {
-        let mut style = (*ctx.style()).clone();
-        style.text_styles = [
-            (Heading, FontId::new(28.0, Proportional)),
-            (Body, FontId::new(GENERIC_FONT_HEIGHT, Proportional)),
-            (Monospace, FontId::new(GENERIC_FONT_HEIGHT, Proportional)),
-            (Button, FontId::new(GENERIC_FONT_HEIGHT, Proportional)),
-            (Small, FontId::new(16.0, Proportional)),
-        ]
-        .into();
-        ctx.set_style(style);
-
-        CentralPanel::default().show(ctx, |ui| match &self.stage {
-            Stage::Start => layout::start::update(self, ui),
-            Stage::NewKeychain => layout::new_keychain::update(self, ui),
-            Stage::RestoreKeychain => layout::restore::update(self, ui),
-            Stage::Menu(menu) => layout::menu::update(self, menu.clone(), ui, frame),
-            Stage::Command(cmd) => match cmd {
-                Command::Passphrase => layout::passphrase::update(self, ui),
-                Command::Sign => layout::sign::update(self, ui),
-                Command::Export(export_type) => {
-                    layout::export::update(self, export_type.clone(), ui)
-                }
-                Command::RenameKeychain => layout::setting::rename::update(self, ui),
-                Command::ChangePassword => layout::setting::change_password::update(self, ui),
-                Command::ViewSecrets => layout::advanced::danger::view_secrets::update(self, ui),
-                Command::WipeKeychain => layout::advanced::danger::wipe::update(self, ui),
-                Command::DeterministicEntropy => {
-                    layout::advanced::deterministic_entropy::update(self, ui)
-                }
+    fn new(network: Network) -> (Self, Command<Self::Message>) {
+        let stage = start::Start::new(network);
+        (
+            Self {
+                state: State::Start(stage.0),
             },
-        });
+            Command::batch(vec![
+                font::load(ROBOTO_MONO_REGULAR_BYTES).map(Message::FontLoaded),
+                font::load(ROBOTO_MONO_LIGHT_BYTES).map(Message::FontLoaded),
+                font::load(ROBOTO_MONO_BOLD_BYTES).map(Message::FontLoaded),
+                stage.1.map(|m| m.into()),
+            ]),
+        )
+    }
+
+    fn title(&self) -> String {
+        let (title, network) = match &self.state {
+            State::Start(auth) => (auth.title(), auth.ctx.network),
+            State::App(app) => (app.title(), app.ctx.keechain.network()),
+        };
+
+        let mut title = if title.is_empty() {
+            APP_NAME.to_string()
+        } else {
+            format!("{APP_NAME} - {title}")
+        };
+
+        if network != Network::Bitcoin {
+            title.push_str(&format!(" [{network}]"));
+        }
+
+        title
+    }
+
+    fn theme(&self) -> Theme {
+        match &self.state {
+            State::Start(start) => start.theme().into(),
+            State::App(app) => app.theme().into(),
+        }
+    }
+
+    fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
+        match (&mut self.state, message) {
+            (State::Start(start), Message::Start(msg)) => {
+                let (command, stage_to_move) = start.update(*msg);
+                if let Some(stage) = stage_to_move {
+                    *self = stage;
+                    return Command::perform(async {}, |_| {
+                        Message::App(Box::new(app::Message::Tick))
+                    });
+                }
+                command.map(|m| m.into())
+            }
+            (State::App(app), Message::App(msg)) => match *msg {
+                app::Message::Lock => {
+                    let new = Self::new(app.ctx.keechain.network());
+                    *self = new.0;
+                    new.1
+                }
+                _ => app.update(*msg).map(|m| m.into()),
+            },
+            _ => Command::none(),
+        }
+    }
+
+    fn view(&self) -> Element<Self::Message> {
+        match &self.state {
+            State::Start(start) => start.view().map(|m| m.into()),
+            State::App(app) => app.view().map(|m| m.into()),
+        }
     }
 }

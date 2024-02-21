@@ -1,23 +1,41 @@
-// Copyright (c) 2022-2023 Yuki Kishimoto
+// Copyright (c) 2022-2024 Yuki Kishimoto
 // Distributed under the MIT software license
+use iced::widget::{Column, Container, Row, Scrollable};
+use iced::{Alignment, Element, Length};
 
-use eframe::egui::{Align, Layout, ScrollArea, Ui};
+use super::{rule, Identity};
 
-use super::Version;
+pub fn view<'a, Message: 'a + Clone + 'static>(
+    column: Column<'a, Message>,
+    identity: Option<Identity>,
+) -> Element<'a, Message> {
+    let content = Container::new(
+        column
+            .align_items(Alignment::Center)
+            .spacing(20)
+            .padding(20),
+    )
+    .width(Length::Fill)
+    .center_x()
+    .center_y()
+    .max_width(400);
 
-pub struct View;
+    let mut v = Column::new();
 
-impl View {
-    pub fn show<R>(ui: &mut Ui, add_contents: impl FnOnce(&mut Ui) -> R) {
-        ScrollArea::vertical().show(ui, |ui| {
-            ui.with_layout(Layout::top_down(Align::Center), |ui| {
-                ui.set_max_width(ui.available_width() - 20.0);
-                add_contents(ui);
-            });
-            ui.add_space(20.0);
-            ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
-                Version::new().render(ui)
-            });
-        });
+    if let Some(identity) = identity {
+        v = v.push(identity.view()).push(rule::horizontal()).spacing(10);
     }
+
+    v.push(
+        Row::new().push(
+            Container::new(Scrollable::new(content))
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .center_x()
+                .center_y(),
+        ),
+    )
+    .width(Length::Fill)
+    .height(Length::Fill)
+    .into()
 }

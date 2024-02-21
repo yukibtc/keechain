@@ -13,17 +13,20 @@ help:
 	@echo ""
 
 gui:
-	cargo build -p keechain --release --all-features
+	cargo build -p keechain --release
 
 cli:
-	cargo build -p keechain-cli --release --all-features
+	cargo build -p keechain-cli --release
+
+dev-gui:
+	cargo run -p keechain
 
 appimage: x86_64-unknown-linux-gnu
 	cd ./contrib/cross/appimage/ && docker build -t keechain/appimage-builder:latest -f Dockerfile.x86_64-unknown-linux-gnu .
 	docker run -v $$(PWD)/target:/target:ro -v $$(PWD)/output:/output keechain/appimage-builder
 
 x86_64-unknown-linux-gnu: cross
-	cross build --release --all-features --target x86_64-unknown-linux-gnu
+	cross build --release --target x86_64-unknown-linux-gnu
 
 x86_64-unknown-linux-musl:
 	rustup target add x86_64-unknown-linux-musl
@@ -35,7 +38,6 @@ cross:
 precommit: test
 	@cargo fmt --all -- --config format_code_in_doc_comments=true
 	cargo clippy --all
-	cargo clippy --all --all-features
 	cargo clippy -p keechain-core --target wasm32-unknown-unknown
 
 test:
