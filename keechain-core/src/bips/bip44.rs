@@ -12,9 +12,40 @@ use super::bip43::Purpose;
 use super::bip48::ScriptType;
 
 #[derive(Debug, PartialEq, Eq)]
+pub enum UnsupportedDerivationPathError {
+    Coin(Option<ChildNumber>),
+    Account(Option<ChildNumber>),
+    Change(Option<ChildNumber>),
+    Purpose(Option<ChildNumber>),
+}
+
+impl fmt::Display for UnsupportedDerivationPathError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Coin(c) => match c {
+                Some(c) => write!(f, "`{c}` coin is not supported"),
+                None => write!(f, "unknown coin"),
+            },
+            Self::Account(a) => match a {
+                Some(a) => write!(f, "`{a}` account index is not supported"),
+                None => write!(f, "unknown account index"),
+            },
+            Self::Change(c) => match c {
+                Some(c) => write!(f, "`{c}` change is not supported"),
+                None => write!(f, "unknown change"),
+            },
+            Self::Purpose(purpose) => match purpose {
+                Some(p) => write!(f, "`{p}` purpose is not supported"),
+                None => write!(f, "unknown purpose"),
+            },
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     BIP32(bip32::Error),
-    UnsupportedDerivationPath,
+    UnsupportedDerivationPath(UnsupportedDerivationPathError),
     BIP48ScriptNotFound,
 }
 
@@ -24,7 +55,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::BIP32(e) => write!(f, "BIP32: {e}"),
-            Self::UnsupportedDerivationPath => write!(f, "Unsupported derivation path"),
+            Self::UnsupportedDerivationPath(e) => write!(f, "Unsupported derivation path: {e}"),
             Self::BIP48ScriptNotFound => write!(f, "BIP48 script type not found"),
         }
     }
@@ -54,17 +85,29 @@ impl ExtendedPath {
         let coin: u32 = match coin {
             Some(ChildNumber::Hardened { index: 0 }) => 0,
             Some(ChildNumber::Hardened { index: 1 }) => 1,
-            _ => return Err(Error::UnsupportedDerivationPath),
+            c => {
+                return Err(Error::UnsupportedDerivationPath(
+                    UnsupportedDerivationPathError::Coin(c.copied()),
+                ))
+            }
         };
 
         let account: u32 = match account {
             Some(ChildNumber::Hardened { index }) => *index,
-            _ => return Err(Error::UnsupportedDerivationPath),
+            a => {
+                return Err(Error::UnsupportedDerivationPath(
+                    UnsupportedDerivationPathError::Account(a.copied()),
+                ))
+            }
         };
 
         let change: bool = match change {
             Some(ChildNumber::Normal { index }) => *index != 0,
-            _ => return Err(Error::UnsupportedDerivationPath),
+            c => {
+                return Err(Error::UnsupportedDerivationPath(
+                    UnsupportedDerivationPathError::Change(c.copied()),
+                ))
+            }
         };
 
         match purpose {
@@ -106,7 +149,9 @@ impl ExtendedPath {
                 account,
                 change,
             }),
-            _ => Err(Error::UnsupportedDerivationPath),
+            p => Err(Error::UnsupportedDerivationPath(
+                UnsupportedDerivationPathError::Purpose(p.copied()),
+            )),
         }
     }
 }
