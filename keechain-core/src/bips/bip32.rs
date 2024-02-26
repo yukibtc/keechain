@@ -47,7 +47,10 @@ pub fn account_extended_path(
     // Path: m/<purpose>'/<coin>'/<account>'
     let path: Vec<ChildNumber> = vec![
         ChildNumber::from_hardened_idx(purpose)?,
-        ChildNumber::from_hardened_idx(u32::from(!network.eq(&Network::Bitcoin)))?,
+        ChildNumber::from_hardened_idx(match network {
+            Network::Bitcoin => 0,
+            _ => 1,
+        })?,
         ChildNumber::from_hardened_idx(account.unwrap_or(0))?,
     ];
     Ok(DerivationPath::from(path))
@@ -61,7 +64,7 @@ pub fn extended_path(
 ) -> Result<DerivationPath, Error> {
     // Path: m/<purpose>'/<coin>'/<account>'/<change>
     let base_path = account_extended_path(purpose, network, account)?;
-    let path: Vec<ChildNumber> = vec![ChildNumber::from_normal_idx(u32::from(change))?];
+    let path: [ChildNumber; 1] = [ChildNumber::from_normal_idx(u32::from(change))?];
     Ok(base_path.extend(path))
 }
 
@@ -74,6 +77,6 @@ pub fn get_path(
 ) -> Result<DerivationPath, Error> {
     // Path: m/<purpose>'/<coin>'/<account>'/<change>/<index>
     let base_path = extended_path(purpose, network, account, change)?;
-    let path: Vec<ChildNumber> = vec![ChildNumber::from_normal_idx(index.unwrap_or(0))?];
+    let path: [ChildNumber; 1] = [ChildNumber::from_normal_idx(index.unwrap_or(0))?];
     Ok(base_path.extend(path))
 }

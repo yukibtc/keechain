@@ -6,6 +6,7 @@
 //! <https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki>
 
 use core::fmt;
+use core::slice::Iter;
 
 use super::bip32::{self, ChildNumber, DerivationPath};
 use super::bip43::Purpose;
@@ -77,45 +78,18 @@ pub struct ExtendedPath {
 impl ExtendedPath {
     pub fn from_derivation_path(path: &DerivationPath) -> Result<Self, Error> {
         let mut path = path.into_iter();
-        let purpose = path.next();
-        let coin = path.next();
-        let account = path.next();
-        let change = path.next();
 
-        let coin: u32 = match coin {
-            Some(ChildNumber::Hardened { index: 0 }) => 0,
-            Some(ChildNumber::Hardened { index: 1 }) => 1,
-            c => {
-                return Err(Error::UnsupportedDerivationPath(
-                    UnsupportedDerivationPathError::Coin(c.copied()),
-                ))
-            }
-        };
+        let purpose: Option<&ChildNumber> = path.next();
 
-        let account: u32 = match account {
-            Some(ChildNumber::Hardened { index }) => *index,
-            a => {
-                return Err(Error::UnsupportedDerivationPath(
-                    UnsupportedDerivationPathError::Account(a.copied()),
-                ))
-            }
-        };
-
-        let change: bool = match change {
-            Some(ChildNumber::Normal { index }) => *index != 0,
-            c => {
-                return Err(Error::UnsupportedDerivationPath(
-                    UnsupportedDerivationPathError::Change(c.copied()),
-                ))
-            }
-        };
+        let coin: u32 = extract_coin(&mut path)?;
+        let account: u32 = extract_account(&mut path)?;
 
         match purpose {
             Some(ChildNumber::Hardened { index: 44 }) => Ok(Self {
                 purpose: Purpose::BIP44,
                 coin,
                 account,
-                change,
+                change: extract_change(&mut path)?,
             }),
             Some(ChildNumber::Hardened { index: 48 }) => {
                 let script: ScriptType = match path.next() {
@@ -128,30 +102,91 @@ impl ExtendedPath {
                     purpose: Purpose::BIP48 { script },
                     coin,
                     account,
-                    change,
+                    change: extract_change(&mut path)?,
                 })
             }
             Some(ChildNumber::Hardened { index: 49 }) => Ok(Self {
                 purpose: Purpose::BIP49,
                 coin,
                 account,
-                change,
+                change: extract_change(&mut path)?,
             }),
             Some(ChildNumber::Hardened { index: 84 }) => Ok(Self {
                 purpose: Purpose::BIP84,
                 coin,
                 account,
-                change,
+                change: extract_change(&mut path)?,
             }),
             Some(ChildNumber::Hardened { index: 86 }) => Ok(Self {
                 purpose: Purpose::BIP86,
                 coin,
                 account,
-                change,
+                change: extract_change(&mut path)?,
             }),
             p => Err(Error::UnsupportedDerivationPath(
                 UnsupportedDerivationPathError::Purpose(p.copied()),
             )),
         }
+    }
+}
+
+fn extract_coin(path: &mut Iter<'_, ChildNumber>) -> Result<u32, Error> {
+    match path.next() {
+        Some(ChildNumber::Hardened { index: 0 }) => Ok(0),
+        Some(ChildNumber::Hardened { index: 1 }) => Ok(1),
+        c => Err(Error::UnsupportedDerivationPath(
+            UnsupportedDerivationPathError::Coin(c.copied()),
+        )),
+    }
+}
+
+fn extract_account(path: &mut Iter<'_, ChildNumber>) -> Result<u32, Error> {
+    match path.next() {
+        Some(ChildNumber::Hardened { index }) => Ok(*index),
+        a => Err(Error::UnsupportedDerivationPath(
+            UnsupportedDerivationPathError::Account(a.copied()),
+        )),
+    }
+}
+
+fn extract_change(path: &mut Iter<'_, ChildNumber>) -> Result<bool, Error> {
+    match path.next() {
+        Some(ChildNumber::Normal { index: 0 }) => Ok(false),
+        Some(ChildNumber::Normal { index: 1 }) => Ok(true),
+        c => Err(Error::UnsupportedDerivationPath(
+            UnsupportedDerivationPathError::Change(c.copied()),
+        )),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use core::str::FromStr;
+
+    use super::*;
+
+    #[test]
+    fn test_extended_path_parsing() {
+        // BIP44
+        // BIP48 path
+        let path = DerivationPath::from_str("m/86'/0'/22'/1").unwrap();
+        let p = ExtendedPath::from_derivation_path(&path).unwrap();
+        assert_eq!(p.purpose, Purpose::BIP86);
+        assert_eq!(p.coin, 0);
+        assert_eq!(p.account, 22);
+        assert!(p.change);
+
+        // BIP48 path
+        let path = DerivationPath::from_str("m/48'/1'/0'/3'/0").unwrap();
+        let p = ExtendedPath::from_derivation_path(&path).unwrap();
+        assert_eq!(
+            p.purpose,
+            Purpose::BIP48 {
+                script: ScriptType::P2TR
+            }
+        );
+        assert_eq!(p.coin, 1);
+        assert_eq!(p.account, 0);
+        assert!(!p.change);
     }
 }

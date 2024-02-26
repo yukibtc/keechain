@@ -31,7 +31,7 @@ pub fn account_extended_path(
 ) -> Result<DerivationPath, Error> {
     // Path: m/<purpose>'/<coin_type>'/<account>'/<script_type>'
     let base_path = bip32::account_extended_path(48, network, account)?;
-    let path: Vec<ChildNumber> = vec![ChildNumber::from_hardened_idx(script_type.as_u32())?];
+    let path: [ChildNumber; 1] = [ChildNumber::from_hardened_idx(script_type.as_u32())?];
     Ok(base_path.extend(path))
 }
 
@@ -43,7 +43,7 @@ pub fn extended_path(
 ) -> Result<DerivationPath, Error> {
     // Path: m/<purpose>'/<coin>'/<account>'/<script_type>'/<change>
     let base_path = account_extended_path(network, account, script_type)?;
-    let path: Vec<ChildNumber> = vec![ChildNumber::from_normal_idx(u32::from(change))?];
+    let path: [ChildNumber; 1] = [ChildNumber::from_normal_idx(u32::from(change))?];
     Ok(base_path.extend(path))
 }
 
