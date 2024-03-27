@@ -346,7 +346,6 @@ mod tests {
     use std::str::FromStr;
 
     use bdk::bitcoin::Network;
-    use bdk::miniscript::psbt::PsbtExt;
     use bip39::Mnemonic;
 
     use super::*;
@@ -372,10 +371,15 @@ mod tests {
         let seed = Seed::new::<&str>(mnemonic, None);
         let mut psbt = PartiallySignedTransaction::from_base64("cHNidP8BAIABAAAAAQiqsV3pVy3i3mOXb44eSY6YXfyBJJquLJUFOQgKxqogAQAAAAD9////ApcWAAAAAAAAGXapFFnK2lAxTIKeGfWneG+O4NSYf0KdiKysDAAAAAAAACJRIDah9WL9RrG8cBtYLPY/dqsOd9+Ysh7+hNnInepPfCUoKTclAAABASvmIwAAAAAAACJRIIFkFWTG5s8O4M/FVct0eYcA0ayNYYMfdUK3VDHm3PNNIhXAAMzzAr/xU1CxCRn2xLf6Vk7deJJ1P2IphMFQkGwGZNwjIFSh53RXgXULuDjlB82aLiF9LkqzhtrTHbwF5MJP9JNyrMAhFlSh53RXgXULuDjlB82aLiF9LkqzhtrTHbwF5MJP9JNyOQETYY0ojn8xo/xlOd4vxPBtGqXOW/RgxpD1azdzLllueXNW5FdWAACAAQAAgBv6C4AAAAAAAAAAACEWAMzzAr/xU1CxCRn2xLf6Vk7deJJ1P2IphMFQkGwGZNwZAJv0NUtWAACAAQAAgBv6C4AAAAAAAAAAAAEXIADM8wK/8VNQsQkZ9sS3+lZO3XiSdT9iKYTBUJBsBmTcARggE2GNKI5/MaP8ZTneL8TwbRqlzlv0YMaQ9Ws3cy5ZbnkAAAEFIMyrxjur6FZA49b3vxbW2gGoFCVIDqhp4WQ8eJq6uV9EAQYlAMAiIFQ0gIXoLoC1Uk+d9i2t+6KirZ4znJISAZS7NkP7DSBbrCEHzKvGO6voVkDj1ve/FtbaAagUJUgOqGnhZDx4mrq5X0QZAJv0NUtWAACAAQAAgBv6C4AAAAAAAQAAACEHVDSAhegugLVST532La37oqKtnjOckhIBlLs2Q/sNIFs5ARpaIl7upiRp2Mj47BtMoV8ZSitR752q1zy5u5ZgWQ7Lc1bkV1YAAIABAACAG/oLgAAAAAABAAAAAA==").unwrap();
         let finalized = psbt
-            .sign_custom(&seed, Some(descriptor), Vec::new(), NETWORK, &secp)
+            .sign_custom(&seed, Some(descriptor.clone()), Vec::new(), NETWORK, &secp)
             .unwrap();
         assert!(finalized);
-        psbt.finalize_mut(&secp).unwrap();
+
+        // TODO: psbt.finalize_mut(&secp).unwrap();
+
+        let wallet = Wallet::new_no_persist(&descriptor.to_string(), None, NETWORK).unwrap();
+        let signopts = SignOptions::default();
+        wallet.finalize_psbt(&mut psbt, signopts).unwrap();
     }
 
     #[test]
@@ -404,7 +408,12 @@ mod tests {
                 .sign_with_descriptor(&seed, descriptor.clone(), Network::Testnet, &secp)
                 .unwrap();
             assert!(finalized);
-            psbt.finalize_mut(&secp).unwrap();
+
+            // TODO: psbt.finalize_mut(&secp).unwrap();
+
+            let wallet = Wallet::new_no_persist(&descriptor.to_string(), None, NETWORK).unwrap();
+            let signopts = SignOptions::default();
+            wallet.finalize_psbt(&mut psbt, signopts).unwrap();
         }
     }
 }
